@@ -7,8 +7,13 @@ import { compareStrings } from "../analysis/limitations.js";
 import type { Snapshot } from "../snapshot/snapshot.js";
 import type { GraphStats } from "../types.js";
 import { isJsTs } from "../util/classify.js";
-import { findPackages, resolveWorkspaceSpecifier, type WorkspacePackage } from "./workspaces.js";
-import { scanNonLiteralImports } from "./lexical.js";
+import {
+  findPackages,
+  parseJsonObject,
+  resolveWorkspaceSpecifier,
+  type WorkspacePackage,
+} from "./workspaces.js";
+import { literalSpecifiers, scanNonLiteralImports } from "./lexical.js";
 
 export interface Edge {
   specifiers: string[];
@@ -121,6 +126,20 @@ export async function buildGraph(
       "The requested tsconfig was not found; path aliases were not resolved.",
       options.tsConfig
     );
+  }
+  // A malformed package.json makes enhanced-resolve fail for every import below it. Neutralize such manifests in
+  // the private snapshot (never in the repository) and say so.
+  for (const path of snapshot.files) {
+    if (path !== "package.json" && !path.endsWith("/package.json")) continue;
+    if (parseJsonObject(snapshot.read(path)) !== null) continue;
+    writeFileSync(`${snapshot.dir}/${path}`, "{}", { mode: 0o600 });
+    if (options.side === "head") {
+      limitations.add(
+        "package-json-unparseable",
+        "These package.json files are not valid JSON objects; they were treated as empty for resolution, so package entry points and workspace names from them are unknown.",
+        path
+      );
+    }
   }
   const packages = findPackages(snapshot);
   const jsTsFiles = snapshot.files.filter(isJsTs);
@@ -278,7 +297,24 @@ export async function buildGraph(
       }
     }
     for (const path of jsTsFiles) {
-      if (scanNonLiteralImports(snapshot.read(path) ?? "") > 0) {
+      // Cross-check: literal specifiers seen lexically but absent from the parser's output suggest a parse failure.
+      const seen = new Set([
+        ...[...(graph.deps.get(path)?.values() ?? [])].flatMap((e) => e.specifiers),
+        ...(graph.unresolvedLocal.get(path) ?? []),
+        ...(graph.external.get(path) ?? []),
+      ]);
+      const text = snapshot.read(path) ?? "";
+      const missing = literalSpecifiers(text).filter(
+        (spec) => !seen.has(spec) && !seen.has(spec.replace(/^node:/, ""))
+      );
+      if (missing.length > 0 && seen.size === 0) {
+        limitations.add(
+          "imports-not-extracted",
+          "The parser extracted no imports from these modules although import statements are present (likely a syntax error); their dependencies are missing from the graph.",
+          path
+        );
+      }
+      if (scanNonLiteralImports(text) > 0) {
         limitations.add(
           "non-literal-dynamic-import",
           "Dynamic import()/require() with a non-literal argument cannot be resolved statically; edges from these modules may be missing.",

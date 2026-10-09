@@ -85,6 +85,27 @@ describe("limits and safe degradation (T6)", () => {
     expect(limitationCodes(missing)).toContain("tsconfig-not-found");
   });
 
+  it("survives syntax errors and malformed package.json without losing resolution", async () => {
+    const repo = Repo.create({
+      ...basicTs,
+      "package.json": '{"name": "x", broken',
+      "src/recoverable.js": 'import { total } from "./services/cart";\nexport const = = {{{ ;;;\n',
+      "src/unparseable.ts":
+        'import { total } from "./services/cart";\n' + "<<<<<<< HEAD\n".repeat(3) + "}}}}}}}\n",
+    }).branch("f");
+    repo.write({ "src/services/cart.ts": basicTs["src/services/cart.ts"] + "\nfunction (( {\n" });
+    repo.commit("broken");
+    const report = await analyzeJson(repo.dir, head);
+    expect(limitationCodes(report)).toContain("package-json-unparseable");
+    expect(dependents(report)).toContain("src/services/checkout.ts");
+    const notExtracted =
+      report.coverageLimitations.find((l) => l.code === "imports-not-extracted")?.paths ?? [];
+    // Never silently dropped: each broken importer is either a graph dependent or reported as not extracted.
+    for (const file of ["src/recoverable.js", "src/unparseable.ts"]) {
+      expect(dependents(report).includes(file) || notExtracted.includes(file), file).toBe(true);
+    }
+  });
+
   it("lists conflicted paths as unmerged with a limitation", async () => {
     const repo = Repo.create(basicTs);
     repo.branch("a");

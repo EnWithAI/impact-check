@@ -66,3 +66,14 @@ export function exportDescriptor(line: string): string | null {
   if (m) return m[1] ? `module.exports.${m[1]}` : m[2] ? `exports.${m[2]}` : "module.exports";
   return null;
 }
+
+const LITERAL_IMPORT = /(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*)(["'])([^"'\n]{1,300})\1/g;
+
+/** String-literal import/require specifiers found lexically (used to cross-check the parser's extraction). */
+export function literalSpecifiers(text: string): string[] {
+  const cleaned = stripComments(text);
+  const out = new Set<string>();
+  for (const m of cleaned.matchAll(LITERAL_IMPORT)) out.add(m[2] ?? "");
+  out.delete("");
+  return [...out].sort();
+}
