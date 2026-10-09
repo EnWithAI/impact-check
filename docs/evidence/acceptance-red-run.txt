@@ -1,0 +1,17 @@
+     × fail-open vs fail-closed is explicit per check type (on-error)
+     × CLI check supports --on-error pass|fail with documented exit codes
+     × validates against schema 2.0 and is identical across runs and fresh repositories
+     × matches the reviewed golden snapshot (regression lock for rule changes)
+     × instruction invariance: injected comments/strings do not change findings, impact or test candidates
+     × instruction-like file names are escaped data and the report warns downstream readers
+     × lists exactly the real consumers, each with the import line and commit
+     × does not report public API changes for body-only edits
+     × a: removed export still imported → verified static fact
+     × b: renamed export → removal fact + possible rename + every importer
+     × c: module with export * → unknown, not a high-severity claim
+     × d: signature change → hypothesis only
+     × reports each construct as an explicit coverage limitation
+     × reports observed changes only and says the graph is unavailable
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  4 failed (4)
+      Tests  14 failed | 1 passed (15)

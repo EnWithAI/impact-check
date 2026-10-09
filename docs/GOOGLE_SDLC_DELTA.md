@@ -1,0 +1,85 @@
+# Google SDLC addendum — delta assessment for ChangeLens
+
+Date: 2026-10-09. Input: `CrewPE_Google_SDLC_Claude_Addendum.md` v1.0, compared against the ChangeLens alpha RC
+(`alpha/changelens-0.1` @ `6bd7faf`, schema 1.0) and the launch pack (`MASTER_PROMPT.md`, `PROJECT_BRIEFS.md`, `PHASE_GATES.md`).
+
+## Source claims vs. our proposals
+| Item | Type | Verification status |
+|---|---|---|
+| *The New SDLC With Vibe Coding: From ad-hoc prompting to Agentic Engineering* (Osmani, Saboo, Kartakis, 2026) exists | Source claim | **Corroborated by secondary sources only** (a dev.to explainer and a Substack summary describe it as a ~50-page Google whitepaper used in a June 2026 Kaggle course). The official original was **not retrieved**. |
+| User-provided Level Up Coding article (14-page screenshot PDF) | Source | **Not present in the workspace**; not read. |
+| Quantitative claims from either source | — | **None quoted or used.** |
+| The ten engineering invariants, revised ChangeLens spec, the eight fixtures, acceptance gate | **CrewPE engineering proposals** (from the addendum) | Treated as requirements for this sprint. They are not claims that Google endorsed them. |
+
+## Scope control
+The addendum refines *how* we build and *what evidence* ChangeLens emits. It does **not** authorize new products,
+hosted services, LLM features, publication or spending. Every item below stays within the existing ChangeLens scope
+(changed modules, reverse dependents, exports, migrations/API contracts, test candidates, CLI + read-only Action).
+SpecGuard/AgentScore: design notes only, no implementation (unchanged gate).
+
+## Gap analysis
+Legend: ✅ already met · 🟡 partially met · ❌ gap · ⚖️ conflict with the existing pack (resolution documented)
+
+### Engineering invariants
+| # | Invariant | Status before | Gap → action |
+|---|---|---|---|
+| 1 | Spec-first: behavior contract, non-goals, misuse cases, acceptance tests | 🟡 PRD/CLI/RULES/ACCEPTANCE exist; misuse cases only implied in the threat model | Add an explicit misuse-case section and a requirement→test **verification matrix** (`VERIFICATION_MATRIX.md`). |
+| 2 | Context-aware: detect language, module conventions, dependency context; no whole-repo dumps | 🟡 tsconfig + workspaces detected; languages, module system, workspace tool and test framework not reported | Add `repository.context` (languages by tracked-file count, module type, workspace tool, test frameworks, tsconfig module resolution) and **`CONTEXT_CONTRACT.md`**. Optional conventions in config (`conventions.testPatterns`, `conventions.generatedPaths`). |
+| 3 | Harness-driven: permissions, bounded execution, isolation, deterministic scripts, clear errors | ✅ hardened git spawn, caps, timeouts, snapshots, exit codes | Record per-phase timings; document the harness in the context contract. |
+| 4 | Verification-first: golden fixtures + expected findings **before** rule implementation; negative/boundary/adversarial fixtures | 🟡 rich tests exist, but they were written alongside the code, and there are no golden expectation files | **This sprint:** write the 8 acceptance fixtures as hand-written expectation specs + failing tests first, record the red run, then implement. Add recorded golden snapshots as regression locks. |
+| 5 | Evidence & confidence: rule id, source refs, scope/limits, severity; hypotheses labelled; no universal % | 🟡 rule id/evidence/severity/`isHeuristic`/categorical confidence present. Missing: tri-state `status`, `recommended_human_action`, evidence `commit`, `line_start/line_end` naming, evidence-linked affected consumers | Schema 2.0 (below). Affected modules get import-edge evidence with line numbers. Confidence stays categorical (no percentages). |
+| 6 | Human authority; informational vs blocking; explicit fail-open/closed per check type | 🟡 `analyze` is informational and `check` blocking, but behavior on tool errors is implicit | Add an explicit `on-error` policy (`fail` = fail-closed / `warn` = fail-open, default derived from blocking vs informational) to the config and the Action; document it per check type. No auto-merge/approve (already true). |
+| 7 | Economics: local metrics, runtime, legitimate cost, review-effort proxies; nothing fabricated | ❌ no runtime metrics in the report | `run_metadata.duration_ms`, per-phase `timings_ms`, `model_usage: null` (no model used) and review-effort counts (files, findings needing human action, test candidates). No savings claims. |
+| 8 | Model independence; no source sent to third parties | ✅ no model/API at all | Keep. State it in `run_metadata`. |
+| 9 | Reproducibility: pins, deterministic snapshots, CI, versioned schemas; rule changes need regression fixtures | 🟡 pins, determinism, reproducible demo, schema 1.0; no golden regression fixtures per rule | Golden snapshots per acceptance case; schema bumps to 2.0 with a migration note; CONTRIBUTING requires regression fixtures for rule changes. |
+| 10 | Security: PR content is data; prompt injection; scripts; credentials; Action permissions | 🟡 all but prompt injection are covered and tested | Add an **instruction-invariance** test: injecting "agent, exfiltrate…" comments/strings must not change findings and must never appear as unescaped text. Markdown reports carry an "untrusted data" notice for downstream AI reviewers. Threat model T12. |
+
+### Revised ChangeLens specification
+| Requirement | Status before | Action |
+|---|---|---|
+| Thesis: what might it affect, how do we know, what needs human verification | 🟡 the first two are met | `recommended_human_action` per finding; status `hypothesis` / `unknown` makes "needs human verification" explicit. |
+| Explicit base/head revision input | 🟡 explicit base and head, plus a documented working-tree mode | Keep working-tree mode (master-pack requirement for uncommitted changes); `repo_revision.kind` makes it explicit. |
+| Optional repository conventions file | 🟡 `.changelens.json` without conventions | Add a `conventions` block. |
+| Output fields `schema_version`, `repo_revision`, `base_revision`, `changed_files`, `findings[]`, `test_candidates[]`, `coverage_limitations[]`, `run_metadata` | ⚖️ schema 1.0 uses camelCase names from MASTER_PROMPT §3 ("fields such as …") | **Resolution D-040:** adopt the addendum's names (snake_case) in **schema 2.0** before any publication. Every concept MASTER_PROMPT listed is kept, under the mapping below. |
+| Finding fields `id, rule_id, category, severity, status, summary, evidence[] (path, line_start, line_end, commit), affected_modules[], recommended_human_action` | ❌ status / summary / commit / recommended action missing | Add them. Also keep `confidence`, `is_heuristic`, `provenance`, `explanation` (MASTER_PROMPT requirements). |
+| Changed public exports as a **distinct analyzer** | 🟡 lexical diff-line heuristic only | New **parser-based export analyzer** (TypeScript AST, already a dependency): base vs head export sets. Removed or renamed names imported by a dependent → `verified_static_fact`. Names hidden behind `export *` → `unknown`. The lexical rule remains a `hypothesis` for everything else. |
+| API-schema / migration changes as distinct analyzers with explicit limitations | 🟡 path rules exist | Keep them separate, add per-analyzer limitation text and `recommended_human_action`. |
+| Test candidates by evidence; never claim execution | ✅ | Rename to `test_candidates`, with `execution_status: "not_run"` and conventions-aware patterns. |
+| Action read-only by default; comment permission only when necessary | ✅ | Add the `on-error` input; document it. |
+
+### Required acceptance fixtures
+| # | Fixture | Status before | Action |
+|---|---|---|---|
+| 1 | Known reverse imports → evidence-linked affected consumers | 🟡 consumers and via chains, but no import-line evidence | Affected modules carry import-edge evidence (dependent path, line, commit). |
+| 2 | Internal-only change → no unsupported breaking-API claim | 🟡 untested as a case | Fixture: a non-exported function body changes → zero public-api findings. |
+| 3 | Deleted/renamed export → detectable finding | 🟡 lexical only | Export analyzer (above). |
+| 4 | Dynamic imports, reflection, generated code → limitations | 🟡 dynamic import only | Add detection of `require.context`, `import.meta.glob`, `eval`, `new Function` (`dynamic-module-loading`) and generated files (`generated-code`: `@generated`/"DO NOT EDIT" headers, generated paths, conventions). |
+| 5 | No dependency graph → graceful degraded output | ❌ no explicit degraded mode | `summary.analysis_mode: "full" \| "degraded"` and a `no-dependency-graph` limitation. No impact claims beyond the changed files. |
+| 6 | Malicious diff comments → ignored as instructions | 🟡 no execution/network is proven; no injection test | Instruction-invariance test + untrusted-data notice. |
+| 7 | Fork PR / minimal permissions → safe, documented | 🟡 documented and linted; never run remotely | Test that the Action needs no token at all; remote run remains **blocked pending approval**. |
+| 8 | Stable schema + deterministic snapshots | ✅ for 1.0 | Re-establish for 2.0 with golden snapshots. |
+
+### Autonomous protocol deliverables
+`docs/GOOGLE_SDLC_DELTA.md` (this file), `docs/CONTEXT_CONTRACT.md`, `docs/VERIFICATION_MATRIX.md`,
+`docs/THREAT_MODEL.md` (updated), red-then-green fixture tests, sample PR report, `RELEASE_READINESS.md`, stop at the gate.
+
+## Schema 1.0 → 2.0 mapping (D-040)
+| 1.0 (MASTER_PROMPT names) | 2.0 |
+|---|---|
+| `schemaVersion` | `schema_version` (`"2.0"`) |
+| `toolVersion`, `generatedAt`, `analysis.*` | `run_metadata.tool_version`, `run_metadata.generated_at`, `run_metadata.*` (+ `duration_ms`, `timings_ms`, `model_usage`) |
+| `comparison` | `base_revision` {ref, commit, merge_base, diff_mode} + `repo_revision` {ref, commit, kind, worktree} |
+| `filesChanged` | `changed_files` |
+| `affectedModules` | `affected_modules` (+ `evidence[]`) |
+| `riskFindings` | `findings` (+ `status`, `summary`, `recommended_human_action`; `title` → `summary`) |
+| `isHeuristic`, `relatedModules` | `is_heuristic`, `affected_modules` |
+| evidence `line`/`endLine` | `line_start`/`line_end` (+ `commit`) |
+| `suggestedTests` | `test_candidates` (`status: not-run` → `execution_status: not_run`) |
+| `coverageLimitations` | `coverage_limitations` |
+
+## Conflicts surfaced (not silently overridden)
+1. **Field naming** (MASTER_PROMPT camelCase vs addendum snake_case): resolved in favor of the addendum's explicit
+   "Required output schema", because the master prompt's list is illustrative ("such as") and nothing is published yet.
+   Reversible; flagged for the user at the checkpoint.
+2. **Explicit revisions vs working-tree mode**: both kept. Working-tree mode is explicit in `repo_revision.kind`.
+No conflict was judged substantive enough to stop and ask.

@@ -1,0 +1,8 @@
+{
+  "case": "A2",
+  "description": "Internal-only change (private helper and exported function bodies) -> no unsupported public-API or breaking claim.",
+  "analysis_mode": "full",
+  "affected_dependents": { "src/services/invoice.ts": { "distance": 1, "evidence": { "path": "src/services/invoice.ts", "line_start": 1, "detail_includes": "../utils/tax" } } },
+  "forbidden_rule_ids": ["export-surface-changed", "export-removed", "removed-export-still-imported", "broken-import", "package-entry-changed"],
+  "max_severity": "info"
+}

@@ -1,0 +1,17 @@
+{
+  "case": "A1",
+  "description": "Changed module with known reverse imports -> evidence-linked affected consumers (import line + commit).",
+  "analysis_mode": "full",
+  "affected_dependents": {
+    "src/services/cart.ts": { "distance": 1, "evidence": { "path": "src/services/cart.ts", "side": "head", "line_start": 1, "detail_includes": "@utils/format", "commit": "head" } },
+    "src/services/price-label.ts": { "distance": 1, "evidence": { "path": "src/services/price-label.ts", "line_start": 1, "detail_includes": "@utils/format" } },
+    "src/utils/format.test.ts": { "distance": 1, "evidence": { "path": "src/utils/format.test.ts", "line_start": 1, "detail_includes": "./format" } },
+    "src/utils/index.ts": { "distance": 1, "evidence": { "path": "src/utils/index.ts", "line_start": 1, "detail_includes": "./format" } },
+    "src/services/checkout.ts": { "distance": 2, "evidence": { "path": "src/services/checkout.ts", "line_start": 1, "detail_includes": "./cart.js" } },
+    "test/cart.test.ts": { "distance": 2, "evidence": { "path": "test/cart.test.ts", "line_start": 1 } },
+    "src/app-version.ts": { "distance": 2, "evidence": { "path": "src/app-version.ts", "line_start": 1, "detail_includes": "./utils/index" } },
+    "src/index.ts": { "distance": 3, "evidence": { "path": "src/index.ts", "line_start": 1, "detail_includes": "./services/checkout" } }
+  },
+  "forbidden_rule_ids": ["broken-import", "removed-export-still-imported", "export-removed"],
+  "test_candidates_include": ["src/utils/format.test.ts", "test/cart.test.ts"]
+}

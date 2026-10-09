@@ -1,24 +1,49 @@
-# Risk rules (alpha)
+# Rules and analyzers (schema 2.0)
 
-ChangeLens does not compute a numeric risk score. Each rule emits findings with a severity, a confidence, a provenance
-and evidence. **Heuristic** findings are _potential_ issues to review, not proven defects.
+ChangeLens does not compute a numeric risk score. Each finding has a `severity`, a categorical `confidence` (never a
+percentage), a `status` and evidence:
 
-| Rule ID                          | Category           | Heuristic? | Provenance       | Severity                                                            | Trigger                                                                                                                                                                                                                                                    |
-| -------------------------------- | ------------------ | ---------- | ---------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `broken-import`                  | broken-import      | **no**     | graph            | high                                                                | A head module imports a specifier that, in the base graph, resolved to a JS/TS file that was deleted/renamed, and the same specifier no longer resolves in head. Deleted non-JS targets (e.g. JSON) only surface as `unresolved-local-import` limitations. |
-| `deleted-module-with-dependents` | deleted-module     | no         | graph            | medium (low if every dependent was also changed or removed)         | A deleted or renamed JS/TS module had dependents in the base graph.                                                                                                                                                                                        |
-| `export-surface-changed`         | public-api         | yes        | inferred         | medium if the module has dependents or is a package entry, else low | Diff adds/removes lines that declare exports (`export …`, `module.exports`, `exports.x`). Removed export lines are named "removed or modified".                                                                                                            |
-| `package-entry-changed`          | public-api         | yes        | inferred         | medium                                                              | A changed module is a workspace/package entry (`index.*` at package root or `src/`, or referenced by `main`/`module`/`types`/`exports`).                                                                                                                   |
-| `package-manifest-changed`       | package-manifest   | yes        | observed         | medium for entry/peer fields, low otherwise                         | `package.json` fields changed between base and head (only field names are reported).                                                                                                                                                                       |
-| `migration-changed`              | migration          | yes        | inferred         | medium                                                              | Path matches migration conventions (`migrations/`, `migrate/`, `prisma/migrations`, `*.sql`, `db/schema.*`).                                                                                                                                               |
-| `api-contract-changed`           | api-contract       | yes        | inferred         | medium                                                              | OpenAPI/Swagger, GraphQL, protobuf, Prisma schema, JSON Schema files.                                                                                                                                                                                      |
-| `config-changed`                 | configuration      | yes        | inferred         | low (medium for CI workflows, `.npmrc`, env files)                  | tsconfig, `*.config.*`, lockfiles, Dockerfiles, CI workflows, env files (contents never read).                                                                                                                                                             |
-| `security-sensitive-change`      | security-sensitive | yes        | inferred / graph | medium                                                              | Path segment matches auth/session/token/crypto/permission vocabulary, matches `securityPathPatterns`, or the changed module imports a known security package or `node:crypto` (graph). Test files are excluded.                                            |
-| `tests-removed`                  | test-change        | yes        | observed         | medium                                                              | A test file was deleted.                                                                                                                                                                                                                                   |
-| `source-without-test-change`     | test-change        | yes        | inferred         | info                                                                | Source modules changed and no test file changed.                                                                                                                                                                                                           |
-| `wide-blast-radius`              | blast-radius       | yes        | graph            | info (low if ≥ 50)                                                  | A changed module has ≥ `blastRadiusThreshold` (default 10) transitive dependents.                                                                                                                                                                          |
+- **`verified_static_fact`** — fully determined by git, the module resolver or the TypeScript parser. It is still
+  *static*: it says nothing about runtime behavior.
+- **`hypothesis`** — inferred from naming conventions, path patterns or lexical/positional signals. A prompt for review.
+- **`unknown`** — the analyzer could not decide (e.g. a removed name may still be re-exported via `export *`).
 
-Confidence guide: `high` = resolver/diff fact; `medium` = lexical pattern on diff lines or path conventions with strong
-signals; `low` = weak naming signal.
+`is_heuristic` is `true` exactly when `status` is not `verified_static_fact`. Each rule also sets a fixed
+`recommended_human_action`.
 
-Default `check` policy: fail on `severity >= high` (which in alpha only non-heuristic graph findings reach).
+## Analyzers
+| Analyzer | Input | Method | Limits |
+|---|---|---|---|
+| Changes | git | `diff --name-status/--numstat/-U0 -z` | Binary content not inspected. |
+| Dependency graph | snapshot | dependency-cruiser `cruise()` | One tsconfig; no bundler aliases; workspace edges inferred. |
+| **Exports** (new in 2.0) | base + head text of each modified/renamed JS/TS module, plus dependents' import declarations | TypeScript AST (`createSourceFile`, no type checking) | Named ESM exports only. `export *` makes the export set open (→ `unknown`). CommonJS `module.exports` shapes and namespace-import member use (`ns.x`) are not analyzed. |
+| Path/contract/migration | changed paths | Path conventions | File contents not analyzed. |
+| Manifest | base + head `package.json` | JSON field comparison | Only field names are reported. |
+| Dynamic loading / generated code | head text | Lexical scan | Can produce false positives in strings; reported as limitations, not findings. |
+
+## Rules
+| Rule ID | Category | Status | Severity | Trigger | Recommended human action |
+|---|---|---|---|---|---|
+| `broken-import` | broken-import | verified_static_fact | high | A specifier that resolved to a now deleted/renamed JS/TS file in base no longer resolves in head. | Update or remove the import, or restore the module. |
+| `removed-export-still-imported` | broken-import | verified_static_fact (`unknown` if the module has `export *` in head) | high | A dependent imports (by name, or `default`) an export that the parser no longer finds in the changed module. | Update the importing module or restore the export. |
+| `export-removed` | public-api | verified_static_fact (`unknown` with `export *`) | medium if the module has dependents or is a package entry, else low | Named export present in base, absent in head. A single removed + single added export of the same kind is noted as a possible rename. | Confirm the removal is intended; check consumers outside this repository. |
+| `export-surface-changed` | public-api | hypothesis | medium if dependents/entry, else low | Changed lines fall inside the *signature* region of an exported declaration (function/arrow header, class/member header, type/interface/enum body, export statement). Body-only changes do not trigger. | Check whether the signature change is backward compatible. |
+| `deleted-module-with-dependents` | deleted-module | verified_static_fact | medium (low if all dependents changed/removed) | A deleted/renamed module had dependents in base. | Verify no remaining code relies on the old path. |
+| `package-entry-changed` | public-api | hypothesis | medium | A changed module is a package entry (declared or conventional). | Review for effects on external consumers. |
+| `package-manifest-changed` | package-manifest | verified_static_fact (`unknown` if unparseable) | medium for entry/identity/peer fields, else low | `package.json` fields differ between base and head. | Review dependency, script and entry-point changes. |
+| `migration-changed` | migration | hypothesis | medium | Path matches migration conventions. | Review ordering, reversibility and data impact; plan the deploy. |
+| `api-contract-changed` | api-contract | hypothesis | medium | OpenAPI/GraphQL/protobuf/Prisma/JSON-Schema-like files. | Check backward compatibility for API consumers. |
+| `config-changed` | configuration | hypothesis | medium for CI/env/registry, else low | Config path conventions (env contents never read). | Review build/CI/runtime configuration changes. |
+| `security-sensitive-change` | security-sensitive | hypothesis | medium | Security vocabulary in path, `securityPathPatterns`, or imports of security packages / `node:crypto`. Tests excluded. | Request a focused security review. |
+| `tests-removed` | test-change | hypothesis | medium | A file classified as a test was deleted. | Confirm the tests were obsolete or moved. |
+| `source-without-test-change` | test-change | hypothesis | info | Source changed, no test changed. | Run the test candidates; consider adding tests. |
+| `wide-blast-radius` | blast-radius | verified_static_fact | info (low if ≥ 50) | A changed module has ≥ `blastRadiusThreshold` transitive dependents. | Prioritize review and testing of the listed dependents. |
+
+## Coverage limitations (selection)
+`non-literal-dynamic-import`, `dynamic-module-loading` (require.context, import.meta.glob, eval, new Function),
+`generated-code`, `no-dependency-graph`, `unresolved-local-import`, `imports-not-extracted`,
+`export-analysis-incomplete`, `tsconfig-*`, `workspace-edges-inferred`, `binary-file`, `unsupported-language`,
+`unsupported-file-type`, `symlink-skipped`, `submodule-skipped`, `file-too-large`, truncation codes,
+`semantic-analysis-not-performed`, `tests-not-executed`.
+
+Default `check` policy: fail on `severity >= high`, which only `verified_static_fact` findings reach in this version.

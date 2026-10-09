@@ -1,79 +1,35 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/EnWithAI/changelens/schema/changelens-report-1.0.schema.json",
+  "$id": "urn:changelens:report:2.0",
   "title": "ChangeLens impact report",
-  "description": "Machine-readable output of `changelens analyze --format json`. Schema version 1.0. Only `generatedAt` varies between runs on identical inputs.",
+  "description": "Output of `changelens analyze --format json`, schema version 2.0. Normalization for determinism: run_metadata.generated_at, run_metadata.duration_ms, run_metadata.timings_ms and run_metadata.node_version vary between runs; everything else is identical for identical inputs.",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion",
-    "toolVersion",
-    "generatedAt",
+    "schema_version",
+    "repo_revision",
+    "base_revision",
     "repository",
-    "comparison",
     "summary",
-    "filesChanged",
-    "affectedModules",
-    "riskFindings",
-    "suggestedTests",
-    "coverageLimitations",
-    "analysis"
+    "changed_files",
+    "affected_modules",
+    "findings",
+    "test_candidates",
+    "coverage_limitations",
+    "run_metadata"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.0" },
-    "toolVersion": { "type": "string", "minLength": 1 },
-    "generatedAt": { "type": "string", "format": "date-time" },
-    "repository": {
+    "schema_version": { "const": "2.0" },
+    "repo_revision": {
+      "description": "The analyzed (head) state.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "isShallow", "tsConfig", "workspacePackages"],
+      "required": ["ref", "commit", "kind", "worktree"],
       "properties": {
-        "name": {
-          "type": "string",
-          "description": "Basename of the repository root directory. No absolute paths are emitted."
-        },
-        "isShallow": { "type": "boolean" },
-        "tsConfig": {
-          "type": ["string", "null"],
-          "description": "Repository-relative tsconfig/jsconfig used for alias resolution, or null."
-        },
-        "workspacePackages": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["name", "path"],
-            "properties": { "name": { "type": "string" }, "path": { "type": "string" } }
-          }
-        }
-      }
-    },
-    "comparison": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "baseRef",
-        "baseCommit",
-        "mergeBase",
-        "diffMode",
-        "headRef",
-        "headCommit",
-        "headKind",
-        "worktree"
-      ],
-      "properties": {
-        "baseRef": { "type": "string" },
-        "baseCommit": { "$ref": "#/$defs/sha" },
-        "mergeBase": { "anyOf": [{ "$ref": "#/$defs/sha" }, { "type": "null" }] },
-        "diffMode": { "enum": ["merge-base", "direct"] },
-        "headRef": { "type": "string", "description": "The ref given by the user, or \"WORKTREE\"." },
-        "headCommit": {
-          "$ref": "#/$defs/sha",
-          "description": "Commit analyzed, or HEAD's commit when analyzing the working tree."
-        },
-        "headKind": { "enum": ["commit", "worktree"] },
+        "ref": { "type": "string", "description": "Ref given by the user, or \"WORKTREE\"." },
+        "commit": { "$ref": "#/$defs/sha", "description": "Analyzed commit, or HEAD's commit in worktree mode." },
+        "kind": { "enum": ["commit", "worktree"] },
         "worktree": {
-          "description": "Uncommitted change counts. In worktree mode these are included; in commit mode they are excluded (see coverageLimitations).",
           "type": "object",
           "additionalProperties": false,
           "required": ["included", "staged", "unstaged", "untracked"],
@@ -86,22 +42,59 @@
         }
       }
     },
+    "base_revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "commit", "merge_base", "diff_mode"],
+      "properties": {
+        "ref": { "type": "string" },
+        "commit": { "$ref": "#/$defs/sha" },
+        "merge_base": { "anyOf": [{ "$ref": "#/$defs/sha" }, { "type": "null" }] },
+        "diff_mode": { "enum": ["merge-base", "direct"] }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "is_shallow", "ts_config", "workspace_packages", "context"],
+      "properties": {
+        "name": { "type": "string", "description": "Basename of the repository root. No absolute paths are emitted." },
+        "is_shallow": { "type": "boolean" },
+        "ts_config": { "type": ["string", "null"] },
+        "workspace_packages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "path"],
+            "properties": { "name": { "type": "string" }, "path": { "type": "string" } }
+          }
+        },
+        "context": { "$ref": "#/$defs/context" }
+      }
+    },
     "summary": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "filesChanged",
-        "jsTsFilesChanged",
-        "affectedModules",
-        "findingsBySeverity",
-        "suggestedTests",
-        "coverageLimitations"
+        "analysis_mode",
+        "files_changed",
+        "js_ts_files_changed",
+        "affected_modules",
+        "findings_by_severity",
+        "findings_by_status",
+        "test_candidates",
+        "coverage_limitations"
       ],
       "properties": {
-        "filesChanged": { "type": "integer", "minimum": 0 },
-        "jsTsFilesChanged": { "type": "integer", "minimum": 0 },
-        "affectedModules": { "type": "integer", "minimum": 0 },
-        "findingsBySeverity": {
+        "analysis_mode": {
+          "enum": ["full", "degraded"],
+          "description": "degraded = no usable JS/TS dependency graph; only observed changes are reported."
+        },
+        "files_changed": { "type": "integer", "minimum": 0 },
+        "js_ts_files_changed": { "type": "integer", "minimum": 0 },
+        "affected_modules": { "type": "integer", "minimum": 0 },
+        "findings_by_severity": {
           "type": "object",
           "additionalProperties": false,
           "required": ["high", "medium", "low", "info"],
@@ -112,86 +105,83 @@
             "info": { "type": "integer", "minimum": 0 }
           }
         },
-        "suggestedTests": { "type": "integer", "minimum": 0 },
-        "coverageLimitations": { "type": "integer", "minimum": 0 }
+        "findings_by_status": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["verified_static_fact", "hypothesis", "unknown"],
+          "properties": {
+            "verified_static_fact": { "type": "integer", "minimum": 0 },
+            "hypothesis": { "type": "integer", "minimum": 0 },
+            "unknown": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "test_candidates": { "type": "integer", "minimum": 0 },
+        "coverage_limitations": { "type": "integer", "minimum": 0 }
       }
     },
-    "filesChanged": {
+    "changed_files": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": [
           "path",
-          "previousPath",
+          "previous_path",
           "status",
           "binary",
+          "generated",
           "language",
           "kind",
           "additions",
           "deletions",
           "origin",
-          "changedLines",
+          "changed_lines",
           "provenance"
         ],
         "properties": {
           "path": { "type": "string" },
-          "previousPath": { "type": ["string", "null"] },
+          "previous_path": { "type": ["string", "null"] },
           "status": { "enum": ["added", "modified", "deleted", "renamed", "type-changed", "unmerged"] },
           "binary": { "type": "boolean" },
+          "generated": { "type": "boolean", "description": "Matches generated-code markers or conventions (inferred)." },
           "language": { "enum": ["typescript", "javascript", "json", "other"] },
           "kind": { "enum": ["source", "test", "config", "other"] },
-          "additions": {
-            "type": ["integer", "null"],
-            "minimum": 0,
-            "description": "Null for binary or unavailable."
-          },
+          "additions": { "type": ["integer", "null"], "minimum": 0 },
           "deletions": { "type": ["integer", "null"], "minimum": 0 },
           "origin": { "enum": ["committed", "staged", "unstaged", "untracked", "mixed"] },
-          "changedLines": {
-            "description": "Head-side changed line ranges from `git diff -U0`. Empty for deletions/binary. Capped; see coverageLimitations.",
-            "type": "array",
-            "items": { "$ref": "#/$defs/lineRange" }
-          },
+          "changed_lines": { "type": "array", "items": { "$ref": "#/$defs/lineRange" } },
           "provenance": { "const": "observed" }
         }
       }
     },
-    "affectedModules": {
+    "affected_modules": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["path", "reason", "distance", "provenance", "via", "changedRoots"],
+        "required": ["path", "reason", "distance", "provenance", "via", "changed_roots", "evidence"],
         "properties": {
           "path": { "type": "string" },
           "reason": { "enum": ["changed", "dependent"] },
-          "distance": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "0 = directly changed; n = shortest reverse-dependency hops from a changed module."
-          },
+          "distance": { "type": "integer", "minimum": 0 },
           "provenance": { "$ref": "#/$defs/provenance" },
-          "via": {
+          "via": { "type": "array", "items": { "type": "string" } },
+          "changed_roots": { "type": "array", "items": { "type": "string" } },
+          "evidence": {
+            "description": "For dependents: the import edge (in this module) that links it to the previous module in `via`.",
             "type": "array",
-            "items": { "type": "string" },
-            "description": "Shortest dependency chain from a changed module to this module (inclusive)."
-          },
-          "changedRoots": {
-            "type": "array",
-            "items": { "type": "string" },
-            "description": "Changed modules this module (transitively) depends on."
+            "items": { "$ref": "#/$defs/evidence" }
           }
         }
       }
     },
-    "riskFindings": { "type": "array", "items": { "$ref": "#/$defs/finding" } },
-    "suggestedTests": {
+    "findings": { "type": "array", "items": { "$ref": "#/$defs/finding" } },
+    "test_candidates": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["path", "reasons", "relatedTo", "provenance", "status"],
+        "required": ["path", "reasons", "related_to", "provenance", "execution_status"],
         "properties": {
           "path": { "type": "string" },
           "reasons": {
@@ -199,13 +189,13 @@
             "minItems": 1,
             "items": { "enum": ["changed-test", "imports-affected-module", "naming-convention"] }
           },
-          "relatedTo": { "type": "array", "items": { "type": "string" } },
+          "related_to": { "type": "array", "items": { "type": "string" } },
           "provenance": { "$ref": "#/$defs/provenance" },
-          "status": { "const": "not-run", "description": "ChangeLens never executes tests." }
+          "execution_status": { "const": "not_run", "description": "ChangeLens never executes tests." }
         }
       }
     },
-    "coverageLimitations": {
+    "coverage_limitations": {
       "type": "array",
       "items": {
         "type": "object",
@@ -214,49 +204,73 @@
         "properties": {
           "code": { "type": "string", "pattern": "^[a-z0-9-]+$" },
           "message": { "type": "string" },
-          "paths": {
-            "type": "array",
-            "items": { "type": "string" },
-            "description": "Example paths (capped). `count` is the total."
-          },
+          "paths": { "type": "array", "items": { "type": "string" } },
           "count": { "type": "integer", "minimum": 0 }
         }
       }
     },
-    "analysis": {
+    "run_metadata": {
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "tool",
+        "tool_version",
+        "generated_at",
+        "duration_ms",
+        "timings_ms",
+        "node_version",
         "engine",
-        "engineVersion",
-        "parserVersion",
-        "headGraph",
-        "baseGraph",
+        "engine_version",
+        "parser_version",
+        "head_graph",
+        "base_graph",
         "limits",
+        "config_source",
         "network",
-        "executedRepositoryCode"
+        "executed_repository_code",
+        "model_usage",
+        "review_effort"
       ],
       "properties": {
-        "engine": { "const": "dependency-cruiser" },
-        "engineVersion": { "type": "string" },
-        "parserVersion": {
-          "type": "string",
-          "description": "TypeScript version used by the engine to parse TS sources."
+        "tool": { "const": "changelens" },
+        "tool_version": { "type": "string" },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "duration_ms": { "type": "integer", "minimum": 0 },
+        "timings_ms": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
         },
-        "headGraph": { "$ref": "#/$defs/graphStats" },
-        "baseGraph": { "anyOf": [{ "$ref": "#/$defs/graphStats" }, { "type": "null" }] },
+        "node_version": { "type": "string" },
+        "engine": { "const": "dependency-cruiser" },
+        "engine_version": { "type": "string" },
+        "parser_version": { "type": "string" },
+        "head_graph": { "$ref": "#/$defs/graphStats" },
+        "base_graph": { "anyOf": [{ "$ref": "#/$defs/graphStats" }, { "type": "null" }] },
         "limits": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["maxDepth", "maxAffected", "truncated"],
+          "required": ["max_depth", "max_affected", "truncated"],
           "properties": {
-            "maxDepth": { "type": "integer", "minimum": 1 },
-            "maxAffected": { "type": "integer", "minimum": 1 },
+            "max_depth": { "type": "integer", "minimum": 1 },
+            "max_affected": { "type": "integer", "minimum": 1 },
             "truncated": { "type": "boolean" }
           }
         },
+        "config_source": { "type": "string", "description": "e.g. \"defaults\", \".changelens.json\"." },
         "network": { "const": false },
-        "executedRepositoryCode": { "const": false }
+        "executed_repository_code": { "const": false },
+        "model_usage": { "type": "null", "description": "No model or paid API is used. Always null in this version." },
+        "review_effort": {
+          "description": "Counts a reviewer has to look at. Proxies only; no time or cost estimates.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["files_to_review", "findings_requiring_human_action", "test_candidates"],
+          "properties": {
+            "files_to_review": { "type": "integer", "minimum": 0 },
+            "findings_requiring_human_action": { "type": "integer", "minimum": 0 },
+            "test_candidates": { "type": "integer", "minimum": 0 }
+          }
+        }
       }
     }
   },
@@ -264,31 +278,49 @@
     "sha": { "type": "string", "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$" },
     "provenance": {
       "enum": ["observed", "graph", "inferred"],
-      "description": "observed = read from git diff; graph = resolved by dependency-cruiser; inferred = heuristic (naming, workspace mapping, lexical patterns)."
+      "description": "observed = git diff; graph = resolver or parser fact; inferred = heuristic."
     },
     "lineRange": {
       "type": "object",
       "additionalProperties": false,
       "required": ["start", "end"],
-      "properties": {
-        "start": { "type": "integer", "minimum": 1 },
-        "end": { "type": "integer", "minimum": 1 }
-      }
+      "properties": { "start": { "type": "integer", "minimum": 1 }, "end": { "type": "integer", "minimum": 1 } }
     },
     "graphStats": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["modules", "edges", "unresolvedLocal"],
+      "required": ["modules", "edges", "unresolved_local"],
       "properties": {
         "modules": { "type": "integer", "minimum": 0 },
         "edges": { "type": "integer", "minimum": 0 },
-        "unresolvedLocal": { "type": "integer", "minimum": 0 }
+        "unresolved_local": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "context": {
+      "description": "Detected repository context (counts and names only).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["languages", "module_type", "workspace_tools", "test_frameworks", "module_resolution"],
+      "properties": {
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["language", "files"],
+            "properties": { "language": { "type": "string" }, "files": { "type": "integer", "minimum": 0 } }
+          }
+        },
+        "module_type": { "enum": ["module", "commonjs", "unknown"] },
+        "workspace_tools": { "type": "array", "items": { "type": "string" } },
+        "test_frameworks": { "type": "array", "items": { "type": "string" } },
+        "module_resolution": { "type": ["string", "null"] }
       }
     },
     "evidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "path", "side", "line", "endLine", "detail"],
+      "required": ["kind", "path", "side", "line_start", "line_end", "commit", "detail"],
       "properties": {
         "kind": {
           "enum": [
@@ -303,12 +335,13 @@
         },
         "path": { "type": "string" },
         "side": { "enum": ["base", "head"] },
-        "line": { "type": ["integer", "null"], "minimum": 1 },
-        "endLine": { "type": ["integer", "null"], "minimum": 1 },
-        "detail": {
-          "type": "string",
-          "description": "Short, redacted descriptor (e.g. an export name, import specifier, matched pattern). Never file contents."
-        }
+        "line_start": { "type": ["integer", "null"], "minimum": 1 },
+        "line_end": { "type": ["integer", "null"], "minimum": 1 },
+        "commit": {
+          "anyOf": [{ "$ref": "#/$defs/sha" }, { "type": "null" }],
+          "description": "Commit the evidence refers to; null for uncommitted working-tree content."
+        },
+        "detail": { "type": "string", "description": "Short redacted descriptor. Never file contents." }
       }
     },
     "finding": {
@@ -316,20 +349,22 @@
       "additionalProperties": false,
       "required": [
         "id",
-        "ruleId",
+        "rule_id",
         "category",
         "severity",
+        "status",
         "confidence",
-        "isHeuristic",
+        "is_heuristic",
         "provenance",
-        "title",
+        "summary",
         "explanation",
+        "recommended_human_action",
         "evidence",
-        "relatedModules"
+        "affected_modules"
       ],
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z0-9-]+:[0-9a-f]{8}$" },
-        "ruleId": { "type": "string" },
+        "rule_id": { "type": "string" },
         "category": {
           "enum": [
             "public-api",
@@ -345,13 +380,18 @@
           ]
         },
         "severity": { "enum": ["high", "medium", "low", "info"] },
+        "status": {
+          "enum": ["verified_static_fact", "hypothesis", "unknown"],
+          "description": "verified_static_fact = determined by git/resolver/parser facts; hypothesis = convention or lexical inference; unknown = evidence insufficient to decide."
+        },
         "confidence": { "enum": ["high", "medium", "low"] },
-        "isHeuristic": { "type": "boolean" },
+        "is_heuristic": { "type": "boolean" },
         "provenance": { "$ref": "#/$defs/provenance" },
-        "title": { "type": "string" },
+        "summary": { "type": "string" },
         "explanation": { "type": "string" },
+        "recommended_human_action": { "type": "string" },
         "evidence": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/evidence" } },
-        "relatedModules": { "type": "array", "items": { "type": "string" } }
+        "affected_modules": { "type": "array", "items": { "type": "string" } }
       }
     }
   }

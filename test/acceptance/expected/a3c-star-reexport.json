@@ -1,0 +1,10 @@
+{
+  "case": "A3c",
+  "description": "Removed export from a module that also has `export *` -> cannot decide statically -> status unknown, not high.",
+  "findings": [
+    { "rule_id": "export-removed", "status": "unknown", "summary_includes": "VERSION" },
+    { "rule_id": "removed-export-still-imported", "status": "unknown", "severity": "medium",
+      "evidence": [{ "path": "src/app-version.ts", "line_start": 1, "detail_includes": "VERSION" }] }
+  ],
+  "max_severity": "medium"
+}

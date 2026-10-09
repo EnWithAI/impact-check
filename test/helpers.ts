@@ -35,9 +35,19 @@ export class Repo {
   }
 
   git(...args: string[]): string {
-    const result = spawnSync("git", ["-c", "core.hooksPath=/dev/null", ...args], {
+    // Fixed identity and dates: fixture commit SHAs are identical on every run and machine (golden snapshots).
+    const result = spawnSync("git", ["-c", "core.hooksPath=/dev/null", "-c", "core.autocrlf=false", ...args], {
       cwd: this.dir,
       encoding: "utf8",
+      env: {
+        ...process.env,
+        GIT_AUTHOR_NAME: "ChangeLens Test",
+        GIT_AUTHOR_EMAIL: "test@example.invalid",
+        GIT_COMMITTER_NAME: "ChangeLens Test",
+        GIT_COMMITTER_EMAIL: "test@example.invalid",
+        GIT_AUTHOR_DATE: "2026-01-01T00:00:00+0000",
+        GIT_COMMITTER_DATE: "2026-01-01T00:00:00+0000",
+      },
     });
     if (result.status !== 0) throw new Error(`git ${args.join(" ")} failed: ${result.stderr}`);
     return result.stdout.trim();
