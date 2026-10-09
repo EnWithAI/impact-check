@@ -1,0 +1,5 @@
+{
+  "ignorePaths": ["generated/**"],
+  "securityPathPatterns": ["src/billing/**"],
+  "policy": { "failOnSeverity": "high", "failOnRules": ["tests-removed"] }
+}

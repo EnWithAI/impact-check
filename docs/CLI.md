@@ -3,6 +3,7 @@
 ```
 changelens analyze [options]     Analyze and print/write a report. Exit 0 unless a fatal error occurs.
 changelens check   [options]     Analyze, then apply the policy from --config. Exit 4 on policy failure.
+changelens render --input <f>    Re-render a saved JSON report (structure-validated; all strings escaped/redacted again).
 changelens schema                Print the report JSON Schema.
 changelens --help | -h           Usage.
 changelens --version | -v        Tool version.
