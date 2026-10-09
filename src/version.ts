@@ -7,7 +7,7 @@ function readJsonVersion(url: URL): string {
   return typeof parsed.version === "string" ? parsed.version : "0.0.0";
 }
 
-/** ChangeLens version (works from both src/ and dist/: package.json is one level up). */
+/** Impact Check version (works from both src/ and dist/: package.json is one level up). */
 export const TOOL_VERSION: string = readJsonVersion(new URL("../package.json", import.meta.url));
 
 /** Resolve a dependency's package.json by walking up from its entry point (works despite `exports` maps). */

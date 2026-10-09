@@ -1,8 +1,8 @@
-# ChangeLens
+# Impact Check
 
 **Evidence-backed change-impact reports for JavaScript/TypeScript pull requests — offline, deterministic, and it never runs your code.**
 
-ChangeLens answers three questions about a change: _what might it affect, how do we know, and what still needs human verification?_ It compares a base ref to your branch (or working tree) and tells a reviewer:
+Impact Check answers three questions about a change: _what might it affect, how do we know, and what still needs human verification?_ It compares a base ref to your branch (or working tree) and tells a reviewer:
 
 - which files changed (added / modified / deleted / renamed / binary, staged / unstaged / untracked);
 - which modules **depend on** them, with the shortest import chain as evidence (reverse-dependency "blast radius");
@@ -13,6 +13,8 @@ ChangeLens answers three questions about a change: _what might it affect, how do
 
 Every finding carries a `status` — `verified_static_fact`, `hypothesis` or `unknown` — plus evidence (path, line range, commit), a provenance (`observed` git diff / `graph` resolver-parser / `inferred` heuristic) and a `recommended_human_action`. There is no opaque risk score and no percentage confidence.
 
+> Formerly developed under the working name _ChangeLens_.
+>
 > Status: **alpha** (`0.2.0-alpha.0`, report schema 2.0). Not yet published to npm; see [Install](#install).
 
 ## 60-second demo
@@ -20,10 +22,10 @@ Every finding carries a `status` — `verified_static_fact`, `hypothesis` or `un
 Requires Node.js 22, 24 or ≥ 26 and git.
 
 ```bash
-git clone <this repository> changelens && cd changelens
+git clone <this repository> impact-check && cd impact-check
 npm ci --ignore-scripts && npm run build
-node examples/demo/create-demo.mjs /tmp/changelens-demo   # synthetic repo with a feature branch
-node dist/cli/main.js analyze --cwd /tmp/changelens-demo --base main
+node examples/demo/create-demo.mjs /tmp/impact-check-demo   # synthetic repo with a feature branch
+node dist/cli/main.js analyze --cwd /tmp/impact-check-demo --base main
 ```
 
 The output is a Markdown report like [`examples/demo/output/sample-report.md`](examples/demo/output/sample-report.md)
@@ -48,38 +50,38 @@ Until a release is published, install from a local build:
 
 ```bash
 npm pack                                    # in this repository, after npm run build
-npm install --save-dev --ignore-scripts ./enwithai-changelens-0.2.0-alpha.0.tgz   # in your project
-npx changelens --help
+npm install --save-dev --ignore-scripts ./enwithai-impact-check-0.2.0-alpha.0.tgz   # in your project
+npx impact-check --help
 ```
 
-Uninstall with `npm uninstall @enwithai/changelens`. ChangeLens writes nothing outside the report files you ask
+Uninstall with `npm uninstall @enwithai/impact-check`. Impact Check writes nothing outside the report files you ask
 for (and private temp directories it deletes after each run). No account, token, telemetry or network access.
 
 ## Usage
 
 ```bash
-changelens analyze --base main                       # working tree (incl. staged, unstaged, untracked) vs main
-changelens analyze --base main --head HEAD           # committed HEAD only; uncommitted changes reported as excluded
-changelens analyze --base main --head HEAD --format json --output changelens-report.json
-changelens check   --base main --head HEAD --config .changelens.json   # exit 4 when the policy fails
-changelens render  --input changelens-report.json    # re-render a saved JSON report
-changelens schema                                    # print the report JSON Schema
+impact-check analyze --base main                       # working tree (incl. staged, unstaged, untracked) vs main
+impact-check analyze --base main --head HEAD           # committed HEAD only; uncommitted changes reported as excluded
+impact-check analyze --base main --head HEAD --format json --output impact-check-report.json
+impact-check check   --base main --head HEAD --config .impact-check.json   # exit 4 when the policy fails
+impact-check render  --input impact-check-report.json    # re-render a saved JSON report
+impact-check schema                                    # print the report JSON Schema
 ```
 
 - Comparison uses **merge-base** semantics by default (like a GitHub PR); `--diff-mode direct` compares base directly.
 - Exit codes: `0` ok · `1` internal error · `2` usage/config error · `3` git/repository error · `4` policy failure.
   `--on-error pass` makes tool/git errors non-blocking (fail-open, with a warning); usage errors and policy failures are never masked.
-- `analyze` is informational; `check` is a policy signal. ChangeLens never approves or merges anything.
+- `analyze` is informational; `check` is a policy signal. Impact Check never approves or merges anything.
 - Full contract: [docs/CLI.md](docs/CLI.md). Configuration and policy: [docs/CONFIG.md](docs/CONFIG.md). Rules: [docs/RULES.md](docs/RULES.md).
 
 ## GitHub Action
 
 Runs on `pull_request` with a read-only token, writes a job summary and a report artifact. Works for fork PRs and
 never executes PR code. See [docs/ACTION.md](docs/ACTION.md) and
-[examples/workflows/changelens.yml](examples/workflows/changelens.yml). Posting a PR comment is optional and uses a
-separate, permission-scoped workflow ([example](examples/workflows/changelens-comment.yml); untested remotely in alpha).
+[examples/workflows/impact-check.yml](examples/workflows/impact-check.yml). Posting a PR comment is optional and uses a
+separate, permission-scoped workflow ([example](examples/workflows/impact-check-comment.yml); untested remotely in alpha).
 
-## What ChangeLens does not do (limitations)
+## What Impact Check does not do (limitations)
 
 - **No semantic analysis.** It reads module imports, export declarations (TypeScript parser, no type checker) and diff
   lines. "Potential public interface change" means lines in an exported signature changed, not that something broke.
@@ -113,4 +115,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Licensed 
 
 ---
 
-<sub>Built by EnWithAI · Part of CrewPE Engineering Commons · [crewpe.ai](https://crewpe.ai) · Enterprise advisory: [NetworkGain](https://networkgain.com). Not affiliated with or endorsed by GitHub, Anthropic or the dependency-cruiser maintainers.</sub>
+<sub>**Check the spec. Check the impact. Check the outcome.** Impact Check is one of three EnWithAI checks (Spec Check and Outcome Check are planned) · Built by EnWithAI · Part of CrewPE Engineering Commons · [crewpe.ai](https://crewpe.ai) · Enterprise advisory: [NetworkGain](https://networkgain.com). Not affiliated with or endorsed by GitHub, Anthropic or the dependency-cruiser maintainers.</sub>

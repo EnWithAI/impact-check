@@ -1,4 +1,4 @@
-# CLAUDE.md — ChangeLens repository conventions
+# CLAUDE.md — Impact Check repository conventions
 
 These conventions apply inside this repository. They never override the CrewPE Engineering Commons launch pack
 (`../START_HERE.md`, `../MASTER_PROMPT.md`, `../PHASE_GATES.md`) or the user's explicit instructions.

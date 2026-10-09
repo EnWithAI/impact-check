@@ -1,6 +1,6 @@
 # Code of Conduct
 
-We want ChangeLens to be a welcoming, harassment-free project for everyone, regardless of background or identity.
+We want Impact Check to be a welcoming, harassment-free project for everyone, regardless of background or identity.
 
 **Expected:** be respectful and constructive; assume good intent; give and accept feedback gracefully; focus on what
 is best for users and the community.

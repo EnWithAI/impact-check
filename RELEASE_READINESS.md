@@ -1,6 +1,6 @@
-# Release readiness — ChangeLens 0.2.0-alpha.0
+# Release readiness — Impact Check 0.2.0-alpha.0
 
-Date: 2026-10-09 · Branch `alpha/changelens-0.2-sdlc` (local only) · Code commit `5024167` · Report schema 2.0
+Date: 2026-10-09 · Branch `alpha/impact-check-0.2-sdlc` (local only) · Code commit `5024167` · Report schema 2.0
 
 ## Verdict
 
@@ -62,17 +62,17 @@ No third-party code copied; the BUSL-licensed npm `changelens` package was not i
 
 ## Known risks
 
-1. **Name conflict**: npm `changelens` is an unrelated BUSL tool in the same space.
+1. **Naming**: resolved by renaming the product to **Impact Check** (`@enwithai/impact-check`); the unscoped npm name `changelens` belongs to an unrelated BUSL tool. A formal trademark check of the new names is still pending.
 2. **Schema 2.0 naming** chosen per the addendum over the master prompt's camelCase examples (D-040); reversible now, costly after release.
 3. First remote CI/Action run may surface Linux/Node-version issues not seen locally.
 
 ## Costs
 
-Model/API cost of ChangeLens itself: none (no model calls). Build-session cost: not available (no metering exposed).
+Model/API cost of Impact Check itself: none (no model calls). Build-session cost: not available (no metering exposed).
 No external services or paid resources were used.
 
 ## Next milestones (each needs your approval)
 
 1. Phase 6 decisions → private test repository → CI matrix + Action self-test + fork-PR test (closes S-5 and A7 remote).
 2. Publish `0.2.0-alpha.x` under the chosen name with npm provenance; announce.
-3. Measure genuine usage; then a fresh go/no-go for SpecGuard (design notes in `progress/`), later AgentScore.
+3. Measure genuine usage; then a fresh go/no-go for Spec Check (design notes in `progress/`), later Outcome Check.

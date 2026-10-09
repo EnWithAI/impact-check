@@ -93,7 +93,7 @@ function loadTsConfig(
   const sanitized = { ...config, ...(kept.length > 0 ? { extends: kept } : {}) };
   if (kept.length === 0) delete sanitized["extends"];
   const dir = tsConfig.includes("/") ? tsConfig.slice(0, tsConfig.lastIndexOf("/") + 1) : "";
-  const fallback = `${snapshot.dir}/${dir}.changelens-tsconfig.json`;
+  const fallback = `${snapshot.dir}/${dir}.impact-check-tsconfig.json`;
   try {
     writeFileSync(fallback, JSON.stringify(sanitized), { mode: 0o600, flag: "wx" });
     return {

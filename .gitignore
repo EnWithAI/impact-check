@@ -3,5 +3,5 @@ dist/
 coverage/
 *.tgz
 .DS_Store
-/changelens-report.*
-/changelens-report/
+/impact-check-report.*
+/impact-check-report/

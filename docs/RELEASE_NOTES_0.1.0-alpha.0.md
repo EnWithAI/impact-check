@@ -1,14 +1,14 @@
-# ChangeLens 0.1.0-alpha.0 (draft release notes — not published)
+# Impact Check 0.1.0-alpha.0 (draft release notes — not published)
 
-First alpha of ChangeLens, a local-first change-impact analyzer for JavaScript/TypeScript pull requests.
+First alpha of Impact Check, a local-first change-impact analyzer for JavaScript/TypeScript pull requests.
 
 **What you get**
 
-- `changelens analyze` — Markdown or JSON report: changed files, reverse-dependency blast radius with import chains,
+- `impact-check analyze` — Markdown or JSON report: changed files, reverse-dependency blast radius with import chains,
   confirmed broken imports, heuristic risk prompts (exports, package entries/manifests, migrations, API contracts,
   CI/config, auth/crypto), candidate tests, and an explicit list of limitations.
-- `changelens check` — policy gate with a distinct exit code (4). By default it fails only on graph-confirmed findings.
-- `changelens render` / `schema` — re-render saved reports; JSON Schema 1.0.
+- `impact-check check` — policy gate with a distinct exit code (4). By default it fails only on graph-confirmed findings.
+- `impact-check render` / `schema` — re-render saved reports; JSON Schema 1.0.
 - A composite GitHub Action for `pull_request` with read-only permissions (job summary + artifact).
 
 **Principles**: offline, deterministic, no telemetry, no account, never executes repository code; every item labelled

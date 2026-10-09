@@ -1,6 +1,6 @@
 # Verification matrix
 
-Requirement → test that proves it → status at `alpha/changelens-0.2-sdlc`. "Red first" marks tests written and
+Requirement → test that proves it → status at `alpha/impact-check-0.2-sdlc`. "Red first" marks tests written and
 observed failing before the implementation (verification-first, `docs/evidence/acceptance-red-run.txt`).
 
 ## Addendum acceptance fixtures (A1–A8)

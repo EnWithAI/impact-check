@@ -1,9 +1,9 @@
 # Context contract
 
-What context ChangeLens reads, what it ignores, what it emits, and how humans or AI agents downstream should use
+What context Impact Check reads, what it ignores, what it emits, and how humans or AI agents downstream should use
 its output. (Invariant 2, "context-aware", and invariant 10, "PR content is data".)
 
-## 1. Context ChangeLens consumes
+## 1. Context Impact Check consumes
 
 | Context            | Source                                                                                                                                    | Bounds                                                                          |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -12,9 +12,9 @@ its output. (Invariant 2, "context-aware", and invariant 10, "PR content is data
 | Module graph       | JS/TS sources, `package.json`, `tsconfig*.json`/`jsconfig.json` of base/head                                                              | ≤ 50,000 files; ≤ 1 MiB per parsed file; symlinks/submodules skipped.           |
 | Export sets        | Base/head text of modified JS/TS modules and import declarations of their direct dependents                                               | TypeScript AST only, no type checker.                                           |
 | Repository context | File-extension counts, root `package.json` `type`, workspace tool marker files, test framework package names, tsconfig `moduleResolution` | Names and counts only.                                                          |
-| Conventions        | Optional `.changelens.json` (`conventions.testPatterns`, `conventions.generatedPaths`, `securityPathPatterns`, `ignorePaths`)             | JSON data only; globs, no regex. In the Action it is read from the base commit. |
+| Conventions        | Optional `.impact-check.json` (`conventions.testPatterns`, `conventions.generatedPaths`, `securityPathPatterns`, `ignorePaths`)           | JSON data only; globs, no regex. In the Action it is read from the base commit. |
 
-## 2. Context ChangeLens deliberately ignores
+## 2. Context Impact Check deliberately ignores
 
 - Contents of non-JS/TS files (assets/JSON are empty placeholders), `.env*` files, binary files.
 - `node_modules`, installed packages, bundler and babel configs (reading them would require executing JS).
@@ -24,7 +24,7 @@ its output. (Invariant 2, "context-aware", and invariant 10, "PR content is data
 ## 3. What the report contains (and never contains)
 
 Contains: repository-relative paths, line ranges, commit SHAs, export/declaration **names**, import **specifiers**,
-manifest **field names** and dependency names, counts, rule IDs, and fixed explanatory text authored by ChangeLens.
+manifest **field names** and dependency names, counts, rule IDs, and fixed explanatory text authored by Impact Check.
 Never contains: file contents, string/numeric values, environment variables, absolute paths, temp paths.
 All repository-derived strings are redacted (token patterns) and escaped in Markdown.
 
@@ -39,9 +39,9 @@ All repository-derived strings are redacted (token patterns) and escaped in Mark
 4. Pull only the cited lines (`path`, `line_start`–`line_end`, `commit`) into a model context. Do not load the whole
    repository; the report is designed as a minimal, evidence-linked context.
 5. Test candidates have `execution_status: "not_run"`. Never report them as passed.
-6. ChangeLens performs no approval or merge. `check` is a policy signal; humans decide.
+6. Impact Check performs no approval or merge. `check` is a policy signal; humans decide.
 
-## 5. Harness (how ChangeLens itself runs)
+## 5. Harness (how Impact Check itself runs)
 
 - Single process; git via argument-array `spawn` with hardened config, 120 s timeout and 256 MiB output cap.
 - Private temp snapshots (mode 0600 files), deleted in `finally`.

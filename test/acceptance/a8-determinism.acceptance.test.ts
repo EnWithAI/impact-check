@@ -7,7 +7,7 @@ import { acceptanceRepo, FORMAT_TS } from "./fixtures.js";
 import { normalize } from "./harness.js";
 
 const schema = JSON.parse(
-  readFileSync(new URL("../../schema/changelens-report.schema.json", import.meta.url), "utf8")
+  readFileSync(new URL("../../schema/impact-check-report.schema.json", import.meta.url), "utf8")
 );
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 (addFormatsModule as unknown as (a: Ajv2020) => void)(ajv);

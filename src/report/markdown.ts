@@ -73,7 +73,7 @@ export function renderMarkdown(report: Report, options: MarkdownOptions): string
   const s = report.summary;
   const out: string[] = [];
 
-  out.push("# ChangeLens impact report", "");
+  out.push("# Impact Check report", "");
   out.push(
     "> Deterministic static analysis of module imports, exports and diff lines. **No tests or repository code were executed.** Each finding is a *verified static fact*, a *hypothesis* or *unknown*; only verified facts are established by the analysis.",
     ">",
@@ -208,7 +208,7 @@ export function renderMarkdown(report: Report, options: MarkdownOptions): string
   );
   const m = report.run_metadata;
   out.push(
-    `<sub>ChangeLens ${text(m.tool_version)} · schema ${report.schema_version} · dependency-cruiser ${text(m.engine_version)} · TypeScript ${text(m.parser_version)} · head graph ${m.head_graph.modules} modules / ${m.head_graph.edges} edges · offline, no model, no telemetry</sub>`
+    `<sub>Impact Check ${text(m.tool_version)} · schema ${report.schema_version} · dependency-cruiser ${text(m.engine_version)} · TypeScript ${text(m.parser_version)} · head graph ${m.head_graph.modules} modules / ${m.head_graph.edges} edges · offline, no model, no telemetry</sub>`
   );
   if (options.branding) {
     out.push(

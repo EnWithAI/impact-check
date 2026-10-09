@@ -1,4 +1,4 @@
-name: "ChangeLens impact report"
+name: "Impact Check report"
 description: "Offline, evidence-backed change-impact report for JS/TS pull requests. Never executes repository code."
 author: "EnWithAI Technologies"
 branding:
@@ -28,17 +28,17 @@ inputs:
     required: false
     default: "."
   output-dir:
-    description: "Directory (relative to the workspace) for changelens-report.json and changelens-report.md."
+    description: "Directory (relative to the workspace) for impact-check-report.json and impact-check-report.md."
     required: false
-    default: "changelens-report"
+    default: "impact-check-report"
   config-source:
-    description: "Where to read .changelens.json from: base (default; PRs cannot weaken their own policy), head, or none."
+    description: "Where to read .impact-check.json from: base (default; PRs cannot weaken their own policy), head, or none."
     required: false
     default: "base"
   config-path:
     description: "Repository-relative config path."
     required: false
-    default: ".changelens.json"
+    default: ".impact-check.json"
   fail-on-policy:
     description: "Fail the step when the configured policy fails (default false: report only)."
     required: false
@@ -58,35 +58,35 @@ inputs:
 outputs:
   report-json:
     description: "Path of the JSON report (relative to the workspace)."
-    value: ${{ steps.changelens.outputs.report-json }}
+    value: ${{ steps.impact-check.outputs.report-json }}
   report-markdown:
     description: "Path of the Markdown report (relative to the workspace)."
-    value: ${{ steps.changelens.outputs.report-markdown }}
+    value: ${{ steps.impact-check.outputs.report-markdown }}
   high-findings:
     description: "Number of high-severity findings."
-    value: ${{ steps.changelens.outputs.high-findings }}
+    value: ${{ steps.impact-check.outputs.high-findings }}
   affected-modules:
     description: "Number of affected modules (changed + dependents)."
-    value: ${{ steps.changelens.outputs.affected-modules }}
+    value: ${{ steps.impact-check.outputs.affected-modules }}
   policy:
     description: "passed or failed."
-    value: ${{ steps.changelens.outputs.policy }}
+    value: ${{ steps.impact-check.outputs.policy }}
   status:
     description: "ok, or error when on-error=warn let a tool error pass (fail-open)."
-    value: ${{ steps.changelens.outputs.status }}
+    value: ${{ steps.impact-check.outputs.status }}
 runs:
   using: "composite"
   steps:
-    - name: Install ChangeLens runtime dependencies (pinned lockfile, no install scripts)
+    - name: Install Impact Check runtime dependencies (pinned lockfile, no install scripts)
       shell: bash
       run: |
         cd "$GITHUB_ACTION_PATH"
         if [ ! -d node_modules/dependency-cruiser ]; then
           npm ci --omit=dev --ignore-scripts --no-audit --no-fund
         fi
-        test -f dist/action/main.js || { echo "::error::dist/ is missing in this ChangeLens ref; use a release tag"; exit 1; }
-    - name: Run ChangeLens
-      id: changelens
+        test -f dist/action/main.js || { echo "::error::dist/ is missing in this Impact Check ref; use a release tag"; exit 1; }
+    - name: Run Impact Check
+      id: impact-check
       shell: bash
       env:
         INPUT_BASE: ${{ inputs.base }}

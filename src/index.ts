@@ -10,6 +10,6 @@ export {
   type Config,
   type Policy,
 } from "./config.js";
-export { ChangeLensError, ExitCode } from "./errors.js";
+export { ImpactCheckError, ExitCode } from "./errors.js";
 export { TOOL_VERSION } from "./version.js";
 export type * from "./types.js";

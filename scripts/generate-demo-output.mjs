@@ -19,8 +19,8 @@ function normalizeJson(text) {
 }
 
 const root = new URL("..", import.meta.url).pathname.replace(/%20/g, " ");
-const work = mkdtempSync(join(tmpdir(), "changelens-demo-"));
-const demo = join(work, "changelens-demo");
+const work = mkdtempSync(join(tmpdir(), "impact-check-demo-"));
+const demo = join(work, "impact-check-demo");
 try {
   const create = spawnSync(process.execPath, [join(root, "examples/demo/create-demo.mjs"), demo], {
     encoding: "utf8",

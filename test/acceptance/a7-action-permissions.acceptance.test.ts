@@ -71,7 +71,7 @@ describe("A7 — fork PR / minimal permissions", () => {
         JSON.stringify(inputs)
       ).toBe(code);
       expect(logs.join("\n")).toMatch(
-        code === 0 ? /::warning title=ChangeLens::/ : /::error title=ChangeLens::/
+        code === 0 ? /::warning title=Impact Check::/ : /::error title=Impact Check::/
       );
     }
     const bad = await runAction(env(repo, badEvent, { "on-error": "maybe" }).env, () => undefined);

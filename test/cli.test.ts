@@ -62,17 +62,15 @@ describe("CLI contract (acceptance A)", () => {
         "--format",
         "markdown",
         "--output",
-        "changelens-report.md",
+        "impact-check-report.md",
         "--offline",
       ],
       repo.dir
     );
     expect(md.code).toBe(0);
     expect(md.stdout).toBe("");
-    expect(md.stderr).toContain("Report written to changelens-report.md");
-    expect(readFileSync(join(repo.dir, "changelens-report.md"), "utf8")).toContain(
-      "# ChangeLens impact report"
-    );
+    expect(md.stderr).toContain("Report written to impact-check-report.md");
+    expect(readFileSync(join(repo.dir, "impact-check-report.md"), "utf8")).toContain("# Impact Check report");
     const json = await cli(
       ["analyze", "--base", "main", "--head", "HEAD", "--format", "json", "--output", "r.json", "--quiet"],
       repo.dir
@@ -106,12 +104,12 @@ describe("check command and policy (exit 4 distinct from errors)", () => {
     );
   });
 
-  it("loads .changelens.json from the repository root and honors custom policy", async () => {
+  it("loads .impact-check.json from the repository root and honors custom policy", async () => {
     const repo = Repo.create(basicTs).branch("f");
     repo.write({ "src/auth/session.ts": basicTs["src/auth/session.ts"] + "//\n" });
     repo.commit("c");
     writeFileSync(
-      join(repo.dir, ".changelens.json"),
+      join(repo.dir, ".impact-check.json"),
       JSON.stringify({ policy: { failOnSeverity: "medium" }, branding: false })
     );
     const result = await cli(["check", "--base", "main", "--head", "HEAD", "--quiet"], repo.dir);

@@ -1,4 +1,4 @@
-// Report contract types (schema 2.0). Must stay in sync with schema/changelens-report.schema.json (validated in tests).
+// Report contract types (schema 2.0). Must stay in sync with schema/impact-check-report.schema.json (validated in tests).
 
 export const SCHEMA_VERSION = "2.0" as const;
 
@@ -155,7 +155,7 @@ export interface Report {
   test_candidates: TestCandidate[];
   coverage_limitations: Limitation[];
   run_metadata: {
-    tool: "changelens";
+    tool: "impact-check";
     tool_version: string;
     generated_at: string;
     duration_ms: number;

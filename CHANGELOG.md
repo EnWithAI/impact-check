@@ -29,7 +29,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- `changelens analyze | check | render | schema` CLI (offline, deterministic).
+- `impact-check analyze | check | render | schema` CLI (offline, deterministic).
 - Changed-file detection incl. renames, deletions, binary files, staged/unstaged/untracked in working-tree mode.
 - Import graph via dependency-cruiser 18.5.0 (TypeScript 6.0.3 parser), tsconfig `paths`, workspace packages (inferred).
 - Reverse-dependency impact with shortest `via` chains, depth/size caps.

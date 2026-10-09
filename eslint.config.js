@@ -12,9 +12,9 @@ export default tseslint.config(
         "error",
         {
           paths: [
-            { name: "node:http", message: "ChangeLens must not use the network." },
-            { name: "node:https", message: "ChangeLens must not use the network." },
-            { name: "node:net", message: "ChangeLens must not use the network." },
+            { name: "node:http", message: "Impact Check must not use the network." },
+            { name: "node:https", message: "Impact Check must not use the network." },
+            { name: "node:net", message: "Impact Check must not use the network." },
             {
               name: "node:child_process",
               importNames: ["exec", "execSync"],

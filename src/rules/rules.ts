@@ -158,7 +158,7 @@ function deletedModules(ctx: RuleContext): Draft[] {
           false,
           "graph",
           `Import of ${verb === "deleted" ? "deleted" : "renamed"} module no longer resolves: ${oldPath}`,
-          `In the base graph these modules resolved an import to ${oldPath}, which was ${verb}. In the head state the same import specifier cannot be resolved by dependency-cruiser. Unless resolution depends on configuration ChangeLens does not see (e.g. bundler aliases), this import is broken.`,
+          `In the base graph these modules resolved an import to ${oldPath}, which was ${verb}. In the head state the same import specifier cannot be resolved by dependency-cruiser. Unless resolution depends on configuration Impact Check does not see (e.g. bundler aliases), this import is broken.`,
           [ev("file-status", oldPath, "base", verb), ...broken],
           [oldPath, ...brokenModules]
         )
@@ -268,7 +268,7 @@ async function exportChanges(ctx: RuleContext): Promise<Draft[]> {
           true,
           "inferred",
           `Package entry point changed: ${file.path}`,
-          `${file.path} is ${entry.declared ? "declared in the package manifest" : "the conventional index"} of package ${entry.pkg}. Changes here may affect consumers outside this repository, which ChangeLens cannot see.`,
+          `${file.path} is ${entry.declared ? "declared in the package manifest" : "the conventional index"} of package ${entry.pkg}. Changes here may affect consumers outside this repository, which Impact Check cannot see.`,
           [
             ev(
               "path-pattern",
@@ -440,7 +440,7 @@ function signatureChanges(
       "hypothesis",
       "inferred",
       `Potential public interface change in ${path}: ${names.join(", ")}`,
-      `Changed lines fall inside the signature of ${plural(names.length, "exported declaration")} (parameters, return type, type members or exported value). The module has ${plural(dependents.length, "direct dependent")}. ChangeLens does not type-check: the change may be fully compatible.`,
+      `Changed lines fall inside the signature of ${plural(names.length, "exported declaration")} (parameters, return type, type members or exported value). The module has ${plural(dependents.length, "direct dependent")}. Impact Check does not type-check: the change may be fully compatible.`,
       evidence,
       [path, ...dependents]
     ),
@@ -516,7 +516,7 @@ async function manifestChanges(ctx: RuleContext): Promise<Draft[]> {
           .sort(compareStrings);
         detail += `: ${names.slice(0, 10).join(", ")}${names.length > 10 ? ` (+${names.length - 10} more)` : ""}`;
       }
-      if (field === "scripts") detail += " (scripts are never executed by ChangeLens)";
+      if (field === "scripts") detail += " (scripts are never executed by Impact Check)";
       evidence.push(ev("manifest-field", file.path, "head", detail));
     }
     if (evidence.length === 0) continue;
@@ -620,7 +620,7 @@ function configChanges(ctx: RuleContext): Draft[] {
         true,
         "inferred",
         `CI, environment or registry configuration changed (${elevated.length})`,
-        "Workflow, container, .npmrc or environment files changed. These can alter build, release or runtime behavior and credentials. ChangeLens never reads the contents of environment files.",
+        "Workflow, container, .npmrc or environment files changed. These can alter build, release or runtime behavior and credentials. Impact Check never reads the contents of environment files.",
         evidence(elevated),
         elevated.map((f) => f.path)
       )
@@ -679,7 +679,7 @@ function securityChanges(ctx: RuleContext): Draft[] {
         true,
         provenance,
         `Security-sensitive area changed: ${file.path}`,
-        "The path name or imports suggest authentication, session, cryptography or access-control code. ChangeLens does not scan for vulnerabilities; this is a prompt for focused review.",
+        "The path name or imports suggest authentication, session, cryptography or access-control code. Impact Check does not scan for vulnerabilities; this is a prompt for focused review.",
         evidence,
         [file.path]
       )

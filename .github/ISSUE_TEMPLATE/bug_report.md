@@ -4,7 +4,7 @@ about: Wrong, missing or misleading output, or a crash
 labels: bug
 ---
 
-**ChangeLens version / Node version / OS**
+**Impact Check version / Node version / OS**
 
 **Command you ran** (no secrets)
 

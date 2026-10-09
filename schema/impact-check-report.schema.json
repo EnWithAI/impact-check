@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:changelens:report:2.0",
-  "title": "ChangeLens impact report",
-  "description": "Output of `changelens analyze --format json`, schema version 2.0. Normalization for determinism: run_metadata.generated_at, run_metadata.duration_ms, run_metadata.timings_ms and run_metadata.node_version vary between runs; everything else is identical for identical inputs.",
+  "$id": "urn:impact-check:report:2.0",
+  "title": "Impact Check report",
+  "description": "Output of `impact-check analyze --format json`, schema version 2.0. Normalization for determinism: run_metadata.generated_at, run_metadata.duration_ms, run_metadata.timings_ms and run_metadata.node_version vary between runs; everything else is identical for identical inputs.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -200,7 +200,7 @@
           },
           "related_to": { "type": "array", "items": { "type": "string" } },
           "provenance": { "$ref": "#/$defs/provenance" },
-          "execution_status": { "const": "not_run", "description": "ChangeLens never executes tests." }
+          "execution_status": { "const": "not_run", "description": "Impact Check never executes tests." }
         }
       }
     },
@@ -241,7 +241,7 @@
         "review_effort"
       ],
       "properties": {
-        "tool": { "const": "changelens" },
+        "tool": { "const": "impact-check" },
         "tool_version": { "type": "string" },
         "generated_at": { "type": "string", "format": "date-time" },
         "duration_ms": { "type": "integer", "minimum": 0 },
@@ -265,7 +265,7 @@
             "truncated": { "type": "boolean" }
           }
         },
-        "config_source": { "type": "string", "description": "e.g. \"defaults\", \".changelens.json\"." },
+        "config_source": { "type": "string", "description": "e.g. \"defaults\", \".impact-check.json\"." },
         "network": { "const": false },
         "executed_repository_code": { "const": false },
         "model_usage": {

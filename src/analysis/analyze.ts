@@ -47,7 +47,7 @@ export interface AnalyzeOptions {
   config?: Config;
   now?: () => Date;
   log?: (message: string) => void;
-  /** Where the config came from, recorded in run_metadata (e.g. ".changelens.json"). */
+  /** Where the config came from, recorded in run_metadata (e.g. ".impact-check.json"). */
   configSource?: string;
 }
 
@@ -406,11 +406,11 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
     }
     limitations.add(
       "semantic-analysis-not-performed",
-      "ChangeLens analyzes module-level imports and diff lines. It does not type-check, evaluate behavior or prove compatibility."
+      "Impact Check analyzes module-level imports and diff lines. It does not type-check, evaluate behavior or prove compatibility."
     );
     limitations.add(
       "tests-not-executed",
-      "Suggested tests are candidates only. ChangeLens never runs tests or package scripts."
+      "Suggested tests are candidates only. Impact Check never runs tests or package scripts."
     );
 
     // --- Rules and tests -------------------------------------------------------------------------------------
@@ -498,7 +498,7 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
       test_candidates: suggestedTests,
       coverage_limitations: coverageLimitations,
       run_metadata: {
-        tool: "changelens",
+        tool: "impact-check",
         tool_version: TOOL_VERSION,
         generated_at: (options.now ?? (() => new Date()))().toISOString(),
         duration_ms: Date.now() - started,

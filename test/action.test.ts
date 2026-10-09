@@ -45,7 +45,7 @@ describe("GitHub Action (acceptance J) — local simulation", () => {
     const { env, summary, output } = prEnv(repo, baseSha);
     const logs: string[] = [];
     expect(await runAction(env, (l) => logs.push(l))).toBe(0);
-    expect(readFileSync(summary, "utf8")).toContain("# ChangeLens impact report");
+    expect(readFileSync(summary, "utf8")).toContain("# Impact Check report");
     const outputs = Object.fromEntries(
       readFileSync(output, "utf8")
         .trim()
@@ -53,8 +53,8 @@ describe("GitHub Action (acceptance J) — local simulation", () => {
         .map((l) => l.split("=") as [string, string])
     );
     expect(outputs).toEqual({
-      "report-json": "changelens-report/changelens-report.json",
-      "report-markdown": "changelens-report/changelens-report.md",
+      "report-json": "impact-check-report/impact-check-report.json",
+      "report-markdown": "impact-check-report/impact-check-report.md",
       "high-findings": "1",
       "affected-modules": expect.any(String),
       policy: "failed",
@@ -62,7 +62,7 @@ describe("GitHub Action (acceptance J) — local simulation", () => {
     });
     const report = JSON.parse(readFileSync(join(repo.dir, outputs["report-json"]!), "utf8"));
     expect(report.base_revision.commit).toBe(baseSha);
-    expect(logs.some((l) => l.startsWith("::warning title=ChangeLens policy::"))).toBe(true);
+    expect(logs.some((l) => l.startsWith("::warning title=Impact Check policy::"))).toBe(true);
     // PR title from the event is never used or echoed.
     expect(logs.join("\n") + readFileSync(summary, "utf8")).not.toContain("rm -rf");
 
@@ -73,13 +73,13 @@ describe("GitHub Action (acceptance J) — local simulation", () => {
   it("reads policy config from the base commit so a PR cannot weaken it", async () => {
     const repo = Repo.create({
       ...basicTs,
-      ".changelens.json": JSON.stringify({ policy: { failOnSeverity: "medium" } }),
+      ".impact-check.json": JSON.stringify({ policy: { failOnSeverity: "medium" } }),
     });
     const baseSha = repo.git("rev-parse", "HEAD");
     repo.branch("pr");
     repo.write({
       "src/auth/session.ts": basicTs["src/auth/session.ts"] + "//\n",
-      ".changelens.json": JSON.stringify({ policy: { failOnSeverity: "none" } }),
+      ".impact-check.json": JSON.stringify({ policy: { failOnSeverity: "none" } }),
     });
     repo.commit("weaken policy");
     expect(await runAction(prEnv(repo, baseSha, { "fail-on-policy": "true" }).env, () => undefined)).toBe(4);

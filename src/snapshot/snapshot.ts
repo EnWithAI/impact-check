@@ -31,7 +31,7 @@ export interface Snapshot {
 
 function createDir(): string {
   // realpath: on macOS tmpdir() is a symlink (/var -> /private/var); the resolver returns real paths.
-  return realpathSync(mkdtempSync(join(tmpdir(), "changelens-")));
+  return realpathSync(mkdtempSync(join(tmpdir(), "impact-check-")));
 }
 
 function safeTarget(dir: string, path: string): string | null {

@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "repo_revision": {
     "ref": "HEAD",
-    "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+    "commit": "c56a9cc51c7c874c2bf7bc295a8aacf4466f35a1",
     "kind": "commit",
     "worktree": {
       "included": false,
@@ -13,8 +13,8 @@
   },
   "base_revision": {
     "ref": "main",
-    "commit": "8597a2e993198d7636e7302e6654a6245dea5008",
-    "merge_base": "8597a2e993198d7636e7302e6654a6245dea5008",
+    "commit": "22496a417ce95fed9bceaefb21d91add5e2b3992",
+    "merge_base": "22496a417ce95fed9bceaefb21d91add5e2b3992",
     "diff_mode": "merge-base"
   },
   "repository": {
@@ -166,7 +166,7 @@
           "side": "head",
           "line_start": 1,
           "line_end": 1,
-          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "commit": "c56a9cc51c7c874c2bf7bc295a8aacf4466f35a1",
           "detail": "imports \"@utils/format\" → src/utils/format.ts"
         }
       ]
@@ -190,7 +190,7 @@
           "side": "head",
           "line_start": 1,
           "line_end": 1,
-          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "commit": "c56a9cc51c7c874c2bf7bc295a8aacf4466f35a1",
           "detail": "imports \"@utils/format\" → src/utils/format.ts"
         }
       ]
@@ -214,7 +214,7 @@
           "side": "head",
           "line_start": 1,
           "line_end": 1,
-          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "commit": "c56a9cc51c7c874c2bf7bc295a8aacf4466f35a1",
           "detail": "imports \"./format\" → src/utils/format.ts"
         }
       ]
@@ -238,7 +238,7 @@
           "side": "head",
           "line_start": 1,
           "line_end": 1,
-          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "commit": "c56a9cc51c7c874c2bf7bc295a8aacf4466f35a1",
           "detail": "imports \"./format\" → src/utils/format.ts"
         }
       ]
@@ -263,7 +263,7 @@
           "side": "head",
           "line_start": 1,
           "line_end": 1,
-          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "commit": "c56a9cc51c7c874c2bf7bc295a8aacf4466f35a1",
           "detail": "imports \"./utils/index\" → src/utils/index.ts"
         }
       ]
@@ -288,7 +288,7 @@
           "side": "head",
           "line_start": 1,
           "line_end": 1,
-          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "commit": "c56a9cc51c7c874c2bf7bc295a8aacf4466f35a1",
           "detail": "imports \"./cart.js\" → src/services/cart.ts"
         }
       ]
@@ -313,7 +313,7 @@
           "side": "head",
           "line_start": 1,
           "line_end": 1,
-          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "commit": "c56a9cc51c7c874c2bf7bc295a8aacf4466f35a1",
           "detail": "imports \"../src/services/cart\" → src/services/cart.ts"
         }
       ]
@@ -339,7 +339,7 @@
           "side": "head",
           "line_start": 1,
           "line_end": 1,
-          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "commit": "c56a9cc51c7c874c2bf7bc295a8aacf4466f35a1",
           "detail": "imports \"./services/checkout\" → src/services/checkout.ts"
         }
       ]
@@ -365,7 +365,7 @@
           "side": "head",
           "line_start": 1,
           "line_end": 1,
-          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "commit": "c56a9cc51c7c874c2bf7bc295a8aacf4466f35a1",
           "detail": "imports \"CURRENCY\" from \"@utils/format\" (not exported in head)"
         }
       ],
@@ -393,7 +393,7 @@
           "side": "base",
           "line_start": 5,
           "line_end": 5,
-          "commit": "8597a2e993198d7636e7302e6654a6245dea5008",
+          "commit": "22496a417ce95fed9bceaefb21d91add5e2b3992",
           "detail": "removed: const CURRENCY"
         }
       ],
@@ -424,7 +424,7 @@
           "side": "head",
           "line_start": 1,
           "line_end": 1,
-          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "commit": "c56a9cc51c7c874c2bf7bc295a8aacf4466f35a1",
           "detail": "added"
         }
       ],
@@ -451,7 +451,7 @@
           "side": "head",
           "line_start": null,
           "line_end": null,
-          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "commit": "c56a9cc51c7c874c2bf7bc295a8aacf4466f35a1",
           "detail": "modified"
         }
       ],
@@ -510,13 +510,13 @@
     },
     {
       "code": "semantic-analysis-not-performed",
-      "message": "ChangeLens analyzes module-level imports and diff lines. It does not type-check, evaluate behavior or prove compatibility.",
+      "message": "Impact Check analyzes module-level imports and diff lines. It does not type-check, evaluate behavior or prove compatibility.",
       "paths": [],
       "count": 1
     },
     {
       "code": "tests-not-executed",
-      "message": "Suggested tests are candidates only. ChangeLens never runs tests or package scripts.",
+      "message": "Suggested tests are candidates only. Impact Check never runs tests or package scripts.",
       "paths": [],
       "count": 1
     },
@@ -530,7 +530,7 @@
     }
   ],
   "run_metadata": {
-    "tool": "changelens",
+    "tool": "impact-check",
     "tool_version": "0.2.0-alpha.0",
     "generated_at": "<generated_at>",
     "duration_ms": 0,

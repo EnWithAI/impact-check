@@ -1,19 +1,19 @@
 {
-  "name": "@enwithai/changelens",
+  "name": "@enwithai/impact-check",
   "version": "0.2.0-alpha.0",
   "description": "Local-first, evidence-backed change-impact reports for JavaScript/TypeScript pull requests.",
   "license": "MIT",
   "author": "EnWithAI Technologies",
   "type": "module",
   "bin": {
-    "changelens": "dist/cli/main.js"
+    "impact-check": "dist/cli/main.js"
   },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./schema/changelens-report.schema.json": "./schema/changelens-report.schema.json",
+    "./schema/impact-check-report.schema.json": "./schema/impact-check-report.schema.json",
     "./package.json": "./package.json"
   },
   "files": [

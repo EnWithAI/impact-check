@@ -8,7 +8,7 @@ import { monorepo } from "./fixtures/monorepo.js";
 import { normalizeReport } from "../src/report/json.js";
 
 const schema = JSON.parse(
-  readFileSync(new URL("../schema/changelens-report.schema.json", import.meta.url), "utf8")
+  readFileSync(new URL("../schema/impact-check-report.schema.json", import.meta.url), "utf8")
 );
 const addFormats = addFormatsModule as unknown as (ajv: Ajv2020) => void;
 const ajv = new Ajv2020({ allErrors: true, strict: true });
@@ -65,6 +65,6 @@ describe("JSON schema (acceptance E) and determinism", () => {
     expect(worktree.test_candidates).toEqual(runs[0]!.test_candidates);
     // No absolute or temp paths leak.
     expect(normalized[0]).not.toContain(repo.dir);
-    expect(normalized[0]).not.toContain("changelens-");
+    expect(normalized[0]).not.toContain("impact-check-");
   });
 });

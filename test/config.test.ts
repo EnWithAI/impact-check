@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CONFIG, globToRegExp, matchesAny, parseConfigText } from "../src/config.js";
-import { ChangeLensError } from "../src/errors.js";
+import { ImpactCheckError } from "../src/errors.js";
 
 describe("config validation", () => {
   it("accepts a full valid config", () => {
@@ -40,7 +40,7 @@ describe("config validation", () => {
     ["policy not object", '{"policy":1}'],
     ["huge", JSON.stringify({ ignorePaths: ["x".repeat(300_000)] })],
   ])("rejects %s with a usage error", (_name, text) => {
-    expect(() => parseConfigText(text, "t")).toThrow(ChangeLensError);
+    expect(() => parseConfigText(text, "t")).toThrow(ImpactCheckError);
   });
   it("matches simple globs without regex injection", () => {
     expect(matchesAny("src/a/b.ts", ["src/**"])).toBe(true);

@@ -1,4 +1,4 @@
-# Configuration (`.changelens.json`)
+# Configuration (`.impact-check.json`)
 
 JSON only (no JS configs — they would have to be executed). Unknown fields are rejected (exit 2). All fields optional.
 
@@ -42,4 +42,4 @@ JSON only (no JS configs — they would have to be executed). Unknown fields are
 
 Globs are converted to anchored expressions internally; regular-expression syntax from users is never evaluated.
 In the GitHub Action the config is read from the **base** commit by default (`config-source: base`).
-An example lives at [`../.changelens.example.json`](../.changelens.example.json).
+An example lives at [`../.impact-check.example.json`](../.impact-check.example.json).

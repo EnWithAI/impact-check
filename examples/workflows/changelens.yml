@@ -1,7 +1,7 @@
-# Example: copy to .github/workflows/changelens.yml in your repository.
-# Produces a job summary and a `changelens-report` artifact on every pull request.
+# Example: copy to .github/workflows/impact-check.yml in your repository.
+# Produces a job summary and a `impact-check-report` artifact on every pull request.
 # Least privilege: read-only token, no secrets, works for fork PRs, never runs PR code.
-name: ChangeLens
+name: Impact Check
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  changelens:
+  impact-check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -21,14 +21,14 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
-      # Replace <RELEASE_COMMIT_SHA> with the full commit SHA of a ChangeLens release tag (do not use a branch).
-      - id: changelens
-        uses: EnWithAI/changelens@<RELEASE_COMMIT_SHA> # v0.1.0-alpha.0
+      # Replace <RELEASE_COMMIT_SHA> with the full commit SHA of an Impact Check release tag (do not use a branch).
+      - id: impact-check
+        uses: EnWithAI/impact-check@<RELEASE_COMMIT_SHA> # v0.1.0-alpha.0
         with:
           fail-on-policy: "false" # set "true" to fail the job on confirmed broken imports (default policy)
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: changelens-report
-          path: changelens-report/
+          name: impact-check-report
+          path: impact-check-report/
           retention-days: 14

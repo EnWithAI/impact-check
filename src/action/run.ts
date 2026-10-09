@@ -2,7 +2,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { join, resolve, sep } from "node:path";
 import { analyze } from "../analysis/analyze.js";
 import { DEFAULT_CONFIG, loadConfigFile, parseConfigText, type Config } from "../config.js";
-import { ChangeLensError, ExitCode, usageError } from "../errors.js";
+import { ImpactCheckError, ExitCode, usageError } from "../errors.js";
 import { repoRoot, showFile, validateRef } from "../git/repo.js";
 import { evaluatePolicy } from "../policy.js";
 import { renderJson } from "../report/json.js";
@@ -63,7 +63,7 @@ function setOutput(env: Env, name: string, value: string): void {
 
 async function loadConfig(env: Env, cwd: string, base: string): Promise<{ config: Config; source: string }> {
   const source = input(env, "config-source", "base");
-  const path = input(env, "config-path", ".changelens.json");
+  const path = input(env, "config-path", ".impact-check.json");
   if (!isSafeRelativePath(path)) throw usageError(`Input "config-path" must be a repository-relative path`);
   if (source === "none") return { config: DEFAULT_CONFIG, source: "defaults" };
   if (source === "head") {
@@ -110,11 +110,11 @@ export async function runAction(env: Env, log: (line: string) => void = console.
     const diffMode = input(env, "diff-mode", "merge-base");
     if (diffMode !== "merge-base" && diffMode !== "direct")
       throw usageError(`Input "diff-mode" must be merge-base or direct`);
-    const outputDir = input(env, "output-dir", "changelens-report");
+    const outputDir = input(env, "output-dir", "impact-check-report");
     if (!isSafeRelativePath(outputDir))
       throw usageError(`Input "output-dir" must be a relative path inside the workspace`);
     const { config, source } = await loadConfig(env, cwd, base);
-    log(`ChangeLens: base ${base}, head ${head}, mode ${diffMode}, config from ${source}`);
+    log(`Impact Check: base ${base}, head ${head}, mode ${diffMode}, config from ${source}`);
 
     const maxDepth = int(env, "max-depth");
     const maxAffected = int(env, "max-affected");
@@ -126,7 +126,7 @@ export async function runAction(env: Env, log: (line: string) => void = console.
       config,
       ...(maxDepth !== undefined ? { maxDepth } : {}),
       ...(maxAffected !== undefined ? { maxAffected } : {}),
-      log: (m) => log(`ChangeLens: ${m}`),
+      log: (m) => log(`Impact Check: ${m}`),
       configSource: source,
     });
     const policy = evaluatePolicy(report, config.policy);
@@ -134,35 +134,35 @@ export async function runAction(env: Env, log: (line: string) => void = console.
 
     const outDir = join(workspace, outputDir);
     mkdirSync(outDir, { recursive: true });
-    writeFileSync(join(outDir, "changelens-report.json"), renderJson(report));
+    writeFileSync(join(outDir, "impact-check-report.json"), renderJson(report));
     writeFileSync(
-      join(outDir, "changelens-report.md"),
+      join(outDir, "impact-check-report.md"),
       renderMarkdown(report, { branding: config.branding })
     );
     if (env["GITHUB_STEP_SUMMARY"]) appendFileSync(env["GITHUB_STEP_SUMMARY"], markdown);
 
-    setOutput(env, "report-json", `${outputDir}/changelens-report.json`);
-    setOutput(env, "report-markdown", `${outputDir}/changelens-report.md`);
+    setOutput(env, "report-json", `${outputDir}/impact-check-report.json`);
+    setOutput(env, "report-markdown", `${outputDir}/impact-check-report.md`);
     setOutput(env, "high-findings", String(report.summary.findings_by_severity.high));
     setOutput(env, "affected-modules", String(report.summary.affected_modules));
     setOutput(env, "policy", policy.passed ? "passed" : "failed");
     setOutput(env, "status", "ok");
     for (const violation of policy.violations)
-      log(`::warning title=ChangeLens policy::${violation.replace(/[\r\n]/g, " ")}`);
+      log(`::warning title=Impact Check policy::${violation.replace(/[\r\n]/g, " ")}`);
     if (!policy.passed && failOnPolicy) {
-      log("::error title=ChangeLens::Policy failed (fail-on-policy is true)");
+      log("::error title=Impact Check::Policy failed (fail-on-policy is true)");
       return ExitCode.Policy;
     }
     return ExitCode.Ok;
   } catch (error) {
     const message = (error instanceof Error ? error.message : String(error)).replace(/[\r\n]/g, " ");
-    const usage = error instanceof ChangeLensError && error.exitCode === ExitCode.Usage;
+    const usage = error instanceof ImpactCheckError && error.exitCode === ExitCode.Usage;
     if (onError === "warn" && !usage) {
       // Fail-open: the informational check could not run; say so loudly but do not block the PR.
       log(
-        `::warning title=ChangeLens::ChangeLens could not analyze this change (on-error=warn, fail-open): ${message}`
+        `::warning title=Impact Check::Impact Check could not analyze this change (on-error=warn, fail-open): ${message}`
       );
-      if (error instanceof ChangeLensError && error.hint) log(`ChangeLens hint: ${error.hint}`);
+      if (error instanceof ImpactCheckError && error.hint) log(`Impact Check hint: ${error.hint}`);
       try {
         setOutput(env, "status", "error");
       } catch {
@@ -170,9 +170,9 @@ export async function runAction(env: Env, log: (line: string) => void = console.
       }
       return ExitCode.Ok;
     }
-    log(`::error title=ChangeLens::${message}`);
-    if (error instanceof ChangeLensError) {
-      if (error.hint) log(`ChangeLens hint: ${error.hint}`);
+    log(`::error title=Impact Check::${message}`);
+    if (error instanceof ImpactCheckError) {
+      if (error.hint) log(`Impact Check hint: ${error.hint}`);
       return error.exitCode;
     }
     return ExitCode.Internal;

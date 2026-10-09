@@ -3,7 +3,7 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { analyze } from "../analysis/analyze.js";
 import { DEFAULT_CONFIG, loadConfigFile, type Config } from "../config.js";
-import { ChangeLensError, ExitCode, usageError } from "../errors.js";
+import { ImpactCheckError, ExitCode, usageError } from "../errors.js";
 import { repoRoot } from "../git/repo.js";
 import { evaluatePolicy } from "../policy.js";
 import { renderJson } from "../report/json.js";
@@ -19,15 +19,15 @@ export interface CliIO {
   now?: () => Date;
 }
 
-export const HELP = `ChangeLens ${TOOL_VERSION} — evidence-backed change-impact reports for JS/TS repositories.
+export const HELP = `Impact Check ${TOOL_VERSION} — evidence-backed change-impact reports for JS/TS repositories.
 
 Usage:
-  changelens analyze [options]   Analyze changes and print/write a report (exit 0 unless a fatal error occurs)
-  changelens check   [options]   Analyze, then apply the policy from the config (exit 4 on policy failure)
-  changelens schema              Print the JSON Schema of the report
-  changelens render --input <report.json> [--format markdown|json] [--output <file>]
+  impact-check analyze [options]   Analyze changes and print/write a report (exit 0 unless a fatal error occurs)
+  impact-check check   [options]   Analyze, then apply the policy from the config (exit 4 on policy failure)
+  impact-check schema              Print the JSON Schema of the report
+  impact-check render --input <report.json> [--format markdown|json] [--output <file>]
                                  Re-render a saved JSON report (validates it; escapes all content)
-  changelens --help | --version
+  impact-check --help | --version
 
 Options:
   --base <ref>             Base ref (default: main, then origin/main, master, origin/master)
@@ -37,12 +37,12 @@ Options:
   --diff-mode <mode>       merge-base (default; GitHub PR semantics) or direct
   --format <fmt>           markdown (default) or json
   --output <file>          Write the report to a file instead of stdout
-  --config <file>          JSON config/policy (default: .changelens.json at the repository root, if present)
+  --config <file>          JSON config/policy (default: .impact-check.json at the repository root, if present)
   --cwd <dir>              Repository directory (default: current directory)
   --tsconfig <file>        tsconfig/jsconfig for path aliases (default: tsconfig.json, then jsconfig.json)
   --max-depth <n>          Max reverse-dependency hops (default 10)
   --max-affected <n>       Max affected modules listed (default 500)
-  --offline                Accepted for explicitness: ChangeLens never uses the network
+  --offline                Accepted for explicitness: Impact Check never uses the network
   --on-error <fail|pass>   Tool/git errors: fail (default; fail-closed, exit 1/3) or pass (fail-open: warn, exit 0).
                            Usage errors always exit 2; policy failures always exit 4
   --no-branding            Omit the footer line in Markdown output
@@ -66,13 +66,13 @@ function writeOutput(path: string, content: string): void {
   if (existsSync(path) && statSync(path).isDirectory())
     throw usageError(`--output points to a directory: ${path}`);
   if (!existsSync(dirname(path))) throw usageError(`Output directory does not exist: ${dirname(path)}`);
-  const temp = join(dirname(path), `.changelens-${process.pid}-${Date.now()}.tmp`);
+  const temp = join(dirname(path), `.impact-check-${process.pid}-${Date.now()}.tmp`);
   writeFileSync(temp, content, { mode: 0o644 });
   renameSync(temp, path);
 }
 
 export function readSchema(): string {
-  return readFileSync(new URL("../../schema/changelens-report.schema.json", import.meta.url), "utf8");
+  return readFileSync(new URL("../../schema/impact-check-report.schema.json", import.meta.url), "utf8");
 }
 
 /** Set by --on-error pass: tool/git errors become warnings with exit 0 (fail-open). */
@@ -107,7 +107,7 @@ async function main(argv: string[], io: CliIO): Promise<number> {
         },
       });
     } catch (error) {
-      throw usageError((error as Error).message, "Run `changelens --help` for usage.");
+      throw usageError((error as Error).message, "Run `impact-check --help` for usage.");
     }
   })();
 
@@ -139,7 +139,7 @@ async function main(argv: string[], io: CliIO): Promise<number> {
       if (statSync(inputPath).size > 64 * 1024 * 1024) throw usageError("--input is too large");
       text = readFileSync(inputPath, "utf8");
     } catch (error) {
-      if (error instanceof ChangeLensError) throw error;
+      if (error instanceof ImpactCheckError) throw error;
       throw usageError(`Cannot read --input ${JSON.stringify(values.input)}`);
     }
     const report = redactDeep(parseReport(text));
@@ -177,14 +177,14 @@ async function main(argv: string[], io: CliIO): Promise<number> {
     config = loadConfigFile(isAbsolute(values.config) ? values.config : resolve(io.cwd, values.config));
   } else {
     const root = await repoRoot(cwd);
-    const implicit = join(root, ".changelens.json");
+    const implicit = join(root, ".impact-check.json");
     if (existsSync(implicit)) {
       config = loadConfigFile(implicit);
-      configSource = ".changelens.json";
+      configSource = ".impact-check.json";
     }
   }
 
-  const log = values.quiet ? undefined : (message: string): void => io.stderr(`changelens: ${message}\n`);
+  const log = values.quiet ? undefined : (message: string): void => io.stderr(`impact-check: ${message}\n`);
   const options = {
     cwd,
     base: values.base ?? null,
@@ -213,7 +213,7 @@ async function main(argv: string[], io: CliIO): Promise<number> {
   if (command === "check") {
     const policy = evaluatePolicy(report, config.policy);
     if (!policy.passed) {
-      for (const violation of policy.violations) io.stderr(`changelens: policy violation: ${violation}\n`);
+      for (const violation of policy.violations) io.stderr(`impact-check: policy violation: ${violation}\n`);
       return ExitCode.Policy;
     }
     log?.("Policy passed");
@@ -227,21 +227,21 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
   try {
     return await main(argv, io);
   } catch (error) {
-    const usage = error instanceof ChangeLensError && error.exitCode === ExitCode.Usage;
+    const usage = error instanceof ImpactCheckError && error.exitCode === ExitCode.Usage;
     if (failOpen && !usage) {
       io.stderr(
-        `changelens: warning: analysis failed and was ignored (on-error=pass, fail-open): ${(error as Error).message}\n`
+        `impact-check: warning: analysis failed and was ignored (on-error=pass, fail-open): ${(error as Error).message}\n`
       );
       return ExitCode.Ok;
     }
-    if (error instanceof ChangeLensError) {
-      io.stderr(`changelens: error: ${error.message}\n`);
-      if (error.hint) io.stderr(`changelens: hint: ${error.hint}\n`);
+    if (error instanceof ImpactCheckError) {
+      io.stderr(`impact-check: error: ${error.message}\n`);
+      if (error.hint) io.stderr(`impact-check: hint: ${error.hint}\n`);
       return error.exitCode;
     }
-    io.stderr(`changelens: internal error: ${(error as Error)?.stack ?? String(error)}\n`);
+    io.stderr(`impact-check: internal error: ${(error as Error)?.stack ?? String(error)}\n`);
     io.stderr(
-      "changelens: this is a bug; please report it with the command you ran (no source code needed).\n"
+      "impact-check: this is a bug; please report it with the command you ran (no source code needed).\n"
     );
     return ExitCode.Internal;
   }

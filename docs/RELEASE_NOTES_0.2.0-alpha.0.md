@@ -1,6 +1,6 @@
-# ChangeLens 0.2.0-alpha.0 (draft — not published)
+# Impact Check 0.2.0-alpha.0 (draft — not published)
 
-Supersedes the unpublished 0.1.0-alpha.0 draft. Aligns ChangeLens with spec-first, verification-first, harness-driven
+Supersedes the unpublished 0.1.0-alpha.0 draft. Aligns Impact Check with spec-first, verification-first, harness-driven
 engineering (CrewPE Google SDLC addendum).
 
 **What might this change affect, how do we know, and what still needs human verification?**

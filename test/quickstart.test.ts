@@ -24,7 +24,7 @@ const bin = join(root, "dist/cli/main.js");
 // README quickstart (acceptance I): runs the *built* CLI as a separate process against a fresh demo repo.
 describe.runIf(existsSync(bin))("README quickstart with the built CLI", () => {
   it("creates the demo repo and produces the documented report", () => {
-    const demo = join(tempDir(), "changelens-demo");
+    const demo = join(tempDir(), "impact-check-demo");
     const create = spawnSync(process.execPath, [join(root, "examples/demo/create-demo.mjs"), demo], {
       encoding: "utf8",
     });
@@ -35,7 +35,7 @@ describe.runIf(existsSync(bin))("README quickstart with the built CLI", () => {
       env: { PATH: process.env["PATH"] ?? "" },
     });
     expect(md.status, md.stderr).toBe(0);
-    expect(md.stdout).toContain("# ChangeLens impact report");
+    expect(md.stdout).toContain("# Impact Check report");
     expect(md.stdout).toContain(
       "HIGH · Import of deleted module no longer resolves: `src/lib/legacy-tax.ts`"
     );

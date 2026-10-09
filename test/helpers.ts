@@ -30,7 +30,7 @@ export class Repo {
     const repo = new Repo(dir);
     repo.git("init", "-q", "-b", options.branch ?? "main");
     repo.git("config", "user.email", "test@example.invalid");
-    repo.git("config", "user.name", "ChangeLens Test");
+    repo.git("config", "user.name", "Impact Check Test");
     repo.git("config", "commit.gpgsign", "false");
     repo.write(files);
     repo.commit("initial");
@@ -47,9 +47,9 @@ export class Repo {
         encoding: "utf8",
         env: {
           ...process.env,
-          GIT_AUTHOR_NAME: "ChangeLens Test",
+          GIT_AUTHOR_NAME: "Impact Check Test",
           GIT_AUTHOR_EMAIL: "test@example.invalid",
-          GIT_COMMITTER_NAME: "ChangeLens Test",
+          GIT_COMMITTER_NAME: "Impact Check Test",
           GIT_COMMITTER_EMAIL: "test@example.invalid",
           GIT_AUTHOR_DATE: "2026-01-01T00:00:00+0000",
           GIT_COMMITTER_DATE: "2026-01-01T00:00:00+0000",

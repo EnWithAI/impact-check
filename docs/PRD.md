@@ -1,4 +1,4 @@
-# ChangeLens — Product Requirements (alpha)
+# Impact Check — Product Requirements (alpha)
 
 ## Problem
 
@@ -30,7 +30,7 @@ Findings carry `isHeuristic`, `severity`, `confidence`, a rule ID and evidence (
 5. Heuristic risk rules (see RULES.md), always labelled heuristic unless graph-confirmed.
 6. Candidate tests (graph + naming convention + changed tests), all `status: not-run`.
 7. Markdown and JSON (schema 1.0) reporters; explicit coverage limitations.
-8. Policy `check` with `.changelens.json` and a distinct exit code.
+8. Policy `check` with `.impact-check.json` and a distinct exit code.
 9. Composite GitHub Action producing a job summary and artifact under `contents: read`.
 
 ## Out of scope (alpha)
@@ -40,5 +40,5 @@ LLM features; hosted service; telemetry; PR comment posting as a default.
 
 ## Success criterion
 
-A stranger can install ChangeLens, run it on a JS/TS repo, get a truthful evidence-backed report, reproduce it offline,
+A stranger can install Impact Check, run it on a JS/TS repo, get a truthful evidence-backed report, reproduce it offline,
 and uninstall it without registering or exposing data.

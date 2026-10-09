@@ -1,6 +1,6 @@
 # Rules and analyzers (schema 2.0)
 
-ChangeLens does not compute a numeric risk score. Each finding has a `severity`, a categorical `confidence` (never a
+Impact Check does not compute a numeric risk score. Each finding has a `severity`, a categorical `confidence` (never a
 percentage), a `status` and evidence:
 
 - **`verified_static_fact`** — fully determined by git, the module resolver or the TypeScript parser. It is still

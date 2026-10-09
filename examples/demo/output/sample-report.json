@@ -2,7 +2,7 @@
   "schema_version": "2.0",
   "repo_revision": {
     "ref": "WORKTREE",
-    "commit": "cef3c01cb043ca4b05b93bcc92d08d47fd3bb535",
+    "commit": "11db8408e7c0421cc06760d432a595ce38d2d0c5",
     "kind": "worktree",
     "worktree": {
       "included": true,
@@ -13,12 +13,12 @@
   },
   "base_revision": {
     "ref": "main",
-    "commit": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
-    "merge_base": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
+    "commit": "ce14de83f5c913f7d82e33148d4b92bb940ff671",
+    "merge_base": "ce14de83f5c913f7d82e33148d4b92bb940ff671",
     "diff_mode": "merge-base"
   },
   "repository": {
-    "name": "changelens-demo",
+    "name": "impact-check-demo",
     "is_shallow": false,
     "ts_config": "tsconfig.json",
     "workspace_packages": [
@@ -204,7 +204,7 @@
           "side": "base",
           "line_start": 2,
           "line_end": 2,
-          "commit": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
+          "commit": "ce14de83f5c913f7d82e33148d4b92bb940ff671",
           "detail": "imports \"../lib/legacy-tax\" → src/lib/legacy-tax.ts"
         }
       ]
@@ -327,7 +327,7 @@
       "is_heuristic": false,
       "provenance": "graph",
       "summary": "Import of deleted module no longer resolves: src/lib/legacy-tax.ts",
-      "explanation": "In the base graph these modules resolved an import to src/lib/legacy-tax.ts, which was deleted. In the head state the same import specifier cannot be resolved by dependency-cruiser. Unless resolution depends on configuration ChangeLens does not see (e.g. bundler aliases), this import is broken.",
+      "explanation": "In the base graph these modules resolved an import to src/lib/legacy-tax.ts, which was deleted. In the head state the same import specifier cannot be resolved by dependency-cruiser. Unless resolution depends on configuration Impact Check does not see (e.g. bundler aliases), this import is broken.",
       "recommended_human_action": "Update or remove the import, or restore the module; then run the listed test candidates.",
       "evidence": [
         {
@@ -336,7 +336,7 @@
           "side": "base",
           "line_start": null,
           "line_end": null,
-          "commit": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
+          "commit": "ce14de83f5c913f7d82e33148d4b92bb940ff671",
           "detail": "deleted"
         },
         {
@@ -373,7 +373,7 @@
           "side": "base",
           "line_start": null,
           "line_end": null,
-          "commit": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
+          "commit": "ce14de83f5c913f7d82e33148d4b92bb940ff671",
           "detail": "deleted"
         },
         {
@@ -382,7 +382,7 @@
           "side": "base",
           "line_start": null,
           "line_end": null,
-          "commit": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
+          "commit": "ce14de83f5c913f7d82e33148d4b92bb940ff671",
           "detail": "imported \"../lib/legacy-tax\""
         }
       ],
@@ -401,7 +401,7 @@
       "is_heuristic": true,
       "provenance": "inferred",
       "summary": "Potential public interface change in src/lib/money.ts: formatCents",
-      "explanation": "Changed lines fall inside the signature of 1 exported declaration (parameters, return type, type members or exported value). The module has 1 direct dependent. ChangeLens does not type-check: the change may be fully compatible.",
+      "explanation": "Changed lines fall inside the signature of 1 exported declaration (parameters, return type, type members or exported value). The module has 1 direct dependent. Impact Check does not type-check: the change may be fully compatible.",
       "recommended_human_action": "Check whether the signature change is backward compatible for every listed dependent.",
       "evidence": [
         {
@@ -456,7 +456,7 @@
       "is_heuristic": true,
       "provenance": "graph",
       "summary": "Security-sensitive area changed: src/auth/session.ts",
-      "explanation": "The path name or imports suggest authentication, session, cryptography or access-control code. ChangeLens does not scan for vulnerabilities; this is a prompt for focused review.",
+      "explanation": "The path name or imports suggest authentication, session, cryptography or access-control code. Impact Check does not scan for vulnerabilities; this is a prompt for focused review.",
       "recommended_human_action": "Request a focused security review of this change.",
       "evidence": [
         {
@@ -492,7 +492,7 @@
       "is_heuristic": true,
       "provenance": "inferred",
       "summary": "Potential public interface change in src/auth/session.ts: sign",
-      "explanation": "Changed lines fall inside the signature of 1 exported declaration (parameters, return type, type members or exported value). The module has 0 direct dependents. ChangeLens does not type-check: the change may be fully compatible.",
+      "explanation": "Changed lines fall inside the signature of 1 exported declaration (parameters, return type, type members or exported value). The module has 0 direct dependents. Impact Check does not type-check: the change may be fully compatible.",
       "recommended_human_action": "Check whether the signature change is backward compatible for every listed dependent.",
       "evidence": [
         {
@@ -582,13 +582,13 @@
     },
     {
       "code": "semantic-analysis-not-performed",
-      "message": "ChangeLens analyzes module-level imports and diff lines. It does not type-check, evaluate behavior or prove compatibility.",
+      "message": "Impact Check analyzes module-level imports and diff lines. It does not type-check, evaluate behavior or prove compatibility.",
       "paths": [],
       "count": 1
     },
     {
       "code": "tests-not-executed",
-      "message": "Suggested tests are candidates only. ChangeLens never runs tests or package scripts.",
+      "message": "Suggested tests are candidates only. Impact Check never runs tests or package scripts.",
       "paths": [],
       "count": 1
     },
@@ -602,7 +602,7 @@
     }
   ],
   "run_metadata": {
-    "tool": "changelens",
+    "tool": "impact-check",
     "tool_version": "0.2.0-alpha.0",
     "generated_at": "2026-01-01T00:00:00.000Z",
     "duration_ms": 0,

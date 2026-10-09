@@ -134,7 +134,7 @@ describe("risk rules (acceptance D)", () => {
     expect(finding.evidence.map((e) => e.detail)).toEqual([
       'field "dependencies" added: left-pad',
       'field "main" changed',
-      'field "scripts" changed (scripts are never executed by ChangeLens)',
+      'field "scripts" changed (scripts are never executed by Impact Check)',
     ]);
     expect(JSON.stringify(report)).not.toContain("writeFileSync");
   });

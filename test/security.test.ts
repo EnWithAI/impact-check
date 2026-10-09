@@ -65,7 +65,7 @@ describe("no execution, no network, no leakage (acceptance H, T1/T5/T7)", () => 
       expect(existsSync(join(repo.dir, name)), name).toBe(false);
       expect(existsSync(join(process.cwd(), name)), name).toBe(false);
     }
-    // Positive control: the trap is armed — an ordinary git diff (without ChangeLens' hardening) trips it.
+    // Positive control: the trap is armed — an ordinary git diff (without Impact Check' hardening) trips it.
     spawnSync("git", ["diff", "HEAD"], { cwd: repo.dir });
     expect(existsSync(join(repo.dir, "CANARY_GIT"))).toBe(true);
   });
@@ -92,10 +92,10 @@ describe("no execution, no network, no leakage (acceptance H, T1/T5/T7)", () => 
   });
 
   it("does not print environment variables", async () => {
-    process.env["CHANGELENS_TEST_SECRET"] = "env-secret-value-123";
+    process.env["IMPACT_CHECK_TEST_SECRET"] = "env-secret-value-123";
     const repo = Repo.create(basicTs);
     const result = await cli(["analyze", "--base", "main"], repo.dir);
     expect(result.stdout + result.stderr).not.toContain("env-secret-value-123");
-    delete process.env["CHANGELENS_TEST_SECRET"];
+    delete process.env["IMPACT_CHECK_TEST_SECRET"];
   });
 });

@@ -1,12 +1,12 @@
 # CLI contract
 
 ```
-changelens analyze [options]     Analyze and print/write a report. Exit 0 unless a fatal error occurs.
-changelens check   [options]     Analyze, then apply the policy from --config. Exit 4 on policy failure.
-changelens render --input <f>    Re-render a saved JSON report (structure-validated; all strings escaped/redacted again).
-changelens schema                Print the report JSON Schema.
-changelens --help | -h           Usage.
-changelens --version | -v        Tool version.
+impact-check analyze [options]     Analyze and print/write a report. Exit 0 unless a fatal error occurs.
+impact-check check   [options]     Analyze, then apply the policy from --config. Exit 4 on policy failure.
+impact-check render --input <f>    Re-render a saved JSON report (structure-validated; all strings escaped/redacted again).
+impact-check schema                Print the report JSON Schema.
+impact-check --help | -h           Usage.
+impact-check --version | -v        Tool version.
 ```
 
 ## Options (analyze / check)
@@ -19,12 +19,12 @@ changelens --version | -v        Tool version.
 | `--diff-mode <merge-base\|direct>` | `merge-base`                                             | `merge-base`: compare `merge-base(base, head)` → head (GitHub PR semantics). `direct`: compare base → head.                                                  |
 | `--format <markdown\|json>`        | `markdown`                                               | Output format.                                                                                                                                               |
 | `--output <file>`                  | stdout                                                   | Write the report to a file (parent directory must exist).                                                                                                    |
-| `--config <file>`                  | `.changelens.json` if present in the cwd repo            | Policy/config (JSON only).                                                                                                                                   |
+| `--config <file>`                  | `.impact-check.json` if present in the cwd repo          | Policy/config (JSON only).                                                                                                                                   |
 | `--cwd <dir>`                      | process cwd                                              | Repository directory.                                                                                                                                        |
 | `--max-depth <n>`                  | 10                                                       | Max reverse-dependency hops.                                                                                                                                 |
 | `--max-affected <n>`               | 500                                                      | Max affected modules listed.                                                                                                                                 |
 | `--tsconfig <file>`                | auto (`tsconfig.json`, then `jsconfig.json`)             | tsconfig used for path aliases.                                                                                                                              |
-| `--offline`                        | always on                                                | Accepted for explicitness. ChangeLens never uses the network; git lazy fetch is disabled (`GIT_NO_LAZY_FETCH=1`).                                            |
+| `--offline`                        | always on                                                | Accepted for explicitness. Impact Check never uses the network; git lazy fetch is disabled (`GIT_NO_LAZY_FETCH=1`).                                          |
 | `--on-error <fail\|pass>`          | `fail`                                                   | Tool/git errors: `fail` = fail-closed (exit 1/3); `pass` = fail-open (warning on stderr, exit 0). Usage errors (2) and policy failures (4) are never masked. |
 | `--no-branding`                    | branding on                                              | Omit the one-line footer in Markdown.                                                                                                                        |
 | `--quiet`                          | off                                                      | Suppress progress messages on stderr.                                                                                                                        |

@@ -1,4 +1,4 @@
-# Acceptance scenarios (map to PHASE_GATES "Acceptance tests for ChangeLens alpha")
+# Acceptance scenarios (map to PHASE_GATES "Acceptance tests for Impact Check alpha")
 
 | ID  | Scenario                                                                                 | Automated test                                         |
 | --- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------ |

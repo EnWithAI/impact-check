@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// Creates a small synthetic TypeScript repository with a feature branch, for trying ChangeLens.
+// Creates a small synthetic TypeScript repository with a feature branch, for trying Impact Check.
 // Usage: node examples/demo/create-demo.mjs <empty-target-dir>
 // Uses only git and the filesystem; installs nothing and runs no package scripts.
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
-const target = resolve(process.argv[2] ?? "changelens-demo");
+const target = resolve(process.argv[2] ?? "impact-check-demo");
 if (existsSync(target) && readdirSync(target).length > 0) {
   console.error(`Target ${target} exists and is not empty.`);
   process.exit(2);
@@ -16,9 +16,9 @@ mkdirSync(target, { recursive: true });
 // Fixed identities and dates make the demo commits (and therefore the sample report) byte-reproducible.
 const env = {
   ...process.env,
-  GIT_AUTHOR_NAME: "ChangeLens Demo",
+  GIT_AUTHOR_NAME: "Impact Check Demo",
   GIT_AUTHOR_EMAIL: "demo@example.invalid",
-  GIT_COMMITTER_NAME: "ChangeLens Demo",
+  GIT_COMMITTER_NAME: "Impact Check Demo",
   GIT_COMMITTER_EMAIL: "demo@example.invalid",
   GIT_AUTHOR_DATE: "2026-01-01T00:00:00+0000",
   GIT_COMMITTER_DATE: "2026-01-01T00:00:00+0000",

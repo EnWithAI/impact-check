@@ -1,6 +1,6 @@
-# Contributing to ChangeLens
+# Contributing to Impact Check
 
-Thanks for helping! ChangeLens aims to stay **small, deterministic and honest** about what it knows.
+Thanks for helping! Impact Check aims to stay **small, deterministic and honest** about what it knows.
 
 ## Ground rules
 

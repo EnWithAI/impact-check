@@ -11,7 +11,7 @@ function isObj(v: unknown): v is Record<string, unknown> {
 }
 
 function fail(message: string): never {
-  throw usageError(`Invalid ChangeLens report: ${message}`);
+  throw usageError(`Invalid Impact Check report: ${message}`);
 }
 
 function strings(obj: Record<string, unknown>, keys: string[], where: string): void {

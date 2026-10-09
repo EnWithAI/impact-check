@@ -1,5 +1,5 @@
 // Masks token-like strings in any repository-derived text before it is rendered.
-// ChangeLens never emits file contents, but paths, specifiers and names can still carry secrets.
+// Impact Check never emits file contents, but paths, specifiers and names can still carry secrets.
 
 const PATTERNS: RegExp[] = [
   /\bgh[pousr]_[A-Za-z0-9]{30,}\b/g,

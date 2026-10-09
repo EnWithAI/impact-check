@@ -64,11 +64,11 @@ export async function repoRoot(cwd: string): Promise<string> {
   if (result.code !== 0) {
     throw repoError(
       `Not a git repository (or git failed): ${firstLine(result.stderr)}`,
-      "Run ChangeLens inside a git working tree, or pass --cwd <repo>."
+      "Run Impact Check inside a git working tree, or pass --cwd <repo>."
     );
   }
   const root = result.stdout.toString("utf8").trim();
-  if (!root) throw repoError("Bare repositories are not supported", "Run ChangeLens in a working tree.");
+  if (!root) throw repoError("Bare repositories are not supported", "Run Impact Check in a working tree.");
   return root;
 }
 
