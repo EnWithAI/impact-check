@@ -25,14 +25,18 @@ export function code(text: string, maxLength = 300): string {
   return `${fence}${pad}${value.replace(/\|/g, "\\|")}${pad}${fence}`;
 }
 
-/** Escape free text (not code) for Markdown paragraphs and tables. Input is single-line after `visible`. */
-export function text(value: string, maxLength = 2000): string {
+/**
+ * Escape free text (not code) for Markdown paragraphs and tables. Input is single-line after `visible`.
+ * Block-level markers (headings, lists, quotes) are only escaped when the text starts a line.
+ */
+export function text(value: string, options: { maxLength?: number; lineStart?: boolean } = {}): string {
   let out = visible(value);
+  const maxLength = options.maxLength ?? 2000;
   if (out.length > maxLength) out = `${out.slice(0, maxLength)}…`;
-  return out
+  out = out
     .replace(/[\\`*_[\]<>|~]/g, "\\$&")
     .replace(/&/g, "&amp;")
-    .replace(/@/g, "@\u200b")
-    .replace(/^([#+=>-])/, "\\$1")
-    .replace(/^(\d+)([.)])/, "$1\\$2");
+    .replace(/@/g, "@\u200b");
+  if (options.lineStart) out = out.replace(/^([#+=-])/, "\\$1").replace(/^(\d+)([.)])/, "$1\\$2");
+  return out;
 }

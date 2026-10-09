@@ -78,7 +78,7 @@ export function renderMarkdown(report: Report, options: MarkdownOptions): string
       `${code(f.ruleId)} · ${kind} · confidence ${f.confidence} · provenance ${PROVENANCE_LABEL[f.provenance]}`,
       ""
     );
-    out.push(text(f.explanation), "");
+    out.push(text(f.explanation, { lineStart: true }), "");
     for (const e of f.evidence) {
       out.push(`- ${code(`${e.path}${location(e.line, e.endLine)}`)} (${e.side}) — ${text(e.detail)}`);
     }
@@ -105,7 +105,12 @@ export function renderMarkdown(report: Report, options: MarkdownOptions): string
       ""
     );
   } else {
-    out.push("| Module | Hops | Provenance | Shortest path from a changed module |", "|---|---:|---|---|");
+    out.push(
+      "Changed modules themselves are listed under *Changed files*. Hops count reverse-import steps from the nearest changed module.",
+      "",
+      "| Module | Hops | Provenance | Shortest path from a changed module |",
+      "|---|---:|---|---|"
+    );
     for (const m of dependents.slice(0, maxRows)) {
       const via = m.via.length > 6 ? [...m.via.slice(0, 3), "…", ...m.via.slice(-2)] : m.via;
       out.push(

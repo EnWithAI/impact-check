@@ -8,6 +8,8 @@ import { repoRoot } from "../git/repo.js";
 import { evaluatePolicy } from "../policy.js";
 import { renderJson } from "../report/json.js";
 import { renderMarkdown } from "../report/markdown.js";
+import { redactDeep } from "../report/redact.js";
+import { parseReport } from "../report/validate.js";
 import { TOOL_VERSION } from "../version.js";
 
 export interface CliIO {
@@ -23,6 +25,8 @@ Usage:
   changelens analyze [options]   Analyze changes and print/write a report (exit 0 unless a fatal error occurs)
   changelens check   [options]   Analyze, then apply the policy from the config (exit 4 on policy failure)
   changelens schema              Print the JSON Schema of the report
+  changelens render --input <report.json> [--format markdown|json] [--output <file>]
+                                 Re-render a saved JSON report (validates it; escapes all content)
   changelens --help | --version
 
 Options:
@@ -78,6 +82,7 @@ async function main(argv: string[], io: CliIO): Promise<number> {
         strict: true,
         options: {
           base: { type: "string" },
+          input: { type: "string" },
           head: { type: "string" },
           worktree: { type: "boolean" },
           "diff-mode": { type: "string" },
@@ -118,8 +123,29 @@ async function main(argv: string[], io: CliIO): Promise<number> {
     io.stdout(readSchema());
     return ExitCode.Ok;
   }
+  if (command === "render") {
+    if (values.input === undefined) throw usageError("render requires --input <report.json>");
+    const format = values.format ?? "markdown";
+    if (format !== "markdown" && format !== "json") throw usageError(`--format must be "markdown" or "json"`);
+    const inputPath = isAbsolute(values.input) ? values.input : resolve(io.cwd, values.input);
+    let text: string;
+    try {
+      if (statSync(inputPath).size > 64 * 1024 * 1024) throw usageError("--input is too large");
+      text = readFileSync(inputPath, "utf8");
+    } catch (error) {
+      if (error instanceof ChangeLensError) throw error;
+      throw usageError(`Cannot read --input ${JSON.stringify(values.input)}`);
+    }
+    const report = redactDeep(parseReport(text));
+    const rendered =
+      format === "json" ? renderJson(report) : renderMarkdown(report, { branding: !values["no-branding"] });
+    if (values.output !== undefined)
+      writeOutput(isAbsolute(values.output) ? values.output : resolve(io.cwd, values.output), rendered);
+    else io.stdout(rendered);
+    return ExitCode.Ok;
+  }
   if (command !== "analyze" && command !== "check") {
-    throw usageError(`Unknown command: ${command}`, "Commands: analyze, check, schema.");
+    throw usageError(`Unknown command: ${command}`, "Commands: analyze, check, render, schema.");
   }
 
   if (values.head !== undefined && values.worktree)

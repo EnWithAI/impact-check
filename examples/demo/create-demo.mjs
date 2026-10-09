@@ -13,11 +13,26 @@ if (existsSync(target) && readdirSync(target).length > 0) {
 }
 mkdirSync(target, { recursive: true });
 
+// Fixed identities and dates make the demo commits (and therefore the sample report) byte-reproducible.
+const env = {
+  ...process.env,
+  GIT_AUTHOR_NAME: "ChangeLens Demo",
+  GIT_AUTHOR_EMAIL: "demo@example.invalid",
+  GIT_COMMITTER_NAME: "ChangeLens Demo",
+  GIT_COMMITTER_EMAIL: "demo@example.invalid",
+  GIT_AUTHOR_DATE: "2026-01-01T00:00:00+0000",
+  GIT_COMMITTER_DATE: "2026-01-01T00:00:00+0000",
+};
 const git = (...args) => {
-  const r = spawnSync("git", ["-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false", ...args], {
-    cwd: target,
-    encoding: "utf8",
-  });
+  const config = [
+    "-c",
+    "core.hooksPath=/dev/null",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.autocrlf=false",
+  ];
+  const r = spawnSync("git", [...config, ...args], { cwd: target, encoding: "utf8", env });
   if (r.status !== 0) {
     console.error(r.stderr);
     process.exit(1);
@@ -65,8 +80,6 @@ write({
   "README.md": "# shop-demo (synthetic)\n",
 });
 git("init", "-q", "-b", "main");
-git("config", "user.email", "demo@example.invalid");
-git("config", "user.name", "ChangeLens Demo");
 git("add", "-A");
 git("commit", "-q", "-m", "Initial demo shop");
 

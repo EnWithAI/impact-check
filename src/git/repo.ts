@@ -268,6 +268,12 @@ export async function untrackedFiles(root: string): Promise<string[]> {
   return splitZ(result.stdout).sort();
 }
 
+/** Paths with unresolved merge conflicts (index stages 1-3). */
+export async function unmergedPaths(root: string): Promise<Set<string>> {
+  const result = await runGit(["ls-files", "--unmerged", "-z", "--full-name"], { cwd: root });
+  return new Set(splitZ(result.stdout).map((r) => r.slice(r.indexOf("\t") + 1)));
+}
+
 export async function stagedPaths(root: string): Promise<string[]> {
   const result = await runGit(["diff", ...DIFF_FLAGS, "--cached", "--name-only", "-z", "HEAD", "--"], {
     cwd: root,

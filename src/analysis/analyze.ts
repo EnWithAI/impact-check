@@ -11,6 +11,7 @@ import {
   showFile,
   stagedPaths,
   unstagedPaths,
+  unmergedPaths,
   untrackedFiles,
   validateRef,
   type FileHunks,
@@ -22,7 +23,7 @@ import { runRules } from "../rules/rules.js";
 import { redactDeep } from "../report/redact.js";
 import { DEFAULT_CONFIG, matchesAny, type Config } from "../config.js";
 import { ENGINE_VERSION, PARSER_VERSION, TOOL_VERSION } from "../version.js";
-import { isJsTs, isUnsupportedModule, kindOf, languageOf } from "../util/classify.js";
+import { isIgnoredDir, isJsTs, isUnsupportedModule, kindOf, languageOf } from "../util/classify.js";
 import type { ChangedFile, Origin, Report } from "../types.js";
 import { SCHEMA_VERSION } from "../types.js";
 import { computeImpact } from "./impact.js";
@@ -45,6 +46,7 @@ export interface AnalyzeOptions {
 }
 
 const MAX_RANGES_PER_FILE = 50;
+export const MAX_FILES_CHANGED = 5000;
 const UNSUPPORTED_LANGUAGE =
   /\.(py|go|rb|java|kt|kts|rs|cs|php|swift|scala|c|cc|cpp|h|hpp|m|mm|dart|ex|exs|clj|lua|r|pl|sh)$/i;
 const DEFAULT_BASES = ["main", "origin/main", "master", "origin/master"];
@@ -127,11 +129,12 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
   log(`Comparing ${from.slice(0, 12)} → ${worktreeMode ? "working tree" : headCommit.slice(0, 12)}`);
 
   // --- Git changes -------------------------------------------------------------------------------------------
-  const [result, staged, unstaged, untracked] = await Promise.all([
+  const [result, staged, unstaged, untracked, unmerged] = await Promise.all([
     diff(root, from, worktreeMode ? null : headCommit),
     stagedPaths(root),
     unstagedPaths(root),
     untrackedFiles(root),
+    unmergedPaths(root),
   ]);
   const worktreeCounts = { staged: staged.length, unstaged: unstaged.length, untracked: untracked.length };
   const dirty = staged.length + unstaged.length + untracked.length;
@@ -191,7 +194,7 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
     files.push({
       path: change.path,
       previousPath: change.previousPath,
-      status: change.status,
+      status: worktreeMode && unmerged.has(change.path) ? "unmerged" : change.status,
       binary: stats?.binary ?? false,
       language: languageOf(change.path),
       kind: kindOf(change.path),
@@ -203,7 +206,12 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
     });
   }
   if (worktreeMode) {
+    let untrackedDeps = 0;
     for (const path of untracked) {
+      if (isIgnoredDir(path)) {
+        untrackedDeps++;
+        continue;
+      }
       if (config.ignorePaths.length > 0 && matchesAny(path, config.ignorePaths)) {
         ignored.push(path);
         continue;
@@ -223,8 +231,23 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
         provenance: "observed",
       });
     }
+    if (untrackedDeps > 0) {
+      limitations.addCount(
+        "untracked-node-modules-skipped",
+        "Untracked files inside node_modules/ (not covered by .gitignore) were not listed or analyzed.",
+        untrackedDeps
+      );
+    }
   }
   files.sort((a, b) => compareStrings(a.path, b.path));
+  if (files.length > MAX_FILES_CHANGED) {
+    limitations.addCount(
+      "files-changed-truncated",
+      `More than ${MAX_FILES_CHANGED} files changed; only the first ${MAX_FILES_CHANGED} (sorted by path) were analyzed and listed.`,
+      files.length - MAX_FILES_CHANGED
+    );
+    files.length = MAX_FILES_CHANGED;
+  }
   for (const path of ignored.sort(compareStrings))
     limitations.add("ignored-by-config", "Changed paths excluded by `ignorePaths` in the config.", path);
 
@@ -305,8 +328,7 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
         `More than ${maxAffected} dependent modules were found; the list was truncated (raise --max-affected).`
       );
     }
-    const reachedDepthLimit = impact.affected.some((m) => m.distance === maxDepth);
-    if (reachedDepthLimit) {
+    if (impact.depthLimited) {
       limitations.add(
         "depth-limit-reached",
         `Reverse dependencies were followed for at most ${maxDepth} hops (raise --max-depth).`

@@ -17,6 +17,8 @@ export interface ImpactResult {
   truncated: boolean;
   /** Transitive dependents per changed root (within maxDepth). */
   dependentCounts: Map<string, number>;
+  /** True when some dependents lie beyond maxDepth. */
+  depthLimited: boolean;
 }
 
 interface NodeState {
@@ -45,6 +47,7 @@ export function computeImpact(input: ImpactInput): ImpactResult {
   const rootSet = new Set(roots);
   const states = new Map<string, NodeState>();
   const dependentCounts = new Map<string, number>();
+  let depthLimited = false;
 
   for (const root of roots) {
     const seen = new Map<string, { via: string[]; provenance: Provenance }>([
@@ -77,6 +80,9 @@ export function computeImpact(input: ImpactInput): ImpactResult {
       }
       frontier = next.sort(compareStrings);
     }
+    if (!depthLimited) {
+      depthLimited = frontier.some((node) => reverseNeighbors(input, node).some((n) => !seen.has(n.path)));
+    }
     dependentCounts.set(root, seen.size - 1);
   }
 
@@ -99,5 +105,5 @@ export function computeImpact(input: ImpactInput): ImpactResult {
   dependents.sort((a, b) => a.distance - b.distance || compareStrings(a.path, b.path));
   const truncated = dependents.length > input.maxAffected;
   if (truncated) dependents = dependents.slice(0, input.maxAffected);
-  return { affected: [...changed, ...dependents], truncated, dependentCounts };
+  return { affected: [...changed, ...dependents], truncated, dependentCounts, depthLimited };
 }

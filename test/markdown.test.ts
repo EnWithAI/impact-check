@@ -17,8 +17,9 @@ describe("escaping (acceptance F)", () => {
     expect(text("<script>")).toBe("\\<script\\>");
     expect(text("[x](javascript:1)")).toBe("\\[x\\](javascript:1)");
     expect(text("@octocat")).toBe("@​octocat");
-    expect(text("# heading")).toBe("\\# heading");
-    expect(text("1. item")).toBe("1\\. item");
+    expect(text("# heading", { lineStart: true })).toBe("\\# heading");
+    expect(text("1. item", { lineStart: true })).toBe("1\\. item");
+    expect(text("0.1.0")).toBe("0.1.0");
     expect(text("a & b")).toBe("a &amp; b");
     expect(visible("\u0000\t")).toBe("\\u0000\\t");
   });

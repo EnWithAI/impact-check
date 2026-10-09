@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -41,6 +41,17 @@ describe.runIf(existsSync(bin))("README quickstart with the built CLI", () => {
       "src/index.ts",
       "test/checkout.test.ts",
     ]);
+    // Expected vs actual: the committed sample outputs are reproduced byte-for-byte (except generatedAt).
+    const expectedJson = readFileSync(join(root, "examples/demo/output/sample-report.json"), "utf8");
+    expect(json.stdout.replace(/"generatedAt": "[^"]+"/, '"generatedAt": "2026-01-01T00:00:00.000Z"')).toBe(
+      expectedJson
+    );
+    expect(md.stdout).toBe(readFileSync(join(root, "examples/demo/output/sample-report.md"), "utf8"));
+    const session = report.riskFindings.find(
+      (f: { ruleId: string }) => f.ruleId === "security-sensitive-change"
+    );
+    expect(session.evidence[1]).toMatchObject({ detail: 'imports "node:crypto"', line: 1 });
+
     const check = spawnSync(process.execPath, [bin, "check", "--cwd", demo, "--base", "main", "--quiet"], {
       encoding: "utf8",
     });

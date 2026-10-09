@@ -85,6 +85,7 @@ function deletedModules(ctx: RuleContext): Draft[] {
   if (!ctx.base) return [];
   const out: Draft[] = [];
   const changedPaths = new Set(ctx.files.map((f) => f.path));
+  const headFiles = new Set(ctx.headSnapshot.files);
   for (const file of ctx.files) {
     const oldPath =
       file.status === "deleted" ? file.path : file.status === "renamed" ? file.previousPath : null;
@@ -122,7 +123,7 @@ function deletedModules(ctx: RuleContext): Draft[] {
         )
       );
     }
-    const stillPresent = baseDependents.filter((d) => ctx.headSnapshot.files.includes(d));
+    const stillPresent = baseDependents.filter((d) => headFiles.has(d));
     const untouched = stillPresent.filter((d) => !changedPaths.has(d));
     out.push(
       draft(
@@ -472,14 +473,11 @@ function securityChanges(ctx: RuleContext): Draft[] {
     if (live(file) && isJsTs(file.path)) {
       const imports = (ctx.head.external.get(file.path) ?? []).filter((s) => SECURITY_PACKAGES.test(s));
       for (const spec of imports) {
+        // The resolver normalizes core modules ("node:crypto" -> "crypto"); report the literal specifier.
+        const text = ctx.headSnapshot.read(file.path) ?? "";
+        const literal = [spec, `node:${spec}`].find((s) => findSpecifierLine(text, s) !== null) ?? spec;
         evidence.push(
-          ev(
-            "import-edge",
-            file.path,
-            "head",
-            `imports "${spec}"`,
-            findSpecifierLine(ctx.headSnapshot.read(file.path) ?? "", spec)
-          )
+          ev("import-edge", file.path, "head", `imports "${literal}"`, findSpecifierLine(text, literal))
         );
         provenance = "graph";
       }

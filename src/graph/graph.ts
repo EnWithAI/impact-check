@@ -1,5 +1,7 @@
 import { cruise } from "dependency-cruiser";
 import extractTSConfig from "dependency-cruiser/config-utl/extract-ts-config";
+import { writeFileSync } from "node:fs";
+import ts from "typescript";
 import type { Limitations } from "../analysis/limitations.js";
 import { compareStrings } from "../analysis/limitations.js";
 import type { Snapshot } from "../snapshot/snapshot.js";
@@ -56,6 +58,49 @@ function tsconfigAliasPrefixes(text: string | null): string[] {
   return keys.filter((k) => k.length > 0);
 }
 
+/**
+ * Load a tsconfig via dependency-cruiser's helper. If that fails because `extends` references packages that are
+ * not present (no node_modules in snapshots), retry with those non-relative `extends` entries removed. The config
+ * text is parsed as data by TypeScript's JSONC parser; nothing is evaluated.
+ */
+function loadTsConfig(
+  snapshot: Snapshot,
+  tsConfig: string
+): { parsed: unknown; file: string; droppedExtends: string[] } | null {
+  const file = `${snapshot.dir}/${tsConfig}`;
+  try {
+    return { parsed: extractTSConfig(file), file, droppedExtends: [] };
+  } catch {
+    // fall through to the sanitized retry
+  }
+  const text = snapshot.read(tsConfig);
+  if (text === null) return null;
+  const { config } = ts.parseConfigFileTextToJson(tsConfig, text) as { config?: Record<string, unknown> };
+  if (!config || typeof config !== "object") return null;
+  const extendsValue = config["extends"];
+  const list =
+    typeof extendsValue === "string" ? [extendsValue] : Array.isArray(extendsValue) ? extendsValue : [];
+  const isLocal = (v: unknown): v is string =>
+    typeof v === "string" && (v.startsWith("./") || v.startsWith("../"));
+  const kept = list.filter(isLocal);
+  const dropped = list.filter((v): v is string => typeof v === "string" && !isLocal(v));
+  if (dropped.length === 0) return null;
+  const sanitized = { ...config, ...(kept.length > 0 ? { extends: kept } : {}) };
+  if (kept.length === 0) delete sanitized["extends"];
+  const dir = tsConfig.includes("/") ? tsConfig.slice(0, tsConfig.lastIndexOf("/") + 1) : "";
+  const fallback = `${snapshot.dir}/${dir}.changelens-tsconfig.json`;
+  try {
+    writeFileSync(fallback, JSON.stringify(sanitized), { mode: 0o600, flag: "wx" });
+    return {
+      parsed: extractTSConfig(fallback),
+      file: fallback,
+      droppedExtends: dropped.sort(compareStrings),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function chooseTsConfig(snapshot: Snapshot, requested: string | null): string | null {
   if (requested !== null) return snapshot.files.includes(requested) ? requested : null;
   for (const candidate of ["tsconfig.json", "jsconfig.json"])
@@ -94,15 +139,26 @@ export async function buildGraph(
 
   let transpileOptions: Record<string, unknown> = {};
   let usedTsConfig = tsConfig;
-  if (tsConfig !== null) {
-    try {
-      transpileOptions = { tsConfig: extractTSConfig(`${snapshot.dir}/${tsConfig}`) };
-    } catch {
+  let tsConfigFile: string | null = tsConfig === null ? null : `${snapshot.dir}/${tsConfig}`;
+  if (tsConfig !== null && tsConfigFile !== null) {
+    const loaded = loadTsConfig(snapshot, tsConfig);
+    if (loaded) {
+      transpileOptions = { tsConfig: loaded.parsed };
+      tsConfigFile = loaded.file;
+      if (loaded.droppedExtends.length > 0 && options.side === "head") {
+        limitations.add(
+          "tsconfig-extends-unavailable",
+          "The tsconfig extends packages that are not available offline; they were ignored and only local settings (incl. paths) were applied.",
+          `${tsConfig} → ${loaded.droppedExtends.join(", ")}`
+        );
+      }
+    } else {
       usedTsConfig = null;
+      tsConfigFile = null;
       if (options.side === "head") {
         limitations.add(
           "tsconfig-unreadable",
-          "The tsconfig could not be loaded (e.g. `extends` points to an uninstalled package); path aliases were not resolved.",
+          "The tsconfig could not be loaded; path aliases were not resolved.",
           tsConfig
         );
       }
@@ -133,7 +189,7 @@ export async function buildGraph(
     doNotFollow: { path: "node_modules" },
     exclude: { path: "(^|/)node_modules/" },
   };
-  if (usedTsConfig !== null) cruiseOptions["tsConfig"] = { fileName: `${snapshot.dir}/${usedTsConfig}` };
+  if (tsConfigFile !== null) cruiseOptions["tsConfig"] = { fileName: tsConfigFile };
 
   const result = await cruise(["."], cruiseOptions as never, {} as never, transpileOptions as never);
   const output = result.output as unknown as { modules: CruiseModule[] };

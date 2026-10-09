@@ -1,0 +1,95 @@
+name: "ChangeLens impact report"
+description: "Offline, evidence-backed change-impact report for JS/TS pull requests. Never executes repository code."
+author: "EnWithAI Technologies"
+branding:
+  icon: "git-pull-request"
+  color: "blue"
+
+# Security model (see docs/ACTION.md):
+# - Use on `pull_request` with `permissions: contents: read`. Do not use `pull_request_target` with this action.
+# - Inputs are passed to the script through environment variables, never interpolated into shell code.
+# - The action installs its own pinned runtime dependencies with `npm ci --omit=dev --ignore-scripts`
+#   inside the action directory, reads git objects, and writes report files + the job summary. Nothing else.
+inputs:
+  base:
+    description: "Base ref or SHA. Default: the pull request base SHA from the event payload."
+    required: false
+    default: ""
+  head:
+    description: "Head ref to analyze. Default: HEAD (the checked-out commit)."
+    required: false
+    default: "HEAD"
+  diff-mode:
+    description: "merge-base (default) or direct."
+    required: false
+    default: "merge-base"
+  working-directory:
+    description: "Repository directory relative to the workspace."
+    required: false
+    default: "."
+  output-dir:
+    description: "Directory (relative to the workspace) for changelens-report.json and changelens-report.md."
+    required: false
+    default: "changelens-report"
+  config-source:
+    description: "Where to read .changelens.json from: base (default; PRs cannot weaken their own policy), head, or none."
+    required: false
+    default: "base"
+  config-path:
+    description: "Repository-relative config path."
+    required: false
+    default: ".changelens.json"
+  fail-on-policy:
+    description: "Fail the step when the configured policy fails (default false: report only)."
+    required: false
+    default: "false"
+  max-depth:
+    description: "Max reverse-dependency hops."
+    required: false
+    default: ""
+  max-affected:
+    description: "Max affected modules listed."
+    required: false
+    default: ""
+outputs:
+  report-json:
+    description: "Path of the JSON report (relative to the workspace)."
+    value: ${{ steps.changelens.outputs.report-json }}
+  report-markdown:
+    description: "Path of the Markdown report (relative to the workspace)."
+    value: ${{ steps.changelens.outputs.report-markdown }}
+  high-findings:
+    description: "Number of high-severity findings."
+    value: ${{ steps.changelens.outputs.high-findings }}
+  affected-modules:
+    description: "Number of affected modules (changed + dependents)."
+    value: ${{ steps.changelens.outputs.affected-modules }}
+  policy:
+    description: "passed or failed."
+    value: ${{ steps.changelens.outputs.policy }}
+runs:
+  using: "composite"
+  steps:
+    - name: Install ChangeLens runtime dependencies (pinned lockfile, no install scripts)
+      shell: bash
+      run: |
+        cd "$GITHUB_ACTION_PATH"
+        if [ ! -d node_modules/dependency-cruiser ]; then
+          npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+        fi
+        test -f dist/action/main.js || { echo "::error::dist/ is missing in this ChangeLens ref; use a release tag"; exit 1; }
+    - name: Run ChangeLens
+      id: changelens
+      shell: bash
+      env:
+        INPUT_BASE: ${{ inputs.base }}
+        INPUT_HEAD: ${{ inputs.head }}
+        INPUT_DIFF_MODE: ${{ inputs.diff-mode }}
+        INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        INPUT_OUTPUT_DIR: ${{ inputs.output-dir }}
+        INPUT_CONFIG_SOURCE: ${{ inputs.config-source }}
+        INPUT_CONFIG_PATH: ${{ inputs.config-path }}
+        INPUT_FAIL_ON_POLICY: ${{ inputs.fail-on-policy }}
+        INPUT_MAX_DEPTH: ${{ inputs.max-depth }}
+        INPUT_MAX_AFFECTED: ${{ inputs.max-affected }}
+      run: node "$GITHUB_ACTION_PATH/dist/action/main.js"
