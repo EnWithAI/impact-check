@@ -156,4 +156,32 @@ describe("limits and safe degradation (T6)", () => {
     expect(elapsed).toBeLessThan(60_000);
     console.log(`2000-module analysis took ${elapsed} ms`);
   });
+  it("export analysis scales to a 1000-module PR with importers", async () => {
+    const files: Record<string, string> = { "package.json": '{"name":"wide"}' };
+    for (let i = 0; i < 1000; i++) {
+      files[`src/lib/m${i}.ts`] =
+        `export function f${i}(a: number): number {\n  return a;\n}\nexport const K${i} = ${i};\n`;
+      files[`src/use/u${i}.ts`] =
+        `import { f${i}, K${i} } from "../lib/m${i}";\nexport const v${i} = f${i}(K${i});\n`;
+    }
+    const repo = Repo.create(files).branch("f");
+    const changed: Record<string, string> = {};
+    for (let i = 0; i < 1000; i++)
+      changed[`src/lib/m${i}.ts`] = `export function f${i}(a: number, b = 0): number {\n  return a + b;\n}\n`;
+    repo.write(changed);
+    repo.commit("signature change + remove K in 1000 modules");
+    const start = Date.now();
+    const result = await cli(
+      ["analyze", ...head, "--format", "json", "--quiet", "--max-affected", "5000"],
+      repo.dir
+    );
+    const elapsed = Date.now() - start;
+    expect(result.code, result.stderr).toBe(0);
+    const report = JSON.parse(result.stdout);
+    expect(
+      report.findings.filter((f: { rule_id: string }) => f.rule_id === "removed-export-still-imported")
+    ).toHaveLength(1000);
+    expect(elapsed).toBeLessThan(120_000);
+    console.log(`1000-module export analysis took ${elapsed} ms`);
+  });
 });

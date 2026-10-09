@@ -342,6 +342,43 @@ export async function readBlobs(root: string, shas: readonly string[]): Promise<
   return map;
 }
 
+/**
+ * Read `<commit>:<path>` for many paths with one `git cat-file --batch` process. Paths containing newlines cannot
+ * be expressed in the line-based batch protocol and are read individually. Missing paths map to null.
+ */
+export async function readPathsAt(
+  root: string,
+  commit: string,
+  paths: readonly string[]
+): Promise<Map<string, Buffer | null>> {
+  const result = new Map<string, Buffer | null>();
+  const batchable = [...new Set(paths)].filter((p) => !/[\r\n]/.test(p));
+  for (const p of paths) if (/[\r\n]/.test(p)) result.set(p, await showFile(root, commit, p));
+  if (batchable.length === 0) return result;
+  const out = (
+    await runGit(["cat-file", "--batch"], {
+      cwd: root,
+      input: batchable.map((p) => `${commit}:${p}`).join("\n") + "\n",
+    })
+  ).stdout;
+  let offset = 0;
+  for (const path of batchable) {
+    const newline = out.indexOf(0x0a, offset);
+    if (newline < 0) break;
+    const header = out.subarray(offset, newline).toString("utf8");
+    offset = newline + 1;
+    const match = /^[0-9a-f]+ (\w+) (\d+)$/.exec(header);
+    if (!match) {
+      result.set(path, null); // "<name> missing" / "ambiguous"
+      continue;
+    }
+    const size = Number(match[2]);
+    result.set(path, match[1] === "blob" ? out.subarray(offset, offset + size) : null);
+    offset += size + 1;
+  }
+  return result;
+}
+
 export async function showFile(root: string, commit: string, path: string): Promise<Buffer | null> {
   const result = await runGit(["cat-file", "blob", `${commit}:${path}`], { cwd: root, allowFailure: true });
   return result.code === 0 ? result.stdout : null;

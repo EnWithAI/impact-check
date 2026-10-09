@@ -239,3 +239,18 @@ describe("misc units", () => {
     expect(resolveWorkspaceSpecifier("@a/bc", pkgs, (p) => files.has(p))).toBeNull();
   });
 });
+
+describe("batched base reads", () => {
+  it("reads many commit:path blobs in one process, including missing and odd paths", async () => {
+    const { Repo } = await import("./helpers.js");
+    const { readPathsAt } = await import("../src/git/repo.js");
+    const repo = Repo.create({ "a.ts": "A\n", "dir/b c.ts": "B\n", "new\nline.ts": "N\n" });
+    const sha = repo.git("rev-parse", "HEAD");
+    const map = await readPathsAt(repo.dir, sha, ["a.ts", "missing.ts", "dir/b c.ts", "new\nline.ts", "dir"]);
+    expect(map.get("a.ts")?.toString()).toBe("A\n");
+    expect(map.get("dir/b c.ts")?.toString()).toBe("B\n");
+    expect(map.get("new\nline.ts")?.toString()).toBe("N\n");
+    expect(map.get("missing.ts")).toBeNull();
+    expect(map.get("dir")).toBeNull(); // a tree, not a blob
+  });
+});

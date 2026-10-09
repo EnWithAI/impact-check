@@ -6,6 +6,7 @@ import {
   isShallow,
   mergeBase,
   repoName,
+  readPathsAt,
   repoRoot,
   resolveCommit,
   showFile,
@@ -413,6 +414,18 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
     );
 
     // --- Rules and tests -------------------------------------------------------------------------------------
+    // Prefetch base-side text of modified/renamed JS/TS modules and manifests in one git process.
+    const baseTexts = await readPathsAt(
+      root,
+      from,
+      files
+        .filter(
+          (f) =>
+            (f.status === "modified" || f.status === "renamed") &&
+            (isJsTs(f.path) || f.path.endsWith("package.json"))
+        )
+        .map((f) => f.previous_path ?? f.path)
+    );
     const findings = await runRules({
       files,
       hunks: result.hunks,
@@ -420,7 +433,7 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
       base: baseGraph,
       headSnapshot,
       readBase: async (path) => {
-        const buffer = await showFile(root, from, path);
+        const buffer = baseTexts.has(path) ? baseTexts.get(path) : await showFile(root, from, path);
         return buffer && buffer.length <= MAX_FILE_BYTES ? buffer.toString("utf8") : null;
       },
       dependentCounts: impact.dependentCounts,
