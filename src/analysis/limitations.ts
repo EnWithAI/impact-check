@@ -1,0 +1,55 @@
+import type { Limitation } from "../types.js";
+
+const MAX_EXAMPLE_PATHS = 20;
+
+/** Collects coverage limitations deterministically (sorted codes and paths, capped examples). */
+export class Limitations {
+  private readonly entries = new Map<string, { message: string; paths: Set<string>; count: number }>();
+
+  add(code: string, message: string, path?: string): void {
+    let entry = this.entries.get(code);
+    if (!entry) {
+      entry = { message, paths: new Set(), count: 0 };
+      this.entries.set(code, entry);
+    }
+    if (path === undefined) {
+      entry.count = Math.max(entry.count, 1);
+      return;
+    }
+    if (!entry.paths.has(path)) {
+      entry.paths.add(path);
+      entry.count++;
+    }
+  }
+
+  /** Record a limitation with an explicit count (no paths). */
+  addCount(code: string, message: string, count: number): void {
+    this.entries.set(code, { message, paths: new Set(), count });
+  }
+
+  has(code: string): boolean {
+    return this.entries.has(code);
+  }
+
+  merge(other: Limitations): void {
+    for (const item of other.toArray(Number.MAX_SAFE_INTEGER)) {
+      if (item.paths.length === 0) this.add(item.code, item.message);
+      for (const path of item.paths) this.add(item.code, item.message, path);
+    }
+  }
+
+  toArray(maxPaths = MAX_EXAMPLE_PATHS): Limitation[] {
+    return [...this.entries.entries()]
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([code, entry]) => ({
+        code,
+        message: entry.message,
+        paths: [...entry.paths].sort(compareStrings).slice(0, maxPaths),
+        count: entry.count,
+      }));
+  }
+}
+
+export function compareStrings(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
