@@ -2,11 +2,36 @@
   "case": "A3a",
   "description": "Deleted export still imported by a dependent -> verified static fact with evidence on both sides.",
   "findings": [
-    { "rule_id": "export-removed", "status": "verified_static_fact", "severity": "medium", "summary_includes": "CURRENCY",
-      "evidence": [{ "path": "src/utils/format.ts", "side": "base", "line_start": 5, "detail_includes": "CURRENCY", "commit": "base" }] },
-    { "rule_id": "removed-export-still-imported", "status": "verified_static_fact", "severity": "high",
-      "evidence": [{ "path": "src/services/price-label.ts", "side": "head", "line_start": 1, "detail_includes": "CURRENCY", "commit": "head" }],
-      "affected_modules_include": ["src/utils/format.ts", "src/services/price-label.ts"] }
+    {
+      "rule_id": "export-removed",
+      "status": "verified_static_fact",
+      "severity": "medium",
+      "summary_includes": "CURRENCY",
+      "evidence": [
+        {
+          "path": "src/utils/format.ts",
+          "side": "base",
+          "line_start": 5,
+          "detail_includes": "CURRENCY",
+          "commit": "base"
+        }
+      ]
+    },
+    {
+      "rule_id": "removed-export-still-imported",
+      "status": "verified_static_fact",
+      "severity": "high",
+      "evidence": [
+        {
+          "path": "src/services/price-label.ts",
+          "side": "head",
+          "line_start": 1,
+          "detail_includes": "CURRENCY",
+          "commit": "head"
+        }
+      ],
+      "affected_modules_include": ["src/utils/format.ts", "src/services/price-label.ts"]
+    }
   ],
   "forbidden_rule_ids": ["broken-import"]
 }

@@ -11,22 +11,23 @@ changelens --version | -v        Tool version.
 
 ## Options (analyze / check)
 
-| Option                             | Default                                                  | Meaning                                                                                                           |
-| ---------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `--base <ref>`                     | `main` (falls back to `origin/main` if `main` is absent) | Base ref. Rejected if it starts with `-`.                                                                         |
-| `--head <ref>`                     | _(none → working tree)_                                  | Analyze this commit. Uncommitted changes are excluded and reported as a limitation.                               |
-| `--worktree`                       | on when `--head` absent                                  | Analyze the working tree (staged + unstaged + untracked, not ignored). Mutually exclusive with `--head`.          |
-| `--diff-mode <merge-base\|direct>` | `merge-base`                                             | `merge-base`: compare `merge-base(base, head)` → head (GitHub PR semantics). `direct`: compare base → head.       |
-| `--format <markdown\|json>`        | `markdown`                                               | Output format.                                                                                                    |
-| `--output <file>`                  | stdout                                                   | Write the report to a file (parent directory must exist).                                                         |
-| `--config <file>`                  | `.changelens.json` if present in the cwd repo            | Policy/config (JSON only).                                                                                        |
-| `--cwd <dir>`                      | process cwd                                              | Repository directory.                                                                                             |
-| `--max-depth <n>`                  | 10                                                       | Max reverse-dependency hops.                                                                                      |
-| `--max-affected <n>`               | 500                                                      | Max affected modules listed.                                                                                      |
-| `--tsconfig <file>`                | auto (`tsconfig.json`, then `jsconfig.json`)             | tsconfig used for path aliases.                                                                                   |
-| `--offline`                        | always on                                                | Accepted for explicitness. ChangeLens never uses the network; git lazy fetch is disabled (`GIT_NO_LAZY_FETCH=1`). |
-| `--no-branding`                    | branding on                                              | Omit the one-line footer in Markdown.                                                                             |
-| `--quiet`                          | off                                                      | Suppress progress messages on stderr.                                                                             |
+| Option                             | Default                                                  | Meaning                                                                                                                                                      |
+| ---------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--base <ref>`                     | `main` (falls back to `origin/main` if `main` is absent) | Base ref. Rejected if it starts with `-`.                                                                                                                    |
+| `--head <ref>`                     | _(none → working tree)_                                  | Analyze this commit. Uncommitted changes are excluded and reported as a limitation.                                                                          |
+| `--worktree`                       | on when `--head` absent                                  | Analyze the working tree (staged + unstaged + untracked, not ignored). Mutually exclusive with `--head`.                                                     |
+| `--diff-mode <merge-base\|direct>` | `merge-base`                                             | `merge-base`: compare `merge-base(base, head)` → head (GitHub PR semantics). `direct`: compare base → head.                                                  |
+| `--format <markdown\|json>`        | `markdown`                                               | Output format.                                                                                                                                               |
+| `--output <file>`                  | stdout                                                   | Write the report to a file (parent directory must exist).                                                                                                    |
+| `--config <file>`                  | `.changelens.json` if present in the cwd repo            | Policy/config (JSON only).                                                                                                                                   |
+| `--cwd <dir>`                      | process cwd                                              | Repository directory.                                                                                                                                        |
+| `--max-depth <n>`                  | 10                                                       | Max reverse-dependency hops.                                                                                                                                 |
+| `--max-affected <n>`               | 500                                                      | Max affected modules listed.                                                                                                                                 |
+| `--tsconfig <file>`                | auto (`tsconfig.json`, then `jsconfig.json`)             | tsconfig used for path aliases.                                                                                                                              |
+| `--offline`                        | always on                                                | Accepted for explicitness. ChangeLens never uses the network; git lazy fetch is disabled (`GIT_NO_LAZY_FETCH=1`).                                            |
+| `--on-error <fail\|pass>`          | `fail`                                                   | Tool/git errors: `fail` = fail-closed (exit 1/3); `pass` = fail-open (warning on stderr, exit 0). Usage errors (2) and policy failures (4) are never masked. |
+| `--no-branding`                    | branding on                                              | Omit the one-line footer in Markdown.                                                                                                                        |
+| `--quiet`                          | off                                                      | Suppress progress messages on stderr.                                                                                                                        |
 
 ## Exit codes
 
@@ -37,6 +38,15 @@ changelens --version | -v        Tool version.
 | 2    | Usage or configuration error.                                                                      |
 | 3    | Git/repository error (not a repo, unknown ref, shallow clone without merge-base, missing objects). |
 | 4    | `check` policy failure.                                                                            |
+
+## Informational vs blocking (addendum invariant 6)
+
+| Check                           | Type                                                     | Tool-error default                  | Override          |
+| ------------------------------- | -------------------------------------------------------- | ----------------------------------- | ----------------- |
+| `analyze`                       | informational                                            | fail-closed (exit 1/3)              | `--on-error pass` |
+| `check`                         | blocking policy signal (humans decide; never auto-merge) | fail-closed                         | `--on-error pass` |
+| Action, `fail-on-policy: false` | informational                                            | fail-open (warning, `status=error`) | `on-error: fail`  |
+| Action, `fail-on-policy: true`  | blocking                                                 | fail-closed                         | `on-error: warn`  |
 
 ## Semantics of uncommitted changes
 

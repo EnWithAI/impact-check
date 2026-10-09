@@ -15,7 +15,10 @@ function stripCommits(value: unknown): unknown {
 }
 
 async function json(repo: Repo): Promise<Json> {
-  const r = await cli(["analyze", "--base", "main", "--head", "HEAD", "--format", "json", "--quiet"], repo.dir);
+  const r = await cli(
+    ["analyze", "--base", "main", "--head", "HEAD", "--format", "json", "--quiet"],
+    repo.dir
+  );
   expect(r.code, r.stderr).toBe(0);
   return JSON.parse(r.stdout) as Json;
 }
@@ -37,7 +40,13 @@ describe("A6 — malicious diff content is data, never instructions", () => {
     }
     const md = await cli(["analyze", "--base", "main", "--head", "HEAD", "--quiet"], injected.dir);
     for (const out of [JSON.stringify(b), md.stdout, md.stderr]) {
-      for (const needle of ["evil.invalid", "ignore all previous", "GITHUB_TOKEN", "maintenance mode", "id_rsa"]) {
+      for (const needle of [
+        "evil.invalid",
+        "ignore all previous",
+        "GITHUB_TOKEN",
+        "maintenance mode",
+        "id_rsa",
+      ]) {
         expect(out).not.toContain(needle);
       }
     }

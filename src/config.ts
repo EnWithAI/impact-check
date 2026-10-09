@@ -20,6 +20,8 @@ export interface Config {
   ignorePaths: string[];
   securityPathPatterns: string[];
   branding: boolean;
+  /** Optional repository conventions (addendum: "optional repository conventions file"). */
+  conventions: { testPatterns: string[]; generatedPaths: string[] };
   policy: Policy;
 }
 
@@ -32,6 +34,7 @@ export const DEFAULT_CONFIG: Config = {
   ignorePaths: [],
   securityPathPatterns: [],
   branding: true,
+  conventions: { testPatterns: [], generatedPaths: [] },
   policy: { failOnSeverity: "high", failOnRules: [], maxAffectedModules: null },
 };
 
@@ -87,6 +90,7 @@ export function parseConfig(raw: unknown, source: string): Config {
     "ignorePaths",
     "securityPathPatterns",
     "branding",
+    "conventions",
     "policy",
   ]);
   const config: Config = structuredClone(DEFAULT_CONFIG);
@@ -108,6 +112,23 @@ export function parseConfig(raw: unknown, source: string): Config {
   if ("branding" in raw) {
     if (typeof raw["branding"] !== "boolean") fail(source, `"branding" must be a boolean`);
     config.branding = raw["branding"];
+  }
+  if ("conventions" in raw) {
+    const conventions = raw["conventions"];
+    if (!isObject(conventions)) fail(source, `"conventions" must be an object`);
+    checkKeys(source, "conventions.", conventions, ["testPatterns", "generatedPaths"]);
+    if ("testPatterns" in conventions)
+      config.conventions.testPatterns = stringList(
+        source,
+        "conventions.testPatterns",
+        conventions["testPatterns"]
+      );
+    if ("generatedPaths" in conventions)
+      config.conventions.generatedPaths = stringList(
+        source,
+        "conventions.generatedPaths",
+        conventions["generatedPaths"]
+      );
   }
   if ("policy" in raw) {
     const policy = raw["policy"];

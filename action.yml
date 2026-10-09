@@ -43,6 +43,10 @@ inputs:
     description: "Fail the step when the configured policy fails (default false: report only)."
     required: false
     default: "false"
+  on-error:
+    description: "Tool errors (not policy failures): auto (default; fail when fail-on-policy is true, otherwise warn), fail (fail-closed) or warn (fail-open)."
+    required: false
+    default: "auto"
   max-depth:
     description: "Max reverse-dependency hops."
     required: false
@@ -67,6 +71,9 @@ outputs:
   policy:
     description: "passed or failed."
     value: ${{ steps.changelens.outputs.policy }}
+  status:
+    description: "ok, or error when on-error=warn let a tool error pass (fail-open)."
+    value: ${{ steps.changelens.outputs.status }}
 runs:
   using: "composite"
   steps:
@@ -90,6 +97,7 @@ runs:
         INPUT_CONFIG_SOURCE: ${{ inputs.config-source }}
         INPUT_CONFIG_PATH: ${{ inputs.config-path }}
         INPUT_FAIL_ON_POLICY: ${{ inputs.fail-on-policy }}
+        INPUT_ON_ERROR: ${{ inputs.on-error }}
         INPUT_MAX_DEPTH: ${{ inputs.max-depth }}
         INPUT_MAX_AFFECTED: ${{ inputs.max-affected }}
       run: node "$GITHUB_ACTION_PATH/dist/action/main.js"

@@ -77,3 +77,11 @@ export function literalSpecifiers(text: string): string[] {
   out.delete("");
   return [...out].sort();
 }
+
+const DYNAMIC_LOADING =
+  /\brequire\s*\)?\s*(?:as\s+any\s*\)\s*)?\.context\s*\(|\bimport\.meta\s*\)?\s*(?:as\s+any\s*\)\s*)?\.glob(?:Eager)?\s*\(|(?<![.\w])eval\s*\(|\bnew\s+Function\s*\(/;
+
+/** Detects module loading the resolver cannot follow: require.context, import.meta.glob, eval, new Function. */
+export function hasDynamicLoading(text: string): boolean {
+  return DYNAMIC_LOADING.test(stripComments(text));
+}

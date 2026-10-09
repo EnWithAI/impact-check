@@ -16,19 +16,22 @@ registry; the analysis itself does not use the network).
 
 ## Inputs
 
-| Input                       | Default                    | Notes                                                                                                                      |
-| --------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `base`                      | PR base SHA from the event | Required outside `pull_request` events.                                                                                    |
-| `head`                      | `HEAD`                     | With the default checkout this is the PR merge commit; merge-base mode then yields exactly the PR's changes.               |
-| `diff-mode`                 | `merge-base`               | or `direct`.                                                                                                               |
-| `working-directory`         | `.`                        | Must stay inside the workspace.                                                                                            |
-| `output-dir`                | `changelens-report`        | Relative path inside the workspace.                                                                                        |
-| `config-source`             | `base`                     | `base` reads `.changelens.json` from the base commit so a PR cannot weaken its own policy; `head` or `none` also possible. |
-| `config-path`               | `.changelens.json`         |                                                                                                                            |
-| `fail-on-policy`            | `false`                    | `true` fails the step (exit 4) when the policy fails.                                                                      |
-| `max-depth`, `max-affected` | config/defaults            |                                                                                                                            |
+| Input                       | Default                    | Notes                                                                                                                                                                       |
+| --------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `base`                      | PR base SHA from the event | Required outside `pull_request` events.                                                                                                                                     |
+| `head`                      | `HEAD`                     | With the default checkout this is the PR merge commit; merge-base mode then yields exactly the PR's changes.                                                                |
+| `diff-mode`                 | `merge-base`               | or `direct`.                                                                                                                                                                |
+| `working-directory`         | `.`                        | Must stay inside the workspace.                                                                                                                                             |
+| `output-dir`                | `changelens-report`        | Relative path inside the workspace.                                                                                                                                         |
+| `config-source`             | `base`                     | `base` reads `.changelens.json` from the base commit so a PR cannot weaken its own policy; `head` or `none` also possible.                                                  |
+| `config-path`               | `.changelens.json`         |                                                                                                                                                                             |
+| `fail-on-policy`            | `false`                    | `true` fails the step (exit 4) when the policy fails.                                                                                                                       |
+| `on-error`                  | `auto`                     | Tool errors (not policy failures). `auto`: fail-closed when `fail-on-policy` is true, fail-open (warning, `status=error`) otherwise. `fail` or `warn` to choose explicitly. |
+| `max-depth`, `max-affected` | config/defaults            |                                                                                                                                                                             |
 
-Outputs: `report-json`, `report-markdown`, `high-findings`, `affected-modules`, `policy` (`passed`/`failed`).
+Outputs: `report-json`, `report-markdown`, `high-findings`, `affected-modules`, `policy` (`passed`/`failed`), `status` (`ok`/`error`).
+
+The action never reads `GITHUB_TOKEN` or any other secret (asserted by `test/acceptance/a7-*` with an access-recording environment).
 
 ## Security notes
 

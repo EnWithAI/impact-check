@@ -52,7 +52,7 @@ describe("redaction (T5)", () => {
     repo.commit("oops");
     const report = await analyzeJson(repo.dir, ["--base", "main", "--head", "HEAD"]);
     expect(JSON.stringify(report)).not.toContain(token);
-    expect(report.filesChanged[0]!.path).toBe(`config/${REDACTED}.json`);
+    expect(report.changed_files[0]!.path).toBe(`config/${REDACTED}.json`);
   });
 });
 

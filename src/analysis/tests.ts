@@ -1,4 +1,4 @@
-import type { AffectedModule, ChangedFile, Provenance, SuggestedTest, TestReason } from "../types.js";
+import type { AffectedModule, ChangedFile, Provenance, TestCandidate, TestReason } from "../types.js";
 import { basenameOf, isTestPath } from "../util/classify.js";
 import { compareStrings } from "./limitations.js";
 
@@ -17,8 +17,9 @@ function stem(path: string): string {
 export function suggestTests(
   files: ChangedFile[],
   affected: AffectedModule[],
-  headFiles: string[]
-): SuggestedTest[] {
+  headFiles: string[],
+  isTest: (path: string) => boolean = isTestPath
+): TestCandidate[] {
   const byPath = new Map<
     string,
     { reasons: Set<TestReason>; related: Set<string>; provenance: Set<Provenance> }
@@ -37,13 +38,13 @@ export function suggestTests(
       add(file.path, "changed-test", [], "observed");
   }
   for (const mod of affected) {
-    if (mod.reason === "dependent" && isTestPath(mod.path))
-      add(mod.path, "imports-affected-module", mod.changedRoots, mod.provenance);
+    if (mod.reason === "dependent" && isTest(mod.path))
+      add(mod.path, "imports-affected-module", mod.changed_roots, mod.provenance);
   }
 
   const testsByStem = new Map<string, string[]>();
   for (const path of headFiles) {
-    if (!isTestPath(path)) continue;
+    if (!isTest(path)) continue;
     const s = stem(path);
     testsByStem.set(s, [...(testsByStem.get(s) ?? []), path]);
   }
@@ -62,8 +63,8 @@ export function suggestTests(
     .map(([path, entry]) => ({
       path,
       reasons: [...entry.reasons].sort(compareStrings) as TestReason[],
-      relatedTo: [...entry.related].sort(compareStrings),
+      related_to: [...entry.related].sort(compareStrings),
       provenance: rank(entry.provenance),
-      status: "not-run" as const,
+      execution_status: "not_run" as const,
     }));
 }

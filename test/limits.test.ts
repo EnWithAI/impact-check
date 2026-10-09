@@ -13,7 +13,7 @@ describe("limits and safe degradation (T6)", () => {
     repo.write({ "src/huge.ts": `export const big = "${"x".repeat(1024 * 1024 + 10)}";\n` });
     repo.commit("big");
     const report = await analyzeJson(repo.dir, head);
-    expect(report.coverageLimitations.find((l) => l.code === "file-too-large")?.paths).toEqual([
+    expect(report.coverage_limitations.find((l) => l.code === "file-too-large")?.paths).toEqual([
       "src/huge.ts",
     ]);
   });
@@ -30,7 +30,7 @@ describe("limits and safe degradation (T6)", () => {
     repo.commit("root");
     const report = await analyzeJson(repo.dir, [...head, "--max-affected", "5", "--max-depth", "3"]);
     expect(dependents(report)).toHaveLength(5);
-    expect(report.analysis.limits).toEqual({ maxDepth: 3, maxAffected: 5, truncated: true });
+    expect(report.run_metadata.limits).toEqual({ max_depth: 3, max_affected: 5, truncated: true });
     expect(limitationCodes(report)).toEqual(
       expect.arrayContaining(["graph-truncated", "depth-limit-reached"])
     );
@@ -62,9 +62,9 @@ describe("limits and safe degradation (T6)", () => {
     repo.write({ "src/utils/format.ts": basicTs["src/utils/format.ts"] + "// x\n" });
     repo.commit("x");
     const report = await analyzeJson(repo.dir, head);
-    expect(report.coverageLimitations.find((l) => l.code === "tsconfig-extends-unavailable")?.paths).toEqual([
-      "tsconfig.json → @tsconfig/node22/tsconfig.json",
-    ]);
+    expect(report.coverage_limitations.find((l) => l.code === "tsconfig-extends-unavailable")?.paths).toEqual(
+      ["tsconfig.json → @tsconfig/node22/tsconfig.json"]
+    );
     expect(dependents(report)).toContain("src/services/cart.ts"); // alias still resolved
   });
 
@@ -80,7 +80,7 @@ describe("limits and safe degradation (T6)", () => {
     expect(limitationCodes(report)).toEqual(
       expect.arrayContaining(["tsconfig-unreadable", "additional-tsconfig-paths-ignored"])
     );
-    expect(report.repository.tsConfig).toBeNull();
+    expect(report.repository.ts_config).toBeNull();
     const missing = await analyzeJson(repo.dir, [...head, "--tsconfig", "nope.json"]);
     expect(limitationCodes(missing)).toContain("tsconfig-not-found");
   });
@@ -99,7 +99,7 @@ describe("limits and safe degradation (T6)", () => {
     expect(limitationCodes(report)).toContain("package-json-unparseable");
     expect(dependents(report)).toContain("src/services/checkout.ts");
     const notExtracted =
-      report.coverageLimitations.find((l) => l.code === "imports-not-extracted")?.paths ?? [];
+      report.coverage_limitations.find((l) => l.code === "imports-not-extracted")?.paths ?? [];
     // Never silently dropped: each broken importer is either a graph dependent or reported as not extracted.
     for (const file of ["src/recoverable.js", "src/unparseable.ts"]) {
       expect(dependents(report).includes(file) || notExtracted.includes(file), file).toBe(true);
@@ -116,7 +116,7 @@ describe("limits and safe degradation (T6)", () => {
     repo.commit("m");
     spawnSync("git", ["merge", "a"], { cwd: repo.dir });
     const report = await analyzeJson(repo.dir, ["--base", "main"]);
-    expect(report.filesChanged.find((f) => f.path === "src/utils/unused.ts")?.status).toBe("unmerged");
+    expect(report.changed_files.find((f) => f.path === "src/utils/unused.ts")?.status).toBe("unmerged");
     expect(limitationCodes(report)).toContain("unmerged-paths");
   });
 
@@ -125,8 +125,8 @@ describe("limits and safe degradation (T6)", () => {
     mkdirSync(join(repo.dir, "node_modules/pkg"), { recursive: true });
     writeFileSync(join(repo.dir, "node_modules/pkg/index.js"), "module.exports = 1;\n");
     const report = await analyzeJson(repo.dir, ["--base", "main"]);
-    expect(report.filesChanged).toEqual([]);
-    expect(report.coverageLimitations.find((l) => l.code === "untracked-node-modules-skipped")?.count).toBe(
+    expect(report.changed_files).toEqual([]);
+    expect(report.coverage_limitations.find((l) => l.code === "untracked-node-modules-skipped")?.count).toBe(
       1
     );
   });
@@ -152,7 +152,7 @@ describe("limits and safe degradation (T6)", () => {
     );
     const elapsed = Date.now() - start;
     expect(result.code).toBe(0);
-    expect(JSON.parse(result.stdout).summary.affectedModules).toBe(2001);
+    expect(JSON.parse(result.stdout).summary.affected_modules).toBe(2001);
     expect(elapsed).toBeLessThan(60_000);
     console.log(`2000-module analysis took ${elapsed} ms`);
   });

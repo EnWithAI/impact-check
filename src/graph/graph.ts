@@ -13,7 +13,7 @@ import {
   resolveWorkspaceSpecifier,
   type WorkspacePackage,
 } from "./workspaces.js";
-import { literalSpecifiers, scanNonLiteralImports } from "./lexical.js";
+import { hasDynamicLoading, literalSpecifiers, scanNonLiteralImports } from "./lexical.js";
 
 export interface Edge {
   specifiers: string[];
@@ -152,7 +152,7 @@ export async function buildGraph(
     external: new Map(),
     packages,
     tsConfig,
-    stats: { modules: 0, edges: 0, unresolvedLocal: 0 },
+    stats: { modules: 0, edges: 0, unresolved_local: 0 },
   };
   if (jsTsFiles.length === 0) return empty;
 
@@ -314,6 +314,13 @@ export async function buildGraph(
           path
         );
       }
+      if (hasDynamicLoading(text)) {
+        limitations.add(
+          "dynamic-module-loading",
+          "require.context, import.meta.glob, eval or new Function load code the resolver cannot see; dependencies of these modules may be missing.",
+          path
+        );
+      }
       if (scanNonLiteralImports(text) > 0) {
         limitations.add(
           "non-literal-dynamic-import",
@@ -328,6 +335,6 @@ export async function buildGraph(
   for (const targets of graph.deps.values()) edges += targets.size;
   let unresolved = 0;
   for (const list of graph.unresolvedLocal.values()) unresolved += list.length;
-  graph.stats = { modules: graph.modules.size, edges, unresolvedLocal: unresolved };
+  graph.stats = { modules: graph.modules.size, edges, unresolved_local: unresolved };
   return graph;
 }

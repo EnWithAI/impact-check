@@ -4,6 +4,9 @@
   "limitations": [
     { "code": "non-literal-dynamic-import", "paths_include": ["src/plugins/loader.ts"] },
     { "code": "dynamic-module-loading", "paths_include": ["src/plugins/loader.ts"] },
-    { "code": "generated-code", "paths_include": ["src/__generated__/schema.ts", "src/api.pb.ts", "src/models.gen.ts"] }
+    {
+      "code": "generated-code",
+      "paths_include": ["src/__generated__/schema.ts", "src/api.pb.ts", "src/models.gen.ts"]
+    }
   ]
 }

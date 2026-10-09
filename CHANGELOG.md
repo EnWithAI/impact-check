@@ -5,6 +5,26 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0-alpha.0] — unreleased (release candidate, 2026-10-09)
+
+### Changed (breaking, pre-release)
+
+- Report **schema 2.0** (snake_case, aligned with the CrewPE Google SDLC addendum): `repo_revision`, `base_revision`,
+  `changed_files`, `findings`, `test_candidates`, `coverage_limitations`, `run_metadata`. Mapping in `docs/GOOGLE_SDLC_DELTA.md`.
+- Findings carry `status` (`verified_static_fact` / `hypothesis` / `unknown`), `summary`, `recommended_human_action`;
+  evidence has `line_start`/`line_end`/`commit`.
+- `export-surface-changed` is now AST-based (signature regions; body-only edits no longer flagged).
+
+### Added
+
+- Parser-based export analyzer: `export-removed`, `removed-export-still-imported` (verified; `unknown` with `export *`).
+- Evidence-linked affected modules (import line + commit).
+- Degraded mode (`analysis_mode`, `no-dependency-graph`); `dynamic-module-loading` and `generated-code` limitations.
+- Repository context, `conventions` config, run metrics (`duration_ms`, `timings_ms`, `review_effort`, `model_usage: null`).
+- Explicit fail-open/fail-closed: CLI `--on-error`, Action `on-error`, Action output `status`.
+- Untrusted-data notice in Markdown; paths in prose rendered as code spans.
+- Acceptance fixtures A1–A8 with hand-written expectations and a golden snapshot.
+
 ## [0.1.0-alpha.0] — unreleased (release candidate, 2026-10-09)
 
 ### Added

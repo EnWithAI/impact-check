@@ -12,3 +12,7 @@
 | H   | No package scripts, inference, telemetry or upload                                       | `test/security.test.ts`                                |
 | I   | Fresh setup, typecheck, lint, test, build, tarball inspected                             | `progress/TEST_EVIDENCE.md`, `test/quickstart.test.ts` |
 | J   | Minimal-permission Action produces a safe artifact or documents limits                   | `test/action.test.ts`, `docs/ACTION.md`                |
+
+## Addendum acceptance gate (Google SDLC alignment)
+
+READY FOR HUMAN REVIEW only if: CLI works without an API key; reproducible evidence-backed output; fixtures A1–A8 tested; safe Action permission choices documented; no critical open security issue; report shows limits; docs permit third-party reproduction. Status and evidence: `docs/VERIFICATION_MATRIX.md`, `RELEASE_READINESS.md`.

@@ -5,6 +5,19 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+// Run-specific metadata is normalized so the committed samples are reproducible (see schema description).
+function normalizeJson(text) {
+  const report = JSON.parse(text);
+  report.run_metadata = {
+    ...report.run_metadata,
+    generated_at: "2026-01-01T00:00:00.000Z",
+    duration_ms: 0,
+    timings_ms: {},
+    node_version: "normalized",
+  };
+  return `${JSON.stringify(report, null, 2)}\n`;
+}
+
 const root = new URL("..", import.meta.url).pathname.replace(/%20/g, " ");
 const work = mkdtempSync(join(tmpdir(), "changelens-demo-"));
 const demo = join(work, "changelens-demo");
@@ -35,10 +48,7 @@ try {
       { encoding: "utf8" }
     );
     if (r.status !== 0) throw new Error(r.stderr);
-    const text =
-      format === "json"
-        ? r.stdout.replace(/"generatedAt": "[^"]+"/, '"generatedAt": "2026-01-01T00:00:00.000Z"')
-        : r.stdout;
+    const text = format === "json" ? normalizeJson(r.stdout) : r.stdout;
     writeFileSync(join(out, file), text);
   }
   console.log(`Wrote ${out}`);

@@ -2,8 +2,14 @@
   "case": "A3d",
   "description": "Exported function signature changes (new optional parameter) -> hypothesis only, no removal claim.",
   "findings": [
-    { "rule_id": "export-surface-changed", "status": "hypothesis", "severity": "medium",
-      "evidence": [{ "path": "src/utils/format.ts", "side": "head", "line_start": 1, "detail_includes": "formatPrice" }] }
+    {
+      "rule_id": "export-surface-changed",
+      "status": "hypothesis",
+      "severity": "medium",
+      "evidence": [
+        { "path": "src/utils/format.ts", "side": "head", "line_start": 1, "detail_includes": "formatPrice" }
+      ]
+    }
   ],
   "forbidden_rule_ids": ["export-removed", "removed-export-still-imported", "broken-import"]
 }

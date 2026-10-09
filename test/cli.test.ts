@@ -78,7 +78,7 @@ describe("CLI contract (acceptance A)", () => {
       repo.dir
     );
     expect(json.code).toBe(0);
-    expect(JSON.parse(readFileSync(join(repo.dir, "r.json"), "utf8")).schemaVersion).toBe("1.0");
+    expect(JSON.parse(readFileSync(join(repo.dir, "r.json"), "utf8")).schema_version).toBe("2.0");
   });
 
   it("--cwd points at a repository from elsewhere, including a subdirectory", async () => {
@@ -150,16 +150,16 @@ describe("check command and policy (exit 4 distinct from errors)", () => {
       repo.dir
     );
     const report = JSON.parse(result.stdout);
-    expect(report.filesChanged.map((f: { path: string }) => f.path)).toEqual(["billing/charge.ts"]);
+    expect(report.changed_files.map((f: { path: string }) => f.path)).toEqual(["billing/charge.ts"]);
     expect(
-      report.coverageLimitations.find((l: { code: string }) => l.code === "ignored-by-config").paths
+      report.coverage_limitations.find((l: { code: string }) => l.code === "ignored-by-config").paths
     ).toEqual(["generated/api.ts"]);
     expect(
-      report.riskFindings.some(
-        (f: { ruleId: string; relatedModules: string[] }) =>
-          f.ruleId === "security-sensitive-change" && f.relatedModules.includes("billing/charge.ts")
+      report.findings.some(
+        (f: { rule_id: string; affected_modules: string[] }) =>
+          f.rule_id === "security-sensitive-change" && f.affected_modules.includes("billing/charge.ts")
       )
     ).toBe(true);
-    expect(report.analysis.limits.maxDepth).toBe(2);
+    expect(report.run_metadata.limits.max_depth).toBe(2);
   });
 });

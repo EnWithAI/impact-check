@@ -1,26 +1,9 @@
 {
-  "schemaVersion": "1.0",
-  "toolVersion": "0.1.0-alpha.0",
-  "generatedAt": "2026-01-01T00:00:00.000Z",
-  "repository": {
-    "name": "changelens-demo",
-    "isShallow": false,
-    "tsConfig": "tsconfig.json",
-    "workspacePackages": [
-      {
-        "name": "shop-demo",
-        "path": "."
-      }
-    ]
-  },
-  "comparison": {
-    "baseRef": "main",
-    "baseCommit": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
-    "mergeBase": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
-    "diffMode": "merge-base",
-    "headRef": "WORKTREE",
-    "headCommit": "cef3c01cb043ca4b05b93bcc92d08d47fd3bb535",
-    "headKind": "worktree",
+  "schema_version": "2.0",
+  "repo_revision": {
+    "ref": "WORKTREE",
+    "commit": "cef3c01cb043ca4b05b93bcc92d08d47fd3bb535",
+    "kind": "worktree",
     "worktree": {
       "included": true,
       "staged": 0,
@@ -28,31 +11,79 @@
       "untracked": 0
     }
   },
+  "base_revision": {
+    "ref": "main",
+    "commit": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
+    "merge_base": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
+    "diff_mode": "merge-base"
+  },
+  "repository": {
+    "name": "changelens-demo",
+    "is_shallow": false,
+    "ts_config": "tsconfig.json",
+    "workspace_packages": [
+      {
+        "name": "shop-demo",
+        "path": "."
+      }
+    ],
+    "context": {
+      "languages": [
+        {
+          "language": "typescript",
+          "files": 7
+        },
+        {
+          "language": "json",
+          "files": 2
+        },
+        {
+          "language": "markdown",
+          "files": 1
+        },
+        {
+          "language": "sql",
+          "files": 1
+        }
+      ],
+      "module_type": "module",
+      "workspace_tools": [],
+      "test_frameworks": [],
+      "module_resolution": "bundler"
+    }
+  },
   "summary": {
-    "filesChanged": 4,
-    "jsTsFilesChanged": 3,
-    "affectedModules": 8,
-    "findingsBySeverity": {
+    "analysis_mode": "full",
+    "files_changed": 4,
+    "js_ts_files_changed": 3,
+    "affected_modules": 8,
+    "findings_by_severity": {
       "high": 1,
       "medium": 4,
       "low": 1,
       "info": 1
     },
-    "suggestedTests": 2,
-    "coverageLimitations": 4
+    "findings_by_status": {
+      "verified_static_fact": 2,
+      "hypothesis": 5,
+      "unknown": 0
+    },
+    "test_candidates": 2,
+    "coverage_limitations": 4
   },
-  "filesChanged": [
+  "changed_files": [
     {
       "path": "db/migrations/002_add_currency.sql",
-      "previousPath": null,
+      "previous_path": null,
       "status": "added",
       "binary": false,
+      "generated": false,
       "language": "other",
       "kind": "other",
       "additions": 1,
       "deletions": 0,
       "origin": "committed",
-      "changedLines": [
+      "changed_lines": [
         {
           "start": 1,
           "end": 1
@@ -62,15 +93,16 @@
     },
     {
       "path": "src/auth/session.ts",
-      "previousPath": null,
+      "previous_path": null,
       "status": "modified",
       "binary": false,
+      "generated": false,
       "language": "typescript",
       "kind": "source",
       "additions": 1,
       "deletions": 1,
       "origin": "committed",
-      "changedLines": [
+      "changed_lines": [
         {
           "start": 3,
           "end": 3
@@ -80,28 +112,30 @@
     },
     {
       "path": "src/lib/legacy-tax.ts",
-      "previousPath": null,
+      "previous_path": null,
       "status": "deleted",
       "binary": false,
+      "generated": false,
       "language": "typescript",
       "kind": "source",
       "additions": 0,
       "deletions": 1,
       "origin": "committed",
-      "changedLines": [],
+      "changed_lines": [],
       "provenance": "observed"
     },
     {
       "path": "src/lib/money.ts",
-      "previousPath": null,
+      "previous_path": null,
       "status": "modified",
       "binary": false,
+      "generated": false,
       "language": "typescript",
       "kind": "source",
       "additions": 2,
       "deletions": 2,
       "origin": "committed",
-      "changedLines": [
+      "changed_lines": [
         {
           "start": 1,
           "end": 2
@@ -110,7 +144,7 @@
       "provenance": "observed"
     }
   ],
-  "affectedModules": [
+  "affected_modules": [
     {
       "path": "src/auth/session.ts",
       "reason": "changed",
@@ -119,9 +153,10 @@
       "via": [
         "src/auth/session.ts"
       ],
-      "changedRoots": [
+      "changed_roots": [
         "src/auth/session.ts"
-      ]
+      ],
+      "evidence": []
     },
     {
       "path": "src/lib/legacy-tax.ts",
@@ -131,9 +166,10 @@
       "via": [
         "src/lib/legacy-tax.ts"
       ],
-      "changedRoots": [
+      "changed_roots": [
         "src/lib/legacy-tax.ts"
-      ]
+      ],
+      "evidence": []
     },
     {
       "path": "src/lib/money.ts",
@@ -143,9 +179,10 @@
       "via": [
         "src/lib/money.ts"
       ],
-      "changedRoots": [
+      "changed_roots": [
         "src/lib/money.ts"
-      ]
+      ],
+      "evidence": []
     },
     {
       "path": "src/cart/cart.ts",
@@ -156,9 +193,20 @@
         "src/lib/legacy-tax.ts",
         "src/cart/cart.ts"
       ],
-      "changedRoots": [
+      "changed_roots": [
         "src/lib/legacy-tax.ts",
         "src/lib/money.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "src/cart/cart.ts",
+          "side": "base",
+          "line_start": 2,
+          "line_end": 2,
+          "commit": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
+          "detail": "imports \"../lib/legacy-tax\" → src/lib/legacy-tax.ts"
+        }
       ]
     },
     {
@@ -171,9 +219,20 @@
         "src/cart/cart.ts",
         "src/cart/cart.test.ts"
       ],
-      "changedRoots": [
+      "changed_roots": [
         "src/lib/legacy-tax.ts",
         "src/lib/money.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "src/cart/cart.test.ts",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": null,
+          "detail": "imports \"./cart\" → src/cart/cart.ts"
+        }
       ]
     },
     {
@@ -186,9 +245,20 @@
         "src/cart/cart.ts",
         "src/checkout/checkout.ts"
       ],
-      "changedRoots": [
+      "changed_roots": [
         "src/lib/legacy-tax.ts",
         "src/lib/money.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "src/checkout/checkout.ts",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": null,
+          "detail": "imports \"../cart/cart\" → src/cart/cart.ts"
+        }
       ]
     },
     {
@@ -202,9 +272,20 @@
         "src/checkout/checkout.ts",
         "src/index.ts"
       ],
-      "changedRoots": [
+      "changed_roots": [
         "src/lib/legacy-tax.ts",
         "src/lib/money.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "src/index.ts",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": null,
+          "detail": "imports \"./checkout/checkout\" → src/checkout/checkout.ts"
+        }
       ]
     },
     {
@@ -218,261 +299,281 @@
         "src/checkout/checkout.ts",
         "test/checkout.test.ts"
       ],
-      "changedRoots": [
+      "changed_roots": [
         "src/lib/legacy-tax.ts",
         "src/lib/money.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "test/checkout.test.ts",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": null,
+          "detail": "imports \"../src/checkout/checkout\" → src/checkout/checkout.ts"
+        }
       ]
     }
   ],
-  "riskFindings": [
+  "findings": [
     {
       "id": "broken-import:de5c41fc",
-      "ruleId": "broken-import",
+      "rule_id": "broken-import",
       "category": "broken-import",
       "severity": "high",
+      "status": "verified_static_fact",
       "confidence": "high",
-      "isHeuristic": false,
+      "is_heuristic": false,
       "provenance": "graph",
-      "title": "Import of deleted module no longer resolves: src/lib/legacy-tax.ts",
+      "summary": "Import of deleted module no longer resolves: src/lib/legacy-tax.ts",
       "explanation": "In the base graph these modules resolved an import to src/lib/legacy-tax.ts, which was deleted. In the head state the same import specifier cannot be resolved by dependency-cruiser. Unless resolution depends on configuration ChangeLens does not see (e.g. bundler aliases), this import is broken.",
+      "recommended_human_action": "Update or remove the import, or restore the module; then run the listed test candidates.",
       "evidence": [
         {
           "kind": "file-status",
           "path": "src/lib/legacy-tax.ts",
           "side": "base",
-          "line": null,
-          "endLine": null,
+          "line_start": null,
+          "line_end": null,
+          "commit": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
           "detail": "deleted"
         },
         {
           "kind": "import-edge",
           "path": "src/cart/cart.ts",
           "side": "head",
-          "line": 2,
-          "endLine": 2,
+          "line_start": 2,
+          "line_end": 2,
+          "commit": null,
           "detail": "imports \"../lib/legacy-tax\" (no longer resolves)"
         }
       ],
-      "relatedModules": [
+      "affected_modules": [
         "src/cart/cart.ts",
         "src/lib/legacy-tax.ts"
       ]
     },
     {
       "id": "deleted-module-with-dependents:38ddabca",
-      "ruleId": "deleted-module-with-dependents",
+      "rule_id": "deleted-module-with-dependents",
       "category": "deleted-module",
       "severity": "medium",
+      "status": "verified_static_fact",
       "confidence": "high",
-      "isHeuristic": false,
+      "is_heuristic": false,
       "provenance": "graph",
-      "title": "Deleted module had 1 dependent(s) in base: src/lib/legacy-tax.ts",
+      "summary": "Deleted module had 1 dependent(s) in base: src/lib/legacy-tax.ts",
       "explanation": "1 of these dependents were not modified in this change. Verify they no longer rely on src/lib/legacy-tax.ts.",
+      "recommended_human_action": "Verify that no remaining code (including dynamic imports and other repositories) relies on the old path.",
       "evidence": [
         {
           "kind": "file-status",
           "path": "src/lib/legacy-tax.ts",
           "side": "base",
-          "line": null,
-          "endLine": null,
+          "line_start": null,
+          "line_end": null,
+          "commit": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
           "detail": "deleted"
         },
         {
           "kind": "import-edge",
           "path": "src/cart/cart.ts",
           "side": "base",
-          "line": null,
-          "endLine": null,
+          "line_start": null,
+          "line_end": null,
+          "commit": "e4b4f7a877d2dae2de72ba7e9c8140693cbffce9",
           "detail": "imported \"../lib/legacy-tax\""
         }
       ],
-      "relatedModules": [
+      "affected_modules": [
         "src/cart/cart.ts",
         "src/lib/legacy-tax.ts"
       ]
     },
     {
-      "id": "export-surface-changed:43de2f81",
-      "ruleId": "export-surface-changed",
+      "id": "export-surface-changed:4be802a0",
+      "rule_id": "export-surface-changed",
       "category": "public-api",
       "severity": "medium",
+      "status": "hypothesis",
       "confidence": "medium",
-      "isHeuristic": true,
+      "is_heuristic": true,
       "provenance": "inferred",
-      "title": "Potential public interface change in src/lib/money.ts",
-      "explanation": "Diff lines that declare exports were removed or modified (1 removed/modified, 1 added line(s)). The module has 1 direct dependent(s) in the head graph. ChangeLens compares lines, not types: this may be fully compatible.",
+      "summary": "Potential public interface change in src/lib/money.ts: formatCents",
+      "explanation": "Changed lines fall inside the signature of 1 exported declaration (parameters, return type, type members or exported value). The module has 1 direct dependent. ChangeLens does not type-check: the change may be fully compatible.",
+      "recommended_human_action": "Check whether the signature change is backward compatible for every listed dependent.",
       "evidence": [
         {
           "kind": "export-declaration",
           "path": "src/lib/money.ts",
-          "side": "base",
-          "line": 1,
-          "endLine": 1,
-          "detail": "modified: function formatCents"
-        },
-        {
-          "kind": "export-declaration",
-          "path": "src/lib/money.ts",
           "side": "head",
-          "line": 1,
-          "endLine": 1,
-          "detail": "modified: function formatCents"
+          "line_start": 1,
+          "line_end": 1,
+          "commit": null,
+          "detail": "signature lines changed: function formatCents"
         }
       ],
-      "relatedModules": [
+      "affected_modules": [
         "src/cart/cart.ts",
         "src/lib/money.ts"
       ]
     },
     {
       "id": "migration-changed:54962912",
-      "ruleId": "migration-changed",
+      "rule_id": "migration-changed",
       "category": "migration",
       "severity": "medium",
+      "status": "hypothesis",
       "confidence": "medium",
-      "isHeuristic": true,
+      "is_heuristic": true,
       "provenance": "inferred",
-      "title": "Database migration or schema files changed (1 file)",
+      "summary": "Database migration or schema files changed (1 file)",
       "explanation": "Migrations can be irreversible or require coordinated deploys. Check ordering, rollback and data impact. Detected by path convention only.",
+      "recommended_human_action": "Review migration ordering, reversibility and data impact, and plan the deployment sequence.",
       "evidence": [
         {
           "kind": "path-pattern",
           "path": "db/migrations/002_add_currency.sql",
           "side": "head",
-          "line": 1,
-          "endLine": 1,
+          "line_start": 1,
+          "line_end": 1,
+          "commit": null,
           "detail": "added"
         }
       ],
-      "relatedModules": [
+      "affected_modules": [
         "db/migrations/002_add_currency.sql"
       ]
     },
     {
       "id": "security-sensitive-change:7c3521d2",
-      "ruleId": "security-sensitive-change",
+      "rule_id": "security-sensitive-change",
       "category": "security-sensitive",
       "severity": "medium",
+      "status": "hypothesis",
       "confidence": "medium",
-      "isHeuristic": true,
+      "is_heuristic": true,
       "provenance": "graph",
-      "title": "Security-sensitive area changed: src/auth/session.ts",
+      "summary": "Security-sensitive area changed: src/auth/session.ts",
       "explanation": "The path name or imports suggest authentication, session, cryptography or access-control code. ChangeLens does not scan for vulnerabilities; this is a prompt for focused review.",
+      "recommended_human_action": "Request a focused security review of this change.",
       "evidence": [
         {
           "kind": "path-pattern",
           "path": "src/auth/session.ts",
           "side": "head",
-          "line": null,
-          "endLine": null,
+          "line_start": null,
+          "line_end": null,
+          "commit": null,
           "detail": "security-related path name"
         },
         {
           "kind": "import-edge",
           "path": "src/auth/session.ts",
           "side": "head",
-          "line": 1,
-          "endLine": 1,
+          "line_start": 1,
+          "line_end": 1,
+          "commit": null,
           "detail": "imports \"node:crypto\""
         }
       ],
-      "relatedModules": [
+      "affected_modules": [
         "src/auth/session.ts"
       ]
     },
     {
-      "id": "export-surface-changed:b4d15422",
-      "ruleId": "export-surface-changed",
+      "id": "export-surface-changed:d6132595",
+      "rule_id": "export-surface-changed",
       "category": "public-api",
       "severity": "low",
+      "status": "hypothesis",
       "confidence": "medium",
-      "isHeuristic": true,
+      "is_heuristic": true,
       "provenance": "inferred",
-      "title": "Potential public interface change in src/auth/session.ts",
-      "explanation": "Diff lines that declare exports were removed or modified (1 removed/modified, 1 added line(s)). The module has 0 direct dependent(s) in the head graph. ChangeLens compares lines, not types: this may be fully compatible.",
+      "summary": "Potential public interface change in src/auth/session.ts: sign",
+      "explanation": "Changed lines fall inside the signature of 1 exported declaration (parameters, return type, type members or exported value). The module has 0 direct dependents. ChangeLens does not type-check: the change may be fully compatible.",
+      "recommended_human_action": "Check whether the signature change is backward compatible for every listed dependent.",
       "evidence": [
         {
           "kind": "export-declaration",
           "path": "src/auth/session.ts",
-          "side": "base",
-          "line": 3,
-          "endLine": 3,
-          "detail": "modified: const sign"
-        },
-        {
-          "kind": "export-declaration",
-          "path": "src/auth/session.ts",
           "side": "head",
-          "line": 3,
-          "endLine": 3,
-          "detail": "modified: const sign"
+          "line_start": 3,
+          "line_end": 3,
+          "commit": null,
+          "detail": "signature lines changed: const sign"
         }
       ],
-      "relatedModules": [
+      "affected_modules": [
         "src/auth/session.ts"
       ]
     },
     {
       "id": "source-without-test-change:ef06187f",
-      "ruleId": "source-without-test-change",
+      "rule_id": "source-without-test-change",
       "category": "test-change",
       "severity": "info",
+      "status": "hypothesis",
       "confidence": "medium",
-      "isHeuristic": true,
+      "is_heuristic": true,
       "provenance": "inferred",
-      "title": "Source changed without test changes (2 modules)",
+      "summary": "Source changed without test changes (2 modules)",
       "explanation": "No test file was modified in this change. Existing tests may still cover it; see suggested tests.",
+      "recommended_human_action": "Run the test candidates and consider adding tests for the changed behavior.",
       "evidence": [
         {
           "kind": "file-status",
           "path": "src/auth/session.ts",
           "side": "head",
-          "line": null,
-          "endLine": null,
+          "line_start": null,
+          "line_end": null,
+          "commit": null,
           "detail": "modified"
         },
         {
           "kind": "file-status",
           "path": "src/lib/money.ts",
           "side": "head",
-          "line": null,
-          "endLine": null,
+          "line_start": null,
+          "line_end": null,
+          "commit": null,
           "detail": "modified"
         }
       ],
-      "relatedModules": [
+      "affected_modules": [
         "src/auth/session.ts",
         "src/lib/money.ts"
       ]
     }
   ],
-  "suggestedTests": [
+  "test_candidates": [
     {
       "path": "src/cart/cart.test.ts",
       "reasons": [
         "imports-affected-module"
       ],
-      "relatedTo": [
+      "related_to": [
         "src/lib/legacy-tax.ts",
         "src/lib/money.ts"
       ],
       "provenance": "graph",
-      "status": "not-run"
+      "execution_status": "not_run"
     },
     {
       "path": "test/checkout.test.ts",
       "reasons": [
         "imports-affected-module"
       ],
-      "relatedTo": [
+      "related_to": [
         "src/lib/legacy-tax.ts",
         "src/lib/money.ts"
       ],
       "provenance": "graph",
-      "status": "not-run"
+      "execution_status": "not_run"
     }
   ],
-  "coverageLimitations": [
+  "coverage_limitations": [
     {
       "code": "external-packages-not-analyzed",
       "message": "Imports of npm packages and Node built-ins are not followed; changes inside dependencies are out of scope.",
@@ -500,26 +601,39 @@
       "count": 1
     }
   ],
-  "analysis": {
+  "run_metadata": {
+    "tool": "changelens",
+    "tool_version": "0.2.0-alpha.0",
+    "generated_at": "2026-01-01T00:00:00.000Z",
+    "duration_ms": 0,
+    "timings_ms": {},
+    "node_version": "normalized",
     "engine": "dependency-cruiser",
-    "engineVersion": "18.5.0",
-    "parserVersion": "6.0.3",
-    "headGraph": {
+    "engine_version": "18.5.0",
+    "parser_version": "6.0.3",
+    "head_graph": {
       "modules": 7,
       "edges": 5,
-      "unresolvedLocal": 1
+      "unresolved_local": 1
     },
-    "baseGraph": {
+    "base_graph": {
       "modules": 8,
       "edges": 6,
-      "unresolvedLocal": 0
+      "unresolved_local": 0
     },
     "limits": {
-      "maxDepth": 10,
-      "maxAffected": 500,
+      "max_depth": 10,
+      "max_affected": 500,
       "truncated": false
     },
+    "config_source": "defaults",
     "network": false,
-    "executedRepositoryCode": false
+    "executed_repository_code": false,
+    "model_usage": null,
+    "review_effort": {
+      "files_to_review": 4,
+      "findings_requiring_human_action": 6,
+      "test_candidates": 2
+    }
   }
 }

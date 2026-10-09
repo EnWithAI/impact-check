@@ -57,9 +57,12 @@ describe("JSON schema (acceptance E) and determinism", () => {
     expect(new Set(normalized).size).toBe(1);
     const worktree = await analyzeJson(repo.dir, ["--base", "main"]);
     // Clean tree: only comparison metadata differs between modes.
-    expect(worktree.affectedModules).toEqual(runs[0]!.affectedModules);
-    expect(worktree.riskFindings).toEqual(runs[0]!.riskFindings);
-    expect(worktree.suggestedTests).toEqual(runs[0]!.suggestedTests);
+    // Worktree-mode evidence has commit: null by design (content may be uncommitted); compare without commits.
+    const noCommits = (v: unknown): unknown =>
+      JSON.parse(JSON.stringify(v), (k, x) => (k === "commit" ? null : x));
+    expect(noCommits(worktree.affected_modules)).toEqual(noCommits(runs[0]!.affected_modules));
+    expect(noCommits(worktree.findings)).toEqual(noCommits(runs[0]!.findings));
+    expect(worktree.test_candidates).toEqual(runs[0]!.test_candidates);
     // No absolute or temp paths leak.
     expect(normalized[0]).not.toContain(repo.dir);
     expect(normalized[0]).not.toContain("changelens-");

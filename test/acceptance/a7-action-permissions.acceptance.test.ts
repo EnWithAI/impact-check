@@ -5,18 +5,35 @@ import { runAction, type Env } from "../../src/action/run.js";
 import { Repo, cli, tempDir } from "../helpers.js";
 import { acceptanceRepo } from "./fixtures.js";
 
-const SECRET_KEYS = ["GITHUB_TOKEN", "ACTIONS_RUNTIME_TOKEN", "ACTIONS_ID_TOKEN_REQUEST_TOKEN", "ACTIONS_ID_TOKEN_REQUEST_URL", "NPM_TOKEN"];
+const SECRET_KEYS = [
+  "GITHUB_TOKEN",
+  "ACTIONS_RUNTIME_TOKEN",
+  "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+  "ACTIONS_ID_TOKEN_REQUEST_URL",
+  "NPM_TOKEN",
+];
 
-function env(repo: Repo, event: object, inputs: Record<string, string> = {}): { env: Env; accessed: Set<string>; output: string } {
+function env(
+  repo: Repo,
+  event: object,
+  inputs: Record<string, string> = {}
+): { env: Env; accessed: Set<string>; output: string } {
   const dir = tempDir();
   writeFileSync(join(dir, "event.json"), JSON.stringify(event));
   const output = join(dir, "out.txt");
   writeFileSync(output, "");
-  const base: Env = { GITHUB_WORKSPACE: repo.dir, GITHUB_EVENT_PATH: join(dir, "event.json"), GITHUB_OUTPUT: output };
+  const base: Env = {
+    GITHUB_WORKSPACE: repo.dir,
+    GITHUB_EVENT_PATH: join(dir, "event.json"),
+    GITHUB_OUTPUT: output,
+  };
   for (const [k, v] of Object.entries(inputs)) base[`INPUT_${k.toUpperCase().replace(/-/g, "_")}`] = v;
   for (const k of SECRET_KEYS) base[k] = `secret-${k}`;
   const accessed = new Set<string>();
-  const proxy = new Proxy(base, { get: (t, k: string) => (accessed.add(k), t[k]), has: (t, k: string) => (accessed.add(k), k in t) });
+  const proxy = new Proxy(base, {
+    get: (t, k: string) => (accessed.add(k), t[k]),
+    has: (t, k: string) => (accessed.add(k), k in t),
+  });
   return { env: proxy, accessed, output };
 }
 
@@ -27,7 +44,9 @@ describe("A7 — fork PR / minimal permissions", () => {
     repo.branch("fork-feature");
     repo.write({ "src/utils/unused.ts": "export const unused = 2;\n" });
     repo.commit("fork change");
-    const fork = { pull_request: { base: { sha: baseSha }, head: { repo: { fork: true, full_name: "someone/fork" } } } };
+    const fork = {
+      pull_request: { base: { sha: baseSha }, head: { repo: { fork: true, full_name: "someone/fork" } } },
+    };
     const run = env(repo, fork);
     const logs: string[] = [];
     expect(await runAction(run.env, (l) => logs.push(l))).toBe(0);
@@ -47,8 +66,13 @@ describe("A7 — fork PR / minimal permissions", () => {
     ];
     for (const [inputs, code] of cases) {
       const logs: string[] = [];
-      expect(await runAction(env(repo, badEvent, inputs).env, (l) => logs.push(l)), JSON.stringify(inputs)).toBe(code);
-      expect(logs.join("\n")).toMatch(code === 0 ? /::warning title=ChangeLens::/ : /::error title=ChangeLens::/);
+      expect(
+        await runAction(env(repo, badEvent, inputs).env, (l) => logs.push(l)),
+        JSON.stringify(inputs)
+      ).toBe(code);
+      expect(logs.join("\n")).toMatch(
+        code === 0 ? /::warning title=ChangeLens::/ : /::error title=ChangeLens::/
+      );
     }
     const bad = await runAction(env(repo, badEvent, { "on-error": "maybe" }).env, () => undefined);
     expect(bad).toBe(2);

@@ -29,6 +29,9 @@ import { SCHEMA_VERSION } from "../types.js";
 import { computeImpact } from "./impact.js";
 import { compareStrings, Limitations } from "./limitations.js";
 import { suggestTests } from "./tests.js";
+import { detectContext } from "../analyzers/context.js";
+import { isGenerated } from "../analyzers/generated.js";
+import { findSpecifierLine } from "../graph/lexical.js";
 
 export interface AnalyzeOptions {
   cwd: string;
@@ -43,6 +46,8 @@ export interface AnalyzeOptions {
   config?: Config;
   now?: () => Date;
   log?: (message: string) => void;
+  /** Where the config came from, recorded in run_metadata (e.g. ".changelens.json"). */
+  configSource?: string;
 }
 
 const MAX_RANGES_PER_FILE = 50;
@@ -95,6 +100,17 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
   const tsConfigOption = options.tsConfig ?? config.tsconfig;
   const log = options.log ?? (() => undefined);
   const limitations = new Limitations();
+  const started = Date.now();
+  const timings: Record<string, number> = {};
+  let mark = started;
+  const lap = (name: string): void => {
+    const now = Date.now();
+    timings[name] = now - mark;
+    mark = now;
+  };
+  const testPatterns = config.conventions.testPatterns;
+  const kindFor = (path: string): ReturnType<typeof kindOf> =>
+    testPatterns.length > 0 && matchesAny(path, testPatterns) ? "test" : kindOf(path);
 
   const root = await repoRoot(options.cwd);
   const shallow = await isShallow(root);
@@ -193,15 +209,16 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
       );
     files.push({
       path: change.path,
-      previousPath: change.previousPath,
+      previous_path: change.previousPath,
       status: worktreeMode && unmerged.has(change.path) ? "unmerged" : change.status,
       binary: stats?.binary ?? false,
+      generated: false,
       language: languageOf(change.path),
-      kind: kindOf(change.path),
+      kind: kindFor(change.path),
       additions: stats?.additions ?? null,
       deletions: stats?.deletions ?? null,
       origin: originOf(change.path),
-      changedLines: change.status === "deleted" ? [] : (hunks?.ranges ?? []).slice(0, MAX_RANGES_PER_FILE),
+      changed_lines: change.status === "deleted" ? [] : (hunks?.ranges ?? []).slice(0, MAX_RANGES_PER_FILE),
       provenance: "observed",
     });
   }
@@ -219,15 +236,16 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
       const info = readUntracked(root, path);
       files.push({
         path,
-        previousPath: null,
+        previous_path: null,
         status: "added",
         binary: info.binary,
+        generated: false,
         language: languageOf(path),
-        kind: kindOf(path),
+        kind: kindFor(path),
         additions: info.lines,
         deletions: info.lines === null ? null : 0,
         origin: "untracked",
-        changedLines: info.lines ? [{ start: 1, end: info.lines }] : [],
+        changed_lines: info.lines ? [{ start: 1, end: info.lines }] : [],
         provenance: "observed",
       });
     }
@@ -285,6 +303,18 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
     const headSnapshot = worktreeMode ? await snapshotWorktree(root) : await snapshotCommit(root, headCommit);
     snapshots.push(headSnapshot);
     limitations.merge(headSnapshot.limitations);
+    lap("git_and_snapshot");
+    for (const file of files) {
+      if (file.status === "deleted") continue;
+      if (isGenerated(file.path, headSnapshot.read(file.path), config.conventions.generatedPaths)) {
+        file.generated = true;
+        limitations.add(
+          "generated-code",
+          "Changed files look generated (marker, path convention or conventions.generatedPaths). Review the generator input; findings on generated code reflect generator output.",
+          file.path
+        );
+      }
+    }
 
     log(`Building head dependency graph (${headSnapshot.files.length} files)`);
     const head = await buildGraph(headSnapshot, { tsConfig: tsConfigOption, side: "head" }, limitations);
@@ -292,12 +322,13 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
     const needsBase = files.some(
       (f) =>
         (f.status === "deleted" && isJsTs(f.path)) ||
-        (f.status === "renamed" && f.previousPath !== null && isJsTs(f.previousPath))
+        (f.status === "renamed" && f.previous_path !== null && isJsTs(f.previous_path))
     );
     let baseGraph: ModuleGraph | null = null;
+    let baseSnapshot: Snapshot | null = null;
     if (needsBase) {
       log("Building base dependency graph (modules were deleted or renamed)");
-      const baseSnapshot = await snapshotCommit(root, from);
+      baseSnapshot = await snapshotCommit(root, from);
       snapshots.push(baseSnapshot);
       baseGraph = await buildGraph(baseSnapshot, { tsConfig: tsConfigOption, side: "base" }, limitations);
     }
@@ -314,14 +345,46 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
       )
         roots.push(file.path);
       const oldPath =
-        file.status === "deleted" ? file.path : file.status === "renamed" ? file.previousPath : null;
+        file.status === "deleted" ? file.path : file.status === "renamed" ? file.previous_path : null;
       if (oldPath !== null && baseGraph && isJsTs(oldPath)) {
         const dependents = [...(baseGraph.rdeps.get(oldPath) ?? [])].filter((d) => headNodes.has(d));
         roots.push(oldPath);
         extraReverse.set(oldPath, dependents);
       }
     }
+    lap("graph");
+    const degraded = head.stats.modules === 0;
+    if (degraded) {
+      limitations.add(
+        "no-dependency-graph",
+        "No JavaScript/TypeScript modules were found, so no dependency graph exists. Only observed file changes are reported; no impact on other modules is claimed."
+      );
+    }
     const impact = computeImpact({ graph: head, roots, extraReverse, maxDepth, maxAffected });
+    // Evidence-linked consumers: the import edge from each dependent to the previous module of its `via` chain.
+    const headEvidenceCommit = worktreeMode ? null : headCommit;
+    for (const mod of impact.affected) {
+      if (mod.reason !== "dependent") continue;
+      const previous = mod.via[mod.via.length - 2] as string;
+      const headEdge = head.deps.get(mod.path)?.get(previous);
+      const baseEdge = headEdge ? undefined : baseGraph?.deps.get(mod.path)?.get(previous);
+      const edge = headEdge ?? baseEdge;
+      if (!edge) continue;
+      const side = headEdge ? "head" : "base";
+      const text = (side === "head" ? headSnapshot.read(mod.path) : baseSnapshot?.read(mod.path)) ?? "";
+      mod.evidence = edge.specifiers.map((spec) => {
+        const line = findSpecifierLine(text, spec);
+        return {
+          kind: "import-edge" as const,
+          path: mod.path,
+          side,
+          line_start: line,
+          line_end: line,
+          commit: side === "head" ? headEvidenceCommit : from,
+          detail: `imports "${spec}" → ${previous}${edge.provenance === "inferred" ? " (inferred workspace mapping)" : ""}`,
+        };
+      });
+    }
     if (impact.truncated) {
       limitations.add(
         "graph-truncated",
@@ -364,58 +427,88 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
       blastRadiusThreshold: config.blastRadiusThreshold,
       maxDepth,
       securityPathPatterns: config.securityPathPatterns,
+      limitations,
     });
-    const suggestedTests = suggestTests(files, impact.affected, headSnapshot.files);
+    for (const finding of findings) {
+      for (const e of finding.evidence) e.commit = e.side === "base" ? from : headEvidenceCommit;
+    }
+    const suggestedTests = suggestTests(
+      files,
+      impact.affected,
+      headSnapshot.files,
+      (p) => kindFor(p) === "test"
+    );
+    lap("rules");
     const coverageLimitations = limitations.toArray();
 
     const bySeverity = { high: 0, medium: 0, low: 0, info: 0 };
-    for (const f of findings) bySeverity[f.severity]++;
+    const byStatus = { verified_static_fact: 0, hypothesis: 0, unknown: 0 };
+    for (const f of findings) {
+      bySeverity[f.severity]++;
+      byStatus[f.status]++;
+    }
 
     const report: Report = {
-      schemaVersion: SCHEMA_VERSION,
-      toolVersion: TOOL_VERSION,
-      generatedAt: (options.now ?? (() => new Date()))().toISOString(),
-      repository: {
-        name: repoName(root),
-        isShallow: shallow,
-        tsConfig: head.tsConfig,
-        workspacePackages: head.packages.map((p) => ({ name: p.name, path: p.dir || "." })),
-      },
-      comparison: {
-        baseRef: base.ref,
-        baseCommit: base.commit,
-        mergeBase: mergeBaseCommit,
-        diffMode: options.diffMode,
-        headRef,
-        headCommit,
-        headKind: worktreeMode ? "worktree" : "commit",
+      schema_version: SCHEMA_VERSION,
+      repo_revision: {
+        ref: headRef,
+        commit: headCommit,
+        kind: worktreeMode ? "worktree" : "commit",
         worktree: { included: worktreeMode, ...worktreeCounts },
       },
-      summary: {
-        filesChanged: files.length,
-        jsTsFilesChanged: files.filter((f) => isJsTs(f.path)).length,
-        affectedModules: impact.affected.length,
-        findingsBySeverity: bySeverity,
-        suggestedTests: suggestedTests.length,
-        coverageLimitations: coverageLimitations.length,
+      base_revision: {
+        ref: base.ref,
+        commit: base.commit,
+        merge_base: mergeBaseCommit,
+        diff_mode: options.diffMode,
       },
-      filesChanged: files,
-      affectedModules: impact.affected,
-      riskFindings: findings,
-      suggestedTests,
-      coverageLimitations,
-      analysis: {
+      repository: {
+        name: repoName(root),
+        is_shallow: shallow,
+        ts_config: head.tsConfig,
+        workspace_packages: head.packages.map((p) => ({ name: p.name, path: p.dir || "." })),
+        context: detectContext(headSnapshot, head.tsConfig),
+      },
+      summary: {
+        analysis_mode: degraded ? "degraded" : "full",
+        files_changed: files.length,
+        js_ts_files_changed: files.filter((f) => isJsTs(f.path)).length,
+        affected_modules: impact.affected.length,
+        findings_by_severity: bySeverity,
+        findings_by_status: byStatus,
+        test_candidates: suggestedTests.length,
+        coverage_limitations: coverageLimitations.length,
+      },
+      changed_files: files,
+      affected_modules: impact.affected,
+      findings,
+      test_candidates: suggestedTests,
+      coverage_limitations: coverageLimitations,
+      run_metadata: {
+        tool: "changelens",
+        tool_version: TOOL_VERSION,
+        generated_at: (options.now ?? (() => new Date()))().toISOString(),
+        duration_ms: Date.now() - started,
+        timings_ms: timings,
+        node_version: process.version,
         engine: "dependency-cruiser",
-        engineVersion: ENGINE_VERSION,
-        parserVersion: PARSER_VERSION,
-        headGraph: head.stats,
-        baseGraph: baseGraph?.stats ?? null,
-        limits: { maxDepth, maxAffected, truncated: impact.truncated },
+        engine_version: ENGINE_VERSION,
+        parser_version: PARSER_VERSION,
+        head_graph: head.stats,
+        base_graph: baseGraph?.stats ?? null,
+        limits: { max_depth: maxDepth, max_affected: maxAffected, truncated: impact.truncated },
+        config_source: options.configSource ?? "defaults",
         network: false,
-        executedRepositoryCode: false,
+        executed_repository_code: false,
+        model_usage: null,
+        review_effort: {
+          files_to_review: files.length,
+          findings_requiring_human_action: findings.filter((f) => f.severity !== "info").length,
+          test_candidates: suggestedTests.length,
+        },
       },
     };
-    return redactDeep(report, new Set(["baseCommit", "headCommit", "mergeBase", "id", "generatedAt"]));
+    return redactDeep(report, new Set(["commit", "merge_base", "id", "generated_at", "node_version"]));
   } finally {
     for (const snapshot of snapshots) snapshot.cleanup();
   }

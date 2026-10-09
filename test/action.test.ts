@@ -58,9 +58,10 @@ describe("GitHub Action (acceptance J) — local simulation", () => {
       "high-findings": "1",
       "affected-modules": expect.any(String),
       policy: "failed",
+      status: "ok",
     });
     const report = JSON.parse(readFileSync(join(repo.dir, outputs["report-json"]!), "utf8"));
-    expect(report.comparison.baseCommit).toBe(baseSha);
+    expect(report.base_revision.commit).toBe(baseSha);
     expect(logs.some((l) => l.startsWith("::warning title=ChangeLens policy::"))).toBe(true);
     // PR title from the event is never used or echoed.
     expect(logs.join("\n") + readFileSync(summary, "utf8")).not.toContain("rm -rf");
@@ -128,9 +129,9 @@ describe("GitHub Action (acceptance J) — local simulation", () => {
       repo.dir
     );
     const report = JSON.parse(result.stdout);
-    report.riskFindings.push({
-      ...report.riskFindings[0],
-      title: "<img src=x onerror=alert(1)> @org/team [click](https://evil.invalid)",
+    report.findings.push({
+      ...report.findings[0],
+      summary: "<img src=x onerror=alert(1)> @org/team [click](https://evil.invalid)",
     });
     const dir = tempDir();
     writeFileSync(join(dir, "r.json"), JSON.stringify(report));
@@ -139,7 +140,7 @@ describe("GitHub Action (acceptance J) — local simulation", () => {
     expect(rendered.stdout).toContain("\\<img src=x onerror=alert(1)\\>");
     expect(rendered.stdout).toContain("@​org/team");
     expect(rendered.stdout).toContain("\\[click\\]");
-    writeFileSync(join(dir, "bad.json"), JSON.stringify({ ...report, riskFindings: [{ title: 1 }] }));
+    writeFileSync(join(dir, "bad.json"), JSON.stringify({ ...report, findings: [{ title: 1 }] }));
     expect((await cli(["render", "--input", "bad.json"], dir)).code).toBe(2);
     writeFileSync(join(dir, "bad2.json"), "not json");
     expect((await cli(["render", "--input", "bad2.json"], dir)).code).toBe(2);

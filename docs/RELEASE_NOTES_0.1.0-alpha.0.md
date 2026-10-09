@@ -3,6 +3,7 @@
 First alpha of ChangeLens, a local-first change-impact analyzer for JavaScript/TypeScript pull requests.
 
 **What you get**
+
 - `changelens analyze` — Markdown or JSON report: changed files, reverse-dependency blast radius with import chains,
   confirmed broken imports, heuristic risk prompts (exports, package entries/manifests, migrations, API contracts,
   CI/config, auth/crypto), candidate tests, and an explicit list of limitations.

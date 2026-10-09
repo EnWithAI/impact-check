@@ -27,7 +27,10 @@
       "required": ["ref", "commit", "kind", "worktree"],
       "properties": {
         "ref": { "type": "string", "description": "Ref given by the user, or \"WORKTREE\"." },
-        "commit": { "$ref": "#/$defs/sha", "description": "Analyzed commit, or HEAD's commit in worktree mode." },
+        "commit": {
+          "$ref": "#/$defs/sha",
+          "description": "Analyzed commit, or HEAD's commit in worktree mode."
+        },
         "kind": { "enum": ["commit", "worktree"] },
         "worktree": {
           "type": "object",
@@ -58,7 +61,10 @@
       "additionalProperties": false,
       "required": ["name", "is_shallow", "ts_config", "workspace_packages", "context"],
       "properties": {
-        "name": { "type": "string", "description": "Basename of the repository root. No absolute paths are emitted." },
+        "name": {
+          "type": "string",
+          "description": "Basename of the repository root. No absolute paths are emitted."
+        },
         "is_shallow": { "type": "boolean" },
         "ts_config": { "type": ["string", "null"] },
         "workspace_packages": {
@@ -143,7 +149,10 @@
           "previous_path": { "type": ["string", "null"] },
           "status": { "enum": ["added", "modified", "deleted", "renamed", "type-changed", "unmerged"] },
           "binary": { "type": "boolean" },
-          "generated": { "type": "boolean", "description": "Matches generated-code markers or conventions (inferred)." },
+          "generated": {
+            "type": "boolean",
+            "description": "Matches generated-code markers or conventions (inferred)."
+          },
           "language": { "enum": ["typescript", "javascript", "json", "other"] },
           "kind": { "enum": ["source", "test", "config", "other"] },
           "additions": { "type": ["integer", "null"], "minimum": 0 },
@@ -259,7 +268,10 @@
         "config_source": { "type": "string", "description": "e.g. \"defaults\", \".changelens.json\"." },
         "network": { "const": false },
         "executed_repository_code": { "const": false },
-        "model_usage": { "type": "null", "description": "No model or paid API is used. Always null in this version." },
+        "model_usage": {
+          "type": "null",
+          "description": "No model or paid API is used. Always null in this version."
+        },
         "review_effort": {
           "description": "Counts a reviewer has to look at. Proxies only; no time or cost estimates.",
           "type": "object",
@@ -284,7 +296,10 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["start", "end"],
-      "properties": { "start": { "type": "integer", "minimum": 1 }, "end": { "type": "integer", "minimum": 1 } }
+      "properties": {
+        "start": { "type": "integer", "minimum": 1 },
+        "end": { "type": "integer", "minimum": 1 }
+      }
     },
     "graphStats": {
       "type": "object",

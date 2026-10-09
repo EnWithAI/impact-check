@@ -84,7 +84,15 @@ async function loadConfig(env: Env, cwd: string, base: string): Promise<{ config
 }
 
 export async function runAction(env: Env, log: (line: string) => void = console.log): Promise<number> {
+  // Explicit fail-open/fail-closed per check type (addendum invariant 6). `auto`: a blocking policy check
+  // (fail-on-policy: true) fails closed on tool errors; an informational report fails open with a warning.
+  let onError: "fail" | "warn" = "fail";
   try {
+    const failOnPolicy = bool(env, "fail-on-policy", false);
+    const onErrorInput = input(env, "on-error", "auto");
+    if (!["auto", "fail", "warn"].includes(onErrorInput))
+      throw usageError(`Input "on-error" must be auto, fail or warn`);
+    onError = onErrorInput === "auto" ? (failOnPolicy ? "fail" : "warn") : (onErrorInput as "fail" | "warn");
     const workspace = env["GITHUB_WORKSPACE"] ?? process.cwd();
     const cwd = resolve(workspace, input(env, "working-directory", "."));
     if (cwd !== workspace && !cwd.startsWith(workspace + sep))
@@ -105,7 +113,6 @@ export async function runAction(env: Env, log: (line: string) => void = console.
     const outputDir = input(env, "output-dir", "changelens-report");
     if (!isSafeRelativePath(outputDir))
       throw usageError(`Input "output-dir" must be a relative path inside the workspace`);
-    const failOnPolicy = bool(env, "fail-on-policy", false);
     const { config, source } = await loadConfig(env, cwd, base);
     log(`ChangeLens: base ${base}, head ${head}, mode ${diffMode}, config from ${source}`);
 
@@ -120,6 +127,7 @@ export async function runAction(env: Env, log: (line: string) => void = console.
       ...(maxDepth !== undefined ? { maxDepth } : {}),
       ...(maxAffected !== undefined ? { maxAffected } : {}),
       log: (m) => log(`ChangeLens: ${m}`),
+      configSource: source,
     });
     const policy = evaluatePolicy(report, config.policy);
     const markdown = renderMarkdown(report, { branding: config.branding, maxChars: SUMMARY_LIMIT });
@@ -135,9 +143,10 @@ export async function runAction(env: Env, log: (line: string) => void = console.
 
     setOutput(env, "report-json", `${outputDir}/changelens-report.json`);
     setOutput(env, "report-markdown", `${outputDir}/changelens-report.md`);
-    setOutput(env, "high-findings", String(report.summary.findingsBySeverity.high));
-    setOutput(env, "affected-modules", String(report.summary.affectedModules));
+    setOutput(env, "high-findings", String(report.summary.findings_by_severity.high));
+    setOutput(env, "affected-modules", String(report.summary.affected_modules));
     setOutput(env, "policy", policy.passed ? "passed" : "failed");
+    setOutput(env, "status", "ok");
     for (const violation of policy.violations)
       log(`::warning title=ChangeLens policy::${violation.replace(/[\r\n]/g, " ")}`);
     if (!policy.passed && failOnPolicy) {
@@ -146,8 +155,22 @@ export async function runAction(env: Env, log: (line: string) => void = console.
     }
     return ExitCode.Ok;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    log(`::error title=ChangeLens::${message.replace(/[\r\n]/g, " ")}`);
+    const message = (error instanceof Error ? error.message : String(error)).replace(/[\r\n]/g, " ");
+    const usage = error instanceof ChangeLensError && error.exitCode === ExitCode.Usage;
+    if (onError === "warn" && !usage) {
+      // Fail-open: the informational check could not run; say so loudly but do not block the PR.
+      log(
+        `::warning title=ChangeLens::ChangeLens could not analyze this change (on-error=warn, fail-open): ${message}`
+      );
+      if (error instanceof ChangeLensError && error.hint) log(`ChangeLens hint: ${error.hint}`);
+      try {
+        setOutput(env, "status", "error");
+      } catch {
+        /* ignore */
+      }
+      return ExitCode.Ok;
+    }
+    log(`::error title=ChangeLens::${message}`);
     if (error instanceof ChangeLensError) {
       if (error.hint) log(`ChangeLens hint: ${error.hint}`);
       return error.exitCode;

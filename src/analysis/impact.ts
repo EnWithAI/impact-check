@@ -92,7 +92,8 @@ export function computeImpact(input: ImpactInput): ImpactResult {
     distance: 0,
     provenance: "observed",
     via: [path],
-    changedRoots: [path],
+    changed_roots: [path],
+    evidence: [],
   }));
   let dependents: AffectedModule[] = [...states.entries()].map(([path, state]) => ({
     path,
@@ -100,7 +101,8 @@ export function computeImpact(input: ImpactInput): ImpactResult {
     distance: state.distance,
     provenance: state.provenance,
     via: state.via,
-    changedRoots: [...state.roots].sort(compareStrings),
+    changed_roots: [...state.roots].sort(compareStrings),
+    evidence: [],
   }));
   dependents.sort((a, b) => a.distance - b.distance || compareStrings(a.path, b.path));
   const truncated = dependents.length > input.maxAffected;

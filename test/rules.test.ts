@@ -18,56 +18,52 @@ describe("risk rules (acceptance D)", () => {
     repo.commit("break things");
     const report = await analyzeJson(repo.dir, head);
 
-    const exportFinding = report.riskFindings.find(
-      (f) => f.ruleId === "export-surface-changed" && f.title.includes("cart.ts")
+    const exportFinding = report.findings.find(
+      (f) => f.rule_id === "export-surface-changed" && f.summary.includes("cart.ts")
     )!;
     expect(exportFinding).toMatchObject({
       category: "public-api",
-      isHeuristic: true,
+      is_heuristic: true,
       provenance: "inferred",
       severity: "medium",
     });
-    expect(exportFinding.title).toMatch(/^Potential/);
-    expect(exportFinding.evidence).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          kind: "export-declaration",
-          side: "base",
-          line: 7,
-          detail: "modified: function total",
-        }),
-        expect.objectContaining({
-          kind: "export-declaration",
-          side: "head",
-          line: 7,
-          detail: "modified: function total",
-        }),
-      ])
-    );
+    expect(exportFinding.summary).toMatch(/^Potential/);
+    // Parser-based (schema 2.0): the changed line lies in the signature of `total`; reported once, head side.
+    expect(exportFinding.status).toBe("hypothesis");
+    expect(exportFinding.evidence).toEqual([
+      expect.objectContaining({
+        kind: "export-declaration",
+        side: "head",
+        line_start: 7,
+        detail: "signature lines changed: function total",
+      }),
+    ]);
 
-    const broken = report.riskFindings.find((f) => f.ruleId === "broken-import")!;
+    const broken = report.findings.find((f) => f.rule_id === "broken-import")!;
     expect(broken).toMatchObject({
       category: "broken-import",
-      isHeuristic: false,
+      is_heuristic: false,
       provenance: "graph",
       severity: "high",
       confidence: "high",
     });
-    const brokenPaths = broken.evidence.filter((e) => e.kind === "import-edge").map((e) => [e.path, e.line]);
+    const brokenPaths = broken.evidence
+      .filter((e) => e.kind === "import-edge")
+      .map((e) => [e.path, e.line_start]);
     expect(brokenPaths).toEqual([
       ["src/services/cart.ts", 1],
       ["src/utils/format.test.ts", 1],
     ]);
-    expect(report.riskFindings[0]!.ruleId).toBe("broken-import"); // sorted by severity first
-    const deleted = report.riskFindings.find((f) => f.ruleId === "deleted-module-with-dependents")!;
+    expect(report.findings[0]!.rule_id).toBe("broken-import"); // sorted by severity first
+    const deleted = report.findings.find((f) => f.rule_id === "deleted-module-with-dependents")!;
     expect(deleted.severity).toBe("medium"); // format.test.ts was not modified
     // Base dependents of the deleted module are listed as affected (graph provenance via base graph).
     expect(dependents(report)).toContain("src/utils/format.test.ts");
-    expect(report.affectedModules.find((m) => m.path === "src/utils/format.test.ts")?.via).toEqual([
+    expect(report.affected_modules.find((m) => m.path === "src/utils/format.test.ts")?.via).toEqual([
       "src/utils/format.ts",
       "src/utils/format.test.ts",
     ]);
-    expect(report.affectedModules.find((m) => m.path === "src/services/cart.ts")?.reason).toBe("changed");
+    expect(report.affected_modules.find((m) => m.path === "src/services/cart.ts")?.reason).toBe("changed");
   });
 
   it("flags migrations, API contracts, config, security paths and imports as heuristics", async () => {
@@ -92,30 +88,36 @@ describe("risk rules (acceptance D)", () => {
       "security-sensitive-change",
     ])
       expect(ids).toContain(id);
-    for (const f of report.riskFindings) {
-      if (f.ruleId !== "broken-import" && f.ruleId !== "deleted-module-with-dependents")
-        expect(f.isHeuristic).toBe(true);
+    for (const f of report.findings) {
+      expect(f.is_heuristic).toBe(f.status !== "verified_static_fact");
+      // Path-convention rules are never presented as facts.
+      if (
+        ["migration-changed", "api-contract-changed", "config-changed", "security-sensitive-change"].includes(
+          f.rule_id
+        )
+      )
+        expect(f.status).toBe("hypothesis");
     }
-    const migration = report.riskFindings.find((f) => f.ruleId === "migration-changed")!;
+    const migration = report.findings.find((f) => f.rule_id === "migration-changed")!;
     expect(migration.evidence.map((e) => e.path)).toEqual(["db/migrations/002_add_price.sql"]);
-    const contract = report.riskFindings.find((f) => f.ruleId === "api-contract-changed")!;
+    const contract = report.findings.find((f) => f.rule_id === "api-contract-changed")!;
     expect(contract.evidence.map((e) => e.path).sort()).toEqual(["api/openapi.yaml", "schema.graphql"]);
-    const configs = report.riskFindings.filter((f) => f.ruleId === "config-changed");
+    const configs = report.findings.filter((f) => f.rule_id === "config-changed");
     expect(configs.map((f) => f.severity)).toEqual(["medium", "low"]);
     expect(configs[0]!.evidence.map((e) => e.path).sort()).toEqual([
       ".env.example",
       ".github/workflows/ci.yml",
     ]);
-    const session = report.riskFindings.find(
-      (f) => f.ruleId === "security-sensitive-change" && f.relatedModules.includes("src/auth/session.ts")
+    const session = report.findings.find(
+      (f) => f.rule_id === "security-sensitive-change" && f.affected_modules.includes("src/auth/session.ts")
     )!;
     expect(session.provenance).toBe("graph");
     expect(session.evidence.map((e) => e.detail)).toEqual([
       "security-related path name",
       'imports "jsonwebtoken"',
     ]);
-    expect(session.evidence[1]!.line).toBe(1);
-    expect(report.riskFindings.some((f) => f.relatedModules.includes("src/permissions/roles.ts"))).toBe(true);
+    expect(session.evidence[1]!.line_start).toBe(1);
+    expect(report.findings.some((f) => f.affected_modules.includes("src/permissions/roles.ts"))).toBe(true);
   });
 
   it("reports package manifest field changes by name only and never runs scripts", async () => {
@@ -127,7 +129,7 @@ describe("risk rules (acceptance D)", () => {
     repo.write({ "package.json": JSON.stringify(pkg, null, 2) });
     repo.commit("manifest");
     const report = await analyzeJson(repo.dir, head);
-    const finding = report.riskFindings.find((f) => f.ruleId === "package-manifest-changed")!;
+    const finding = report.findings.find((f) => f.rule_id === "package-manifest-changed")!;
     expect(finding.severity).toBe("medium");
     expect(finding.evidence.map((e) => e.detail)).toEqual([
       'field "dependencies" added: left-pad',
@@ -142,7 +144,7 @@ describe("risk rules (acceptance D)", () => {
     repo.remove("test/cart.test.ts");
     repo.commit("drop test");
     const report = await analyzeJson(repo.dir, head);
-    expect(report.riskFindings.find((f) => f.ruleId === "tests-removed")).toMatchObject({
+    expect(report.findings.find((f) => f.rule_id === "tests-removed")).toMatchObject({
       severity: "medium",
       provenance: "observed",
     });
@@ -151,9 +153,7 @@ describe("risk rules (acceptance D)", () => {
     repo2.write({ "src/utils/unused.ts": "export const unused = 7;\n" });
     repo2.commit("src only");
     const report2 = await analyzeJson(repo2.dir, head);
-    expect(report2.riskFindings.find((f) => f.ruleId === "source-without-test-change")?.severity).toBe(
-      "info"
-    );
+    expect(report2.findings.find((f) => f.rule_id === "source-without-test-change")?.severity).toBe("info");
   });
 
   it("flags package entry points and wide blast radius", async () => {
@@ -167,11 +167,16 @@ describe("risk rules (acceptance D)", () => {
     });
     repo.commit("core");
     const report = await analyzeJson(repo.dir, head);
-    const wide = report.riskFindings.find((f) => f.ruleId === "wide-blast-radius")!;
-    expect(wide).toMatchObject({ severity: "info", provenance: "graph", isHeuristic: true });
-    expect(wide.title).toBe("12 modules transitively depend on src/core.ts");
-    const entry = report.riskFindings.find((f) => f.ruleId === "package-entry-changed")!;
-    expect(entry).toMatchObject({ confidence: "medium", relatedModules: ["src/index.ts"] });
+    const wide = report.findings.find((f) => f.rule_id === "wide-blast-radius")!;
+    expect(wide).toMatchObject({
+      severity: "info",
+      provenance: "graph",
+      status: "verified_static_fact",
+      is_heuristic: false,
+    });
+    expect(wide.summary).toBe("12 modules transitively depend on src/core.ts");
+    const entry = report.findings.find((f) => f.rule_id === "package-entry-changed")!;
+    expect(entry).toMatchObject({ confidence: "medium", affected_modules: ["src/index.ts"] });
   });
 });
 
@@ -184,17 +189,17 @@ describe("monorepo / workspaces", () => {
     });
     repo.commit("core change");
     const report = await analyzeJson(repo.dir, head);
-    expect(report.repository.workspacePackages).toEqual([
+    expect(report.repository.workspace_packages).toEqual([
       { name: "acme-monorepo", path: "." },
       { name: "@acme/app", path: "packages/app" },
       { name: "@acme/core", path: "packages/core" },
     ]);
-    const byPath = Object.fromEntries(report.affectedModules.map((m) => [m.path, m]));
+    const byPath = Object.fromEntries(report.affected_modules.map((m) => [m.path, m]));
     expect(byPath["packages/core/src/index.ts"]).toMatchObject({ distance: 1, provenance: "graph" });
     expect(byPath["packages/app/src/main.ts"]).toMatchObject({ distance: 2, provenance: "inferred" });
     expect(byPath["packages/app/src/main.test.ts"]).toMatchObject({ distance: 3, provenance: "inferred" });
     expect(limitationCodes(report)).toContain("workspace-edges-inferred");
-    expect(report.suggestedTests.map((t) => t.path)).toEqual([
+    expect(report.test_candidates.map((t) => t.path)).toEqual([
       "packages/app/src/main.test.ts",
       "packages/core/src/math.test.ts",
     ]);

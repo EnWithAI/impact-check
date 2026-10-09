@@ -43,6 +43,8 @@ Options:
   --max-depth <n>          Max reverse-dependency hops (default 10)
   --max-affected <n>       Max affected modules listed (default 500)
   --offline                Accepted for explicitness: ChangeLens never uses the network
+  --on-error <fail|pass>   Tool/git errors: fail (default; fail-closed, exit 1/3) or pass (fail-open: warn, exit 0).
+                           Usage errors always exit 2; policy failures always exit 4
   --no-branding            Omit the footer line in Markdown output
   --quiet                  No progress messages on stderr
   -h, --help               Show this help
@@ -73,6 +75,9 @@ export function readSchema(): string {
   return readFileSync(new URL("../../schema/changelens-report.schema.json", import.meta.url), "utf8");
 }
 
+/** Set by --on-error pass: tool/git errors become warnings with exit 0 (fail-open). */
+let failOpen = false;
+
 async function main(argv: string[], io: CliIO): Promise<number> {
   const { values, positionals } = (() => {
     try {
@@ -95,6 +100,7 @@ async function main(argv: string[], io: CliIO): Promise<number> {
           "max-affected": { type: "string" },
           offline: { type: "boolean" },
           "no-branding": { type: "boolean" },
+          "on-error": { type: "string" },
           quiet: { type: "boolean" },
           help: { type: "boolean", short: "h" },
           version: { type: "boolean", short: "v" },
@@ -148,6 +154,9 @@ async function main(argv: string[], io: CliIO): Promise<number> {
     throw usageError(`Unknown command: ${command}`, "Commands: analyze, check, render, schema.");
   }
 
+  const onError = values["on-error"] ?? "fail";
+  if (onError !== "fail" && onError !== "pass") throw usageError(`--on-error must be "fail" or "pass"`);
+  failOpen = onError === "pass";
   if (values.head !== undefined && values.worktree)
     throw usageError("--head and --worktree cannot be combined");
   const format = values.format ?? "markdown";
@@ -162,12 +171,17 @@ async function main(argv: string[], io: CliIO): Promise<number> {
     throw usageError(`--cwd is not a directory: ${values.cwd ?? cwd}`);
 
   let config: Config = DEFAULT_CONFIG;
+  let configSource = "defaults";
   if (values.config !== undefined) {
+    configSource = "--config";
     config = loadConfigFile(isAbsolute(values.config) ? values.config : resolve(io.cwd, values.config));
   } else {
     const root = await repoRoot(cwd);
     const implicit = join(root, ".changelens.json");
-    if (existsSync(implicit)) config = loadConfigFile(implicit);
+    if (existsSync(implicit)) {
+      config = loadConfigFile(implicit);
+      configSource = ".changelens.json";
+    }
   }
 
   const log = values.quiet ? undefined : (message: string): void => io.stderr(`changelens: ${message}\n`);
@@ -177,6 +191,7 @@ async function main(argv: string[], io: CliIO): Promise<number> {
     head: values.head ?? null,
     diffMode: diffMode as "merge-base" | "direct",
     config,
+    configSource,
     tsConfig: values.tsconfig ?? null,
     ...(maxDepth !== undefined ? { maxDepth } : {}),
     ...(maxAffected !== undefined ? { maxAffected } : {}),
@@ -208,9 +223,17 @@ async function main(argv: string[], io: CliIO): Promise<number> {
 
 /** CLI entry point. Never throws; maps every error to a documented exit code. */
 export async function run(argv: string[], io: CliIO): Promise<number> {
+  failOpen = false;
   try {
     return await main(argv, io);
   } catch (error) {
+    const usage = error instanceof ChangeLensError && error.exitCode === ExitCode.Usage;
+    if (failOpen && !usage) {
+      io.stderr(
+        `changelens: warning: analysis failed and was ignored (on-error=pass, fail-open): ${(error as Error).message}\n`
+      );
+      return ExitCode.Ok;
+    }
     if (error instanceof ChangeLensError) {
       io.stderr(`changelens: error: ${error.message}\n`);
       if (error.hint) io.stderr(`changelens: hint: ${error.hint}\n`);

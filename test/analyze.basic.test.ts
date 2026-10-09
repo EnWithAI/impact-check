@@ -11,8 +11,10 @@ describe("basic TS fixture — reverse dependencies (acceptance B, C)", () => {
     repo.commit("tweak format");
 
     const report = await analyzeJson(repo.dir, ["--base", "main", "--head", "HEAD"]);
-    expect(report.filesChanged.map((f) => [f.path, f.status])).toEqual([["src/utils/format.ts", "modified"]]);
-    expect(report.filesChanged[0]!.changedLines).toEqual([{ start: 2, end: 2 }]);
+    expect(report.changed_files.map((f) => [f.path, f.status])).toEqual([
+      ["src/utils/format.ts", "modified"],
+    ]);
+    expect(report.changed_files[0]!.changed_lines).toEqual([{ start: 2, end: 2 }]);
     expect(dependents(report).sort()).toEqual(
       [
         "src/index.ts",
@@ -22,13 +24,13 @@ describe("basic TS fixture — reverse dependencies (acceptance B, C)", () => {
         "test/cart.test.ts",
       ].sort()
     );
-    const cart = report.affectedModules.find((m) => m.path === "src/services/cart.ts")!;
+    const cart = report.affected_modules.find((m) => m.path === "src/services/cart.ts")!;
     expect(cart).toMatchObject({
       distance: 1,
       provenance: "graph",
       via: ["src/utils/format.ts", "src/services/cart.ts"],
     });
-    const index = report.affectedModules.find((m) => m.path === "src/index.ts")!;
+    const index = report.affected_modules.find((m) => m.path === "src/index.ts")!;
     expect(index.distance).toBe(3);
     expect(index.via).toEqual([
       "src/utils/format.ts",
@@ -43,16 +45,16 @@ describe("basic TS fixture — reverse dependencies (acceptance B, C)", () => {
       "src/plugins/loader.ts",
       "src/legacy/missing.ts",
     ]) {
-      expect(report.affectedModules.map((m) => m.path)).not.toContain(unrelated);
+      expect(report.affected_modules.map((m) => m.path)).not.toContain(unrelated);
     }
     // Suggested tests are graph-derived plus naming convention, never claimed as run.
-    const tests = Object.fromEntries(report.suggestedTests.map((t) => [t.path, t]));
+    const tests = Object.fromEntries(report.test_candidates.map((t) => [t.path, t]));
     expect(tests["src/utils/format.test.ts"]!.reasons).toEqual([
       "imports-affected-module",
       "naming-convention",
     ]);
     expect(tests["test/cart.test.ts"]!.reasons).toEqual(["imports-affected-module"]);
-    expect(report.suggestedTests.every((t) => t.status === "not-run")).toBe(true);
+    expect(report.test_candidates.every((t) => t.execution_status === "not_run")).toBe(true);
     expect(limitationCodes(report)).toEqual(
       expect.arrayContaining(["tests-not-executed", "semantic-analysis-not-performed"])
     );
@@ -63,14 +65,15 @@ describe("basic TS fixture — reverse dependencies (acceptance B, C)", () => {
     repo.write({ "src/utils/unused.ts": "export const unused = 43;\n" });
     repo.commit("bump");
     const report = await analyzeJson(repo.dir, ["--base", "main", "--head", "HEAD"]);
-    expect(report.affectedModules).toEqual([
+    expect(report.affected_modules).toEqual([
       {
         path: "src/utils/unused.ts",
         reason: "changed",
         distance: 0,
         provenance: "observed",
         via: ["src/utils/unused.ts"],
-        changedRoots: ["src/utils/unused.ts"],
+        changed_roots: ["src/utils/unused.ts"],
+        evidence: [],
       },
     ]);
     expect(ruleIds(report)).not.toContain("wide-blast-radius");
@@ -81,10 +84,10 @@ describe("basic TS fixture — reverse dependencies (acceptance B, C)", () => {
     repo.write({ "README.md": "# Basic fixture\n\nMore docs.\n" });
     repo.commit("docs");
     const report = await analyzeJson(repo.dir, ["--base", "main", "--head", "HEAD"]);
-    expect(report.filesChanged.map((f) => f.kind)).toEqual(["other"]);
-    expect(report.affectedModules).toEqual([]);
-    expect(report.riskFindings).toEqual([]);
-    expect(report.suggestedTests).toEqual([]);
+    expect(report.changed_files.map((f) => f.kind)).toEqual(["other"]);
+    expect(report.affected_modules).toEqual([]);
+    expect(report.findings).toEqual([]);
+    expect(report.test_candidates).toEqual([]);
   });
 
   it("reports dynamic imports and unresolved local imports as limitations", async () => {
@@ -92,10 +95,10 @@ describe("basic TS fixture — reverse dependencies (acceptance B, C)", () => {
     repo.write({ "src/plugins/loader.ts": basicTs["src/plugins/loader.ts"] + "// touched\n" });
     repo.commit("touch");
     const report = await analyzeJson(repo.dir, ["--base", "main", "--head", "HEAD"]);
-    const byCode = Object.fromEntries(report.coverageLimitations.map((l) => [l.code, l]));
+    const byCode = Object.fromEntries(report.coverage_limitations.map((l) => [l.code, l]));
     expect(byCode["non-literal-dynamic-import"]!.paths).toEqual(["src/plugins/loader.ts"]);
     expect(byCode["unresolved-local-import"]!.paths).toEqual(["src/legacy/missing.ts → ./does-not-exist"]);
-    expect(report.analysis.headGraph.unresolvedLocal).toBe(1);
+    expect(report.run_metadata.head_graph.unresolved_local).toBe(1);
   });
 
   it("resolves tsconfig path aliases as graph edges", async () => {
@@ -103,7 +106,7 @@ describe("basic TS fixture — reverse dependencies (acceptance B, C)", () => {
     repo.write({ "src/utils/format.ts": basicTs["src/utils/format.ts"] + "export const X = 1;\n" });
     repo.commit("add export");
     const report = await analyzeJson(repo.dir, ["--base", "main", "--head", "HEAD"]);
-    expect(report.repository.tsConfig).toBe("tsconfig.json");
-    expect(report.affectedModules.find((m) => m.path === "src/services/cart.ts")?.provenance).toBe("graph");
+    expect(report.repository.ts_config).toBe("tsconfig.json");
+    expect(report.affected_modules.find((m) => m.path === "src/services/cart.ts")?.provenance).toBe("graph");
   });
 });

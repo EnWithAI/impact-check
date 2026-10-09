@@ -4,11 +4,15 @@
   "findings": [
     { "rule_id": "export-removed", "status": "verified_static_fact", "summary_includes": "formatPrice" },
     { "rule_id": "export-removed", "status": "verified_static_fact", "summary_includes": "formatAmount" },
-    { "rule_id": "removed-export-still-imported", "status": "verified_static_fact", "severity": "high",
+    {
+      "rule_id": "removed-export-still-imported",
+      "status": "verified_static_fact",
+      "severity": "high",
       "evidence": [
         { "path": "src/services/cart.ts", "line_start": 1, "detail_includes": "formatPrice" },
         { "path": "src/services/price-label.ts", "line_start": 1, "detail_includes": "formatPrice" },
         { "path": "src/utils/format.test.ts", "line_start": 1, "detail_includes": "formatPrice" }
-      ] }
+      ]
+    }
   ]
 }

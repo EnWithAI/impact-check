@@ -134,7 +134,7 @@ function graph(edges: [string, string, ("graph" | "inferred")?][]): ModuleGraph 
     external: new Map(),
     packages: [],
     tsConfig: null,
-    stats: { modules: 0, edges: 0, unresolvedLocal: 0 },
+    stats: { modules: 0, edges: 0, unresolved_local: 0 },
   };
   for (const [from, to, provenance] of edges) {
     g.modules.add(from).add(to);
@@ -187,7 +187,7 @@ describe("impact BFS", () => {
       maxAffected: 100,
     });
     const d = r.affected.find((m) => m.path === "d")!;
-    expect(d).toMatchObject({ distance: 1, via: ["c", "d"], changedRoots: ["a", "c"] });
+    expect(d).toMatchObject({ distance: 1, via: ["c", "d"], changed_roots: ["a", "c"] });
     expect(r.affected.find((m) => m.path === "c")!.reason).toBe("changed");
   });
 });
@@ -221,8 +221,8 @@ describe("misc units", () => {
   });
   it("evaluates policies", () => {
     const report = {
-      riskFindings: [{ id: "x:00000000", ruleId: "x", severity: "medium" }],
-      summary: { affectedModules: 3 },
+      findings: [{ id: "x:00000000", rule_id: "x", severity: "medium" }],
+      summary: { affected_modules: 3 },
     } as never;
     expect(evaluatePolicy(report, DEFAULT_CONFIG.policy).passed).toBe(true);
     expect(

@@ -24,7 +24,10 @@ export class Repo {
   constructor(readonly dir: string) {}
 
   static create(files: FileMap, options: { branch?: string } = {}): Repo {
-    const repo = new Repo(tempDir("cl-repo-"));
+    // Fixed directory name: `repository.name` (the basename) is part of the deterministic report.
+    const dir = join(tempDir("cl-repo-"), "fixture-repo");
+    mkdirSync(dir);
+    const repo = new Repo(dir);
     repo.git("init", "-q", "-b", options.branch ?? "main");
     repo.git("config", "user.email", "test@example.invalid");
     repo.git("config", "user.name", "ChangeLens Test");
@@ -36,19 +39,23 @@ export class Repo {
 
   git(...args: string[]): string {
     // Fixed identity and dates: fixture commit SHAs are identical on every run and machine (golden snapshots).
-    const result = spawnSync("git", ["-c", "core.hooksPath=/dev/null", "-c", "core.autocrlf=false", ...args], {
-      cwd: this.dir,
-      encoding: "utf8",
-      env: {
-        ...process.env,
-        GIT_AUTHOR_NAME: "ChangeLens Test",
-        GIT_AUTHOR_EMAIL: "test@example.invalid",
-        GIT_COMMITTER_NAME: "ChangeLens Test",
-        GIT_COMMITTER_EMAIL: "test@example.invalid",
-        GIT_AUTHOR_DATE: "2026-01-01T00:00:00+0000",
-        GIT_COMMITTER_DATE: "2026-01-01T00:00:00+0000",
-      },
-    });
+    const result = spawnSync(
+      "git",
+      ["-c", "core.hooksPath=/dev/null", "-c", "core.autocrlf=false", ...args],
+      {
+        cwd: this.dir,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          GIT_AUTHOR_NAME: "ChangeLens Test",
+          GIT_AUTHOR_EMAIL: "test@example.invalid",
+          GIT_COMMITTER_NAME: "ChangeLens Test",
+          GIT_COMMITTER_EMAIL: "test@example.invalid",
+          GIT_AUTHOR_DATE: "2026-01-01T00:00:00+0000",
+          GIT_COMMITTER_DATE: "2026-01-01T00:00:00+0000",
+        },
+      }
+    );
     if (result.status !== 0) throw new Error(`git ${args.join(" ")} failed: ${result.stderr}`);
     return result.stdout.trim();
   }
@@ -104,8 +111,8 @@ export async function analyzeJson(cwd: string, args: string[] = []): Promise<Rep
 }
 
 export const dependents = (report: Report): string[] =>
-  report.affectedModules.filter((m) => m.reason === "dependent").map((m) => m.path);
+  report.affected_modules.filter((m) => m.reason === "dependent").map((m) => m.path);
 
-export const ruleIds = (report: Report): string[] => report.riskFindings.map((f) => f.ruleId);
+export const ruleIds = (report: Report): string[] => report.findings.map((f) => f.rule_id);
 
-export const limitationCodes = (report: Report): string[] => report.coverageLimitations.map((l) => l.code);
+export const limitationCodes = (report: Report): string[] => report.coverage_limitations.map((l) => l.code);

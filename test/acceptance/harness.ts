@@ -39,7 +39,12 @@ export function loadExpectation(name: string): Expectation {
 type Json = Record<string, unknown>;
 const ORDER = { info: 0, low: 1, medium: 2, high: 3 } as const;
 
-function matchEvidence(actual: Json[], e: ExpectedEvidence, commits: { head: string | null; base: string }, where: string): void {
+function matchEvidence(
+  actual: Json[],
+  e: ExpectedEvidence,
+  commits: { head: string | null; base: string },
+  where: string
+): void {
   const hit = actual.find(
     (a) =>
       a["path"] === e.path &&
@@ -71,43 +76,72 @@ export function assertExpectation(report: Json, exp: Expectation): void {
     for (const [path, want] of Object.entries(exp.affected_dependents)) {
       const m = dependents.find((d) => d["path"] === path) as Json;
       expect(m["distance"], `${exp.case}: ${path} distance`).toBe(want.distance);
-      if (want.evidence) matchEvidence(m["evidence"] as Json[], want.evidence, commits, `${exp.case}: ${path}`);
+      if (want.evidence)
+        matchEvidence(m["evidence"] as Json[], want.evidence, commits, `${exp.case}: ${path}`);
     }
   }
 
   const findings = report["findings"] as Json[];
   for (const f of exp.findings ?? []) {
-    const candidates = findings.filter((a) => a["rule_id"] === f.rule_id && (f.summary_includes === undefined || String(a["summary"]).includes(f.summary_includes)));
-    expect(candidates.length, `${exp.case}: finding ${f.rule_id} ${f.summary_includes ?? ""} missing; got ${findings.map((x) => `${x["rule_id"]}:${x["summary"]}`).join(" | ")}`).toBeGreaterThan(0);
+    const candidates = findings.filter(
+      (a) =>
+        a["rule_id"] === f.rule_id &&
+        (f.summary_includes === undefined || String(a["summary"]).includes(f.summary_includes))
+    );
+    expect(
+      candidates.length,
+      `${exp.case}: finding ${f.rule_id} ${f.summary_includes ?? ""} missing; got ${findings.map((x) => `${x["rule_id"]}:${x["summary"]}`).join(" | ")}`
+    ).toBeGreaterThan(0);
     const a = candidates[0] as Json;
     expect(a["status"], `${exp.case}: ${f.rule_id} status`).toBe(f.status);
-    expect(a["is_heuristic"], `${exp.case}: ${f.rule_id} is_heuristic`).toBe(f.status !== "verified_static_fact");
-    expect(String(a["recommended_human_action"]).length, `${exp.case}: ${f.rule_id} action`).toBeGreaterThan(10);
+    expect(a["is_heuristic"], `${exp.case}: ${f.rule_id} is_heuristic`).toBe(
+      f.status !== "verified_static_fact"
+    );
+    expect(String(a["recommended_human_action"]).length, `${exp.case}: ${f.rule_id} action`).toBeGreaterThan(
+      10
+    );
     if (f.severity) expect(a["severity"], `${exp.case}: ${f.rule_id} severity`).toBe(f.severity);
-    for (const e of f.evidence ?? []) matchEvidence(a["evidence"] as Json[], e, commits, `${exp.case}: ${f.rule_id}`);
+    for (const e of f.evidence ?? [])
+      matchEvidence(a["evidence"] as Json[], e, commits, `${exp.case}: ${f.rule_id}`);
     for (const m of f.affected_modules_include ?? []) expect(a["affected_modules"] as string[]).toContain(m);
   }
   for (const id of exp.forbidden_rule_ids ?? []) {
-    expect(findings.map((f) => f["rule_id"]), `${exp.case}: forbidden ${id}`).not.toContain(id);
+    expect(
+      findings.map((f) => f["rule_id"]),
+      `${exp.case}: forbidden ${id}`
+    ).not.toContain(id);
   }
   if (exp.max_severity) {
     for (const f of findings) {
-      expect(ORDER[f["severity"] as keyof typeof ORDER], `${exp.case}: ${f["rule_id"]} exceeds ${exp.max_severity}`).toBeLessThanOrEqual(ORDER[exp.max_severity]);
+      expect(
+        ORDER[f["severity"] as keyof typeof ORDER],
+        `${exp.case}: ${f["rule_id"]} exceeds ${exp.max_severity}`
+      ).toBeLessThanOrEqual(ORDER[exp.max_severity]);
     }
   }
   const limits = report["coverage_limitations"] as Json[];
   for (const l of exp.limitations ?? []) {
     const hit = limits.find((x) => x["code"] === l.code);
-    expect(hit, `${exp.case}: limitation ${l.code} missing; got ${limits.map((x) => x["code"]).join(", ")}`).toBeDefined();
+    expect(
+      hit,
+      `${exp.case}: limitation ${l.code} missing; got ${limits.map((x) => x["code"]).join(", ")}`
+    ).toBeDefined();
     for (const p of l.paths_include ?? []) expect((hit as Json)["paths"] as string[]).toContain(p);
   }
   const tests = (report["test_candidates"] as Json[]).map((t) => t["path"]);
-  for (const t of exp.test_candidates_include ?? []) expect(tests, `${exp.case}: test candidate ${t}`).toContain(t);
+  for (const t of exp.test_candidates_include ?? [])
+    expect(tests, `${exp.case}: test candidate ${t}`).toContain(t);
   for (const t of report["test_candidates"] as Json[]) expect(t["execution_status"]).toBe("not_run");
 }
 
 /** Fields that legitimately vary between runs (see schema description). */
 export function normalize(report: Json): Json {
-  const meta = { ...(report["run_metadata"] as Json), generated_at: "<generated_at>", duration_ms: 0, timings_ms: {}, node_version: "<node>" };
+  const meta = {
+    ...(report["run_metadata"] as Json),
+    generated_at: "<generated_at>",
+    duration_ms: 0,
+    timings_ms: {},
+    node_version: "<node>",
+  };
   return { ...report, run_metadata: meta };
 }

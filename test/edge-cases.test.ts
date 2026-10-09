@@ -18,31 +18,31 @@ describe("git diff edge cases (acceptance G)", () => {
     });
     repo.commit("mixed");
     const report = await analyzeJson(repo.dir, ["--base", "main", "--head", "HEAD"]);
-    const byPath = Object.fromEntries(report.filesChanged.map((f) => [f.path, f]));
+    const byPath = Object.fromEntries(report.changed_files.map((f) => [f.path, f]));
     expect(byPath["src/services/pay.ts"]).toMatchObject({
       status: "renamed",
-      previousPath: "src/services/checkout.ts",
+      previous_path: "src/services/checkout.ts",
     });
-    expect(byPath["src/utils/unused.ts"]).toMatchObject({ status: "deleted", changedLines: [] });
+    expect(byPath["src/utils/unused.ts"]).toMatchObject({ status: "deleted", changed_lines: [] });
     expect(byPath["src/new-feature.ts"]).toMatchObject({ status: "added", kind: "source" });
     expect(byPath["assets/logo.png"]).toMatchObject({ status: "added", binary: true, additions: null });
     expect(byPath["docs/notes.md"]).toMatchObject({ status: "added", kind: "other" });
     expect(limitationCodes(report)).toContain("binary-file");
     // Renamed module: its base dependent (src/index.ts) was updated, so no broken import.
     expect(ruleIds(report)).not.toContain("broken-import");
-    const deleted = report.riskFindings.find((f) => f.ruleId === "deleted-module-with-dependents");
-    expect(deleted).toMatchObject({ severity: "low", isHeuristic: false, provenance: "graph" });
-    expect(report.analysis.baseGraph).not.toBeNull();
+    const deleted = report.findings.find((f) => f.rule_id === "deleted-module-with-dependents");
+    expect(deleted).toMatchObject({ severity: "low", is_heuristic: false, provenance: "graph" });
+    expect(report.run_metadata.base_graph).not.toBeNull();
     // Sorted output
-    const paths = report.filesChanged.map((f) => f.path);
+    const paths = report.changed_files.map((f) => f.path);
     expect(paths).toEqual([...paths].sort());
   });
 
   it("returns an empty, valid report when nothing changed", async () => {
     const repo = Repo.create(basicTs);
     const report = await analyzeJson(repo.dir, ["--base", "main", "--head", "HEAD"]);
-    expect(report.summary).toMatchObject({ filesChanged: 0, affectedModules: 0, suggestedTests: 0 });
-    expect(report.riskFindings).toEqual([]);
+    expect(report.summary).toMatchObject({ files_changed: 0, affected_modules: 0, test_candidates: 0 });
+    expect(report.findings).toEqual([]);
   });
 
   it("fails with exit 3 and a remediation hint for a missing base ref", async () => {
@@ -58,7 +58,7 @@ describe("git diff edge cases (acceptance G)", () => {
     repo.write({ "src/utils/unused.ts": "export const unused = 0;\n" });
     repo.commit("x");
     const report = await analyzeJson(repo.dir, ["--head", "HEAD"]);
-    expect(report.comparison.baseRef).toBe("master");
+    expect(report.base_revision.ref).toBe("master");
   });
 
   it("rejects option-like refs (exit 2) without invoking git with them", async () => {
@@ -86,15 +86,20 @@ describe("git diff edge cases (acceptance G)", () => {
     });
 
     const commitMode = await analyzeJson(repo.dir, ["--base", "main", "--head", "HEAD"]);
-    expect(commitMode.comparison.headKind).toBe("commit");
-    expect(commitMode.filesChanged.map((f) => f.path)).toEqual(["src/utils/unused.ts"]);
-    const excluded = commitMode.coverageLimitations.find((l) => l.code === "dirty-worktree-excluded");
+    expect(commitMode.repo_revision.kind).toBe("commit");
+    expect(commitMode.changed_files.map((f) => f.path)).toEqual(["src/utils/unused.ts"]);
+    const excluded = commitMode.coverage_limitations.find((l) => l.code === "dirty-worktree-excluded");
     expect(excluded?.count).toBe(3);
-    expect(commitMode.comparison.worktree).toEqual({ included: false, staged: 1, unstaged: 1, untracked: 1 });
+    expect(commitMode.repo_revision.worktree).toEqual({
+      included: false,
+      staged: 1,
+      unstaged: 1,
+      untracked: 1,
+    });
 
     const worktree = await analyzeJson(repo.dir, ["--base", "main"]);
-    expect(worktree.comparison).toMatchObject({ headKind: "worktree", headRef: "WORKTREE" });
-    const origins = Object.fromEntries(worktree.filesChanged.map((f) => [f.path, f.origin]));
+    expect(worktree.repo_revision).toMatchObject({ kind: "worktree", ref: "WORKTREE" });
+    const origins = Object.fromEntries(worktree.changed_files.map((f) => [f.path, f.origin]));
     expect(origins).toEqual({
       "src/scratch.ts": "untracked",
       "src/services/cart.ts": "unstaged",
@@ -110,7 +115,7 @@ describe("git diff edge cases (acceptance G)", () => {
     const sha = repo.commit("x");
     repo.git("checkout", "-q", "--detach", sha);
     const report = await analyzeJson(repo.dir, ["--base", "main", "--head", "HEAD"]);
-    expect(report.comparison.headCommit).toBe(sha);
+    expect(report.repo_revision.commit).toBe(sha);
   });
 
   it("explains shallow clones that lack the merge base", async () => {
@@ -137,7 +142,7 @@ describe("git diff edge cases (acceptance G)", () => {
       cloneDir
     );
     expect(direct.code).toBe(0);
-    expect(JSON.parse(direct.stdout).repository.isShallow).toBe(true);
+    expect(JSON.parse(direct.stdout).repository.is_shallow).toBe(true);
   });
 
   it("skips symlinks instead of following them", async () => {
@@ -145,10 +150,10 @@ describe("git diff edge cases (acceptance G)", () => {
     symlinkSync("/etc/hosts", join(repo.dir, "src/evil.ts"));
     repo.commit("symlink");
     const report = await analyzeJson(repo.dir, ["--base", "main", "--head", "HEAD"]);
-    const symlinks = report.coverageLimitations.find((l) => l.code === "symlink-skipped");
+    const symlinks = report.coverage_limitations.find((l) => l.code === "symlink-skipped");
     expect(symlinks?.paths).toEqual(["src/evil.ts"]);
     const worktree = await analyzeJson(repo.dir, ["--base", "main"]);
-    expect(worktree.coverageLimitations.find((l) => l.code === "symlink-skipped")?.paths).toEqual([
+    expect(worktree.coverage_limitations.find((l) => l.code === "symlink-skipped")?.paths).toEqual([
       "src/evil.ts",
     ]);
   });
@@ -173,7 +178,7 @@ describe("git diff edge cases (acceptance G)", () => {
     repo.write(Object.fromEntries(names.map((n) => [n, "export const v = 2;\n"])));
     repo.commit("weird names");
     const report = await analyzeJson(repo.dir, ["--base", "main", "--head", "HEAD"]);
-    expect(report.filesChanged.map((f) => f.path).sort()).toEqual([...names].sort());
+    expect(report.changed_files.map((f) => f.path).sort()).toEqual([...names].sort());
     expect(dependents(report)).toEqual(["src/consumer.ts"]);
     const md = await cli(["analyze", "--base", "main", "--head", "HEAD", "--quiet"], repo.dir);
     expect(md.code).toBe(0);

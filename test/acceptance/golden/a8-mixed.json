@@ -1,0 +1,567 @@
+{
+  "schema_version": "2.0",
+  "repo_revision": {
+    "ref": "HEAD",
+    "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+    "kind": "commit",
+    "worktree": {
+      "included": false,
+      "staged": 0,
+      "unstaged": 0,
+      "untracked": 0
+    }
+  },
+  "base_revision": {
+    "ref": "main",
+    "commit": "8597a2e993198d7636e7302e6654a6245dea5008",
+    "merge_base": "8597a2e993198d7636e7302e6654a6245dea5008",
+    "diff_mode": "merge-base"
+  },
+  "repository": {
+    "name": "fixture-repo",
+    "is_shallow": false,
+    "ts_config": "tsconfig.json",
+    "workspace_packages": [
+      {
+        "name": "basic-fixture",
+        "path": "."
+      }
+    ],
+    "context": {
+      "languages": [
+        {
+          "language": "typescript",
+          "files": 14
+        },
+        {
+          "language": "json",
+          "files": 2
+        },
+        {
+          "language": "sql",
+          "files": 2
+        },
+        {
+          "language": "markdown",
+          "files": 1
+        }
+      ],
+      "module_type": "module",
+      "workspace_tools": [],
+      "test_frameworks": [],
+      "module_resolution": "bundler"
+    }
+  },
+  "summary": {
+    "analysis_mode": "full",
+    "files_changed": 3,
+    "js_ts_files_changed": 2,
+    "affected_modules": 10,
+    "findings_by_severity": {
+      "high": 1,
+      "medium": 2,
+      "low": 0,
+      "info": 1
+    },
+    "findings_by_status": {
+      "verified_static_fact": 2,
+      "hypothesis": 2,
+      "unknown": 0
+    },
+    "test_candidates": 2,
+    "coverage_limitations": 6
+  },
+  "changed_files": [
+    {
+      "path": "db/migrations/9.sql",
+      "previous_path": null,
+      "status": "added",
+      "binary": false,
+      "generated": false,
+      "language": "other",
+      "kind": "other",
+      "additions": 1,
+      "deletions": 0,
+      "origin": "committed",
+      "changed_lines": [
+        {
+          "start": 1,
+          "end": 1
+        }
+      ],
+      "provenance": "observed"
+    },
+    {
+      "path": "src/utils/format.ts",
+      "previous_path": null,
+      "status": "modified",
+      "binary": false,
+      "generated": false,
+      "language": "typescript",
+      "kind": "source",
+      "additions": 0,
+      "deletions": 1,
+      "origin": "committed",
+      "changed_lines": [],
+      "provenance": "observed"
+    },
+    {
+      "path": "src/utils/unused.ts",
+      "previous_path": null,
+      "status": "deleted",
+      "binary": false,
+      "generated": false,
+      "language": "typescript",
+      "kind": "source",
+      "additions": 0,
+      "deletions": 1,
+      "origin": "committed",
+      "changed_lines": [],
+      "provenance": "observed"
+    }
+  ],
+  "affected_modules": [
+    {
+      "path": "src/utils/format.ts",
+      "reason": "changed",
+      "distance": 0,
+      "provenance": "observed",
+      "via": [
+        "src/utils/format.ts"
+      ],
+      "changed_roots": [
+        "src/utils/format.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "path": "src/utils/unused.ts",
+      "reason": "changed",
+      "distance": 0,
+      "provenance": "observed",
+      "via": [
+        "src/utils/unused.ts"
+      ],
+      "changed_roots": [
+        "src/utils/unused.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "path": "src/services/cart.ts",
+      "reason": "dependent",
+      "distance": 1,
+      "provenance": "graph",
+      "via": [
+        "src/utils/format.ts",
+        "src/services/cart.ts"
+      ],
+      "changed_roots": [
+        "src/utils/format.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "src/services/cart.ts",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "detail": "imports \"@utils/format\" → src/utils/format.ts"
+        }
+      ]
+    },
+    {
+      "path": "src/services/price-label.ts",
+      "reason": "dependent",
+      "distance": 1,
+      "provenance": "graph",
+      "via": [
+        "src/utils/format.ts",
+        "src/services/price-label.ts"
+      ],
+      "changed_roots": [
+        "src/utils/format.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "src/services/price-label.ts",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "detail": "imports \"@utils/format\" → src/utils/format.ts"
+        }
+      ]
+    },
+    {
+      "path": "src/utils/format.test.ts",
+      "reason": "dependent",
+      "distance": 1,
+      "provenance": "graph",
+      "via": [
+        "src/utils/format.ts",
+        "src/utils/format.test.ts"
+      ],
+      "changed_roots": [
+        "src/utils/format.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "src/utils/format.test.ts",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "detail": "imports \"./format\" → src/utils/format.ts"
+        }
+      ]
+    },
+    {
+      "path": "src/utils/index.ts",
+      "reason": "dependent",
+      "distance": 1,
+      "provenance": "graph",
+      "via": [
+        "src/utils/format.ts",
+        "src/utils/index.ts"
+      ],
+      "changed_roots": [
+        "src/utils/format.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "src/utils/index.ts",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "detail": "imports \"./format\" → src/utils/format.ts"
+        }
+      ]
+    },
+    {
+      "path": "src/app-version.ts",
+      "reason": "dependent",
+      "distance": 2,
+      "provenance": "graph",
+      "via": [
+        "src/utils/format.ts",
+        "src/utils/index.ts",
+        "src/app-version.ts"
+      ],
+      "changed_roots": [
+        "src/utils/format.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "src/app-version.ts",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "detail": "imports \"./utils/index\" → src/utils/index.ts"
+        }
+      ]
+    },
+    {
+      "path": "src/services/checkout.ts",
+      "reason": "dependent",
+      "distance": 2,
+      "provenance": "graph",
+      "via": [
+        "src/utils/format.ts",
+        "src/services/cart.ts",
+        "src/services/checkout.ts"
+      ],
+      "changed_roots": [
+        "src/utils/format.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "src/services/checkout.ts",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "detail": "imports \"./cart.js\" → src/services/cart.ts"
+        }
+      ]
+    },
+    {
+      "path": "test/cart.test.ts",
+      "reason": "dependent",
+      "distance": 2,
+      "provenance": "graph",
+      "via": [
+        "src/utils/format.ts",
+        "src/services/cart.ts",
+        "test/cart.test.ts"
+      ],
+      "changed_roots": [
+        "src/utils/format.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "test/cart.test.ts",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "detail": "imports \"../src/services/cart\" → src/services/cart.ts"
+        }
+      ]
+    },
+    {
+      "path": "src/index.ts",
+      "reason": "dependent",
+      "distance": 3,
+      "provenance": "graph",
+      "via": [
+        "src/utils/format.ts",
+        "src/services/cart.ts",
+        "src/services/checkout.ts",
+        "src/index.ts"
+      ],
+      "changed_roots": [
+        "src/utils/format.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "src/index.ts",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "detail": "imports \"./services/checkout\" → src/services/checkout.ts"
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "removed-export-still-imported:41ea444a",
+      "rule_id": "removed-export-still-imported",
+      "category": "broken-import",
+      "severity": "high",
+      "status": "verified_static_fact",
+      "confidence": "high",
+      "is_heuristic": false,
+      "provenance": "graph",
+      "summary": "Removed export still imported by 1 module: CURRENCY from src/utils/format.ts",
+      "explanation": "These dependents import names that the parser no longer finds among the exports of src/utils/format.ts. Unless the names are provided some other way the parser cannot see, these imports are broken.",
+      "recommended_human_action": "Update the importing modules or restore the export before merging.",
+      "evidence": [
+        {
+          "kind": "import-edge",
+          "path": "src/services/price-label.ts",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "detail": "imports \"CURRENCY\" from \"@utils/format\" (not exported in head)"
+        }
+      ],
+      "affected_modules": [
+        "src/services/price-label.ts",
+        "src/utils/format.ts"
+      ]
+    },
+    {
+      "id": "export-removed:8e0a26d4",
+      "rule_id": "export-removed",
+      "category": "public-api",
+      "severity": "medium",
+      "status": "verified_static_fact",
+      "confidence": "high",
+      "is_heuristic": false,
+      "provenance": "graph",
+      "summary": "Export removed from src/utils/format.ts: CURRENCY",
+      "explanation": "The TypeScript parser finds 1 named export in the base version that is absent in the head version. The module has 4 direct dependents.",
+      "recommended_human_action": "Confirm the removal is intended and check consumers outside this repository (published packages, other services).",
+      "evidence": [
+        {
+          "kind": "export-declaration",
+          "path": "src/utils/format.ts",
+          "side": "base",
+          "line_start": 5,
+          "line_end": 5,
+          "commit": "8597a2e993198d7636e7302e6654a6245dea5008",
+          "detail": "removed: const CURRENCY"
+        }
+      ],
+      "affected_modules": [
+        "src/services/cart.ts",
+        "src/services/price-label.ts",
+        "src/utils/format.test.ts",
+        "src/utils/format.ts",
+        "src/utils/index.ts"
+      ]
+    },
+    {
+      "id": "migration-changed:389e8932",
+      "rule_id": "migration-changed",
+      "category": "migration",
+      "severity": "medium",
+      "status": "hypothesis",
+      "confidence": "medium",
+      "is_heuristic": true,
+      "provenance": "inferred",
+      "summary": "Database migration or schema files changed (1 file)",
+      "explanation": "Migrations can be irreversible or require coordinated deploys. Check ordering, rollback and data impact. Detected by path convention only.",
+      "recommended_human_action": "Review migration ordering, reversibility and data impact, and plan the deployment sequence.",
+      "evidence": [
+        {
+          "kind": "path-pattern",
+          "path": "db/migrations/9.sql",
+          "side": "head",
+          "line_start": 1,
+          "line_end": 1,
+          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "detail": "added"
+        }
+      ],
+      "affected_modules": [
+        "db/migrations/9.sql"
+      ]
+    },
+    {
+      "id": "source-without-test-change:078c777f",
+      "rule_id": "source-without-test-change",
+      "category": "test-change",
+      "severity": "info",
+      "status": "hypothesis",
+      "confidence": "medium",
+      "is_heuristic": true,
+      "provenance": "inferred",
+      "summary": "Source changed without test changes (1 module)",
+      "explanation": "No test file was modified in this change. Existing tests may still cover it; see suggested tests.",
+      "recommended_human_action": "Run the test candidates and consider adding tests for the changed behavior.",
+      "evidence": [
+        {
+          "kind": "file-status",
+          "path": "src/utils/format.ts",
+          "side": "head",
+          "line_start": null,
+          "line_end": null,
+          "commit": "7b30c65ad4fec750fabb722d767edcffbc1fe4cf",
+          "detail": "modified"
+        }
+      ],
+      "affected_modules": [
+        "src/utils/format.ts"
+      ]
+    }
+  ],
+  "test_candidates": [
+    {
+      "path": "src/utils/format.test.ts",
+      "reasons": [
+        "imports-affected-module",
+        "naming-convention"
+      ],
+      "related_to": [
+        "src/utils/format.ts"
+      ],
+      "provenance": "graph",
+      "execution_status": "not_run"
+    },
+    {
+      "path": "test/cart.test.ts",
+      "reasons": [
+        "imports-affected-module"
+      ],
+      "related_to": [
+        "src/utils/format.ts"
+      ],
+      "provenance": "graph",
+      "execution_status": "not_run"
+    }
+  ],
+  "coverage_limitations": [
+    {
+      "code": "export-analysis-incomplete",
+      "message": "Export analysis was skipped or incomplete for these modules (unreadable, too large, CommonJS exports, transitive re-exports or namespace imports).",
+      "paths": [
+        "src/utils/index.ts"
+      ],
+      "count": 1
+    },
+    {
+      "code": "external-packages-not-analyzed",
+      "message": "Imports of npm packages and Node built-ins are not followed; changes inside dependencies are out of scope.",
+      "paths": [],
+      "count": 1
+    },
+    {
+      "code": "non-literal-dynamic-import",
+      "message": "Dynamic import()/require() with a non-literal argument cannot be resolved statically; edges from these modules may be missing.",
+      "paths": [
+        "src/plugins/loader.ts"
+      ],
+      "count": 1
+    },
+    {
+      "code": "semantic-analysis-not-performed",
+      "message": "ChangeLens analyzes module-level imports and diff lines. It does not type-check, evaluate behavior or prove compatibility.",
+      "paths": [],
+      "count": 1
+    },
+    {
+      "code": "tests-not-executed",
+      "message": "Suggested tests are candidates only. ChangeLens never runs tests or package scripts.",
+      "paths": [],
+      "count": 1
+    },
+    {
+      "code": "unresolved-local-import",
+      "message": "Local imports that could not be resolved; their dependents may be missing.",
+      "paths": [
+        "src/legacy/missing.ts → ./does-not-exist"
+      ],
+      "count": 1
+    }
+  ],
+  "run_metadata": {
+    "tool": "changelens",
+    "tool_version": "0.2.0-alpha.0",
+    "generated_at": "<generated_at>",
+    "duration_ms": 0,
+    "timings_ms": {},
+    "node_version": "<node>",
+    "engine": "dependency-cruiser",
+    "engine_version": "18.5.0",
+    "parser_version": "6.0.3",
+    "head_graph": {
+      "modules": 14,
+      "edges": 9,
+      "unresolved_local": 1
+    },
+    "base_graph": {
+      "modules": 15,
+      "edges": 9,
+      "unresolved_local": 1
+    },
+    "limits": {
+      "max_depth": 10,
+      "max_affected": 500,
+      "truncated": false
+    },
+    "config_source": "defaults",
+    "network": false,
+    "executed_repository_code": false,
+    "model_usage": null,
+    "review_effort": {
+      "files_to_review": 3,
+      "findings_requiring_human_action": 3,
+      "test_candidates": 2
+    }
+  }
+}

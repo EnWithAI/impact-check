@@ -9,7 +9,10 @@ Thanks for helping! ChangeLens aims to stay **small, deterministic and honest** 
 - No network access, telemetry, code execution of analyzed repositories, or new runtime dependencies without
   discussion in an issue first.
 - Fixtures must be **synthetic**. Never commit real or client code, secrets or personal data.
-- Report schema changes must bump `schemaVersion` and update `schema/` + `src/types.ts` together.
+- Report schema changes must bump `schema_version` and update `schema/` + `src/types.ts` together.
+- **Rule or analyzer changes need regression fixtures first:** add or update an expectation in
+  `test/acceptance/expected/`, watch it fail, then implement. Golden snapshot updates (`vitest -u`) must be reviewed
+  in the PR diff, never accepted blindly.
 
 ## Development
 

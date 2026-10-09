@@ -27,27 +27,28 @@ the review signal (reports must not be spoofable into misleading reviewers).
 | T9  | Spoofed artifact consumed by a privileged comment workflow                                    | Optional `workflow_run` template: validates JSON against the schema, re-renders Markdown with the base-branch ChangeLens (escaping again), takes PR number from the event payload, `pull-requests: write` only. Remote run **untested** in alpha.                                        | template review                                                 |
 | T10 | Policy bypass via PR-supplied `.changelens.json`                                              | Action loads config from the **base** commit (`git show <base>:.changelens.json`) by default.                                                                                                                                                                                            | `action.test.ts`                                                |
 | T11 | Supply chain of ChangeLens itself                                                             | Two exact-pinned runtime deps; lockfile; `npm ci --ignore-scripts`; Actions pinned by SHA; license audit.                                                                                                                                                                                | release checklist                                               |
-| T12 | Prompt injection: PR content (comments, strings, file names) addressed to AI agents | ChangeLens has no model and interprets no content as instructions; comments/strings are never copied into reports; file names are escaped; the Markdown header tells downstream readers (incl. AI reviewers) that repository strings are data; CONTEXT_CONTRACT §4. | `test/acceptance/a6-injection.test.ts` |
-| T13 | Misleading certainty: a hypothesis presented as a fact | Tri-state `status`; only git/resolver/parser facts may be `verified_static_fact`; status shown on every Markdown finding; limitations listed. | `test/acceptance/a2-*`, `a3-*` |
-
-## Misuse cases (spec-first, invariant 1)
-| Misuse | Expected behavior |
-|---|---|
-| Using `check` as an automatic merge approver | Not supported: ChangeLens never approves or merges; docs state that `check` is a policy signal. |
-| Treating "no findings" as "safe to merge" | Report lists limitations; CONTEXT_CONTRACT §4.3. |
-| Running the Action under `pull_request_target` with secrets | Documented as unsupported; workflow lint rejects it in our repository. |
-| Feeding the whole repository to an AI reviewer "because ChangeLens said so" | Contract recommends pulling only cited lines. |
-| Shipping a PR-supplied `.changelens.json` that disables the policy | Action reads config from the base commit by default. |
+| T12 | Prompt injection: PR content (comments, strings, file names) addressed to AI agents           | ChangeLens has no model and interprets no content as instructions; comments/strings are never copied into reports; file names are escaped; the Markdown header tells downstream readers (incl. AI reviewers) that repository strings are data; CONTEXT_CONTRACT §4.                      | `test/acceptance/a6-injection.test.ts`                          |
+| T13 | Misleading certainty: a hypothesis presented as a fact                                        | Tri-state `status`; only git/resolver/parser facts may be `verified_static_fact`; status shown on every Markdown finding; limitations listed.                                                                                                                                            | `test/acceptance/a2-*`, `a3-*`                                  |
 
 ## Misuse cases (spec-first, invariant 1)
 
-| Misuse | Expected behavior |
-|---|---|
-| Using `check` as an automatic merge approver | Unsupported: ChangeLens never approves or merges; `check` is a policy signal. |
-| Treating "no findings" as "safe" | Report lists limitations; CONTEXT_CONTRACT §4.3. |
-| Running the Action under `pull_request_target` with secrets | Documented as unsupported; workflow lint rejects it here. |
-| Feeding the whole repository to an AI reviewer | Contract recommends pulling only cited lines. |
-| PR-supplied `.changelens.json` disabling the policy | Action reads config from the base commit by default. |
+| Misuse                                                                      | Expected behavior                                                                               |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Using `check` as an automatic merge approver                                | Not supported: ChangeLens never approves or merges; docs state that `check` is a policy signal. |
+| Treating "no findings" as "safe to merge"                                   | Report lists limitations; CONTEXT_CONTRACT §4.3.                                                |
+| Running the Action under `pull_request_target` with secrets                 | Documented as unsupported; workflow lint rejects it in our repository.                          |
+| Feeding the whole repository to an AI reviewer "because ChangeLens said so" | Contract recommends pulling only cited lines.                                                   |
+| Shipping a PR-supplied `.changelens.json` that disables the policy          | Action reads config from the base commit by default.                                            |
+
+## Misuse cases (spec-first, invariant 1)
+
+| Misuse                                                      | Expected behavior                                                             |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Using `check` as an automatic merge approver                | Unsupported: ChangeLens never approves or merges; `check` is a policy signal. |
+| Treating "no findings" as "safe"                            | Report lists limitations; CONTEXT_CONTRACT §4.3.                              |
+| Running the Action under `pull_request_target` with secrets | Documented as unsupported; workflow lint rejects it here.                     |
+| Feeding the whole repository to an AI reviewer              | Contract recommends pulling only cited lines.                                 |
+| PR-supplied `.changelens.json` disabling the policy         | Action reads config from the base commit by default.                          |
 
 ## Residual risks
 

@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto";
 import type { FileHunks } from "../git/repo.js";
 import type { ModuleGraph } from "../graph/graph.js";
-import { exportDescriptor, findSpecifierLine } from "../graph/lexical.js";
+import { findSpecifierLine } from "../graph/lexical.js";
+import { extractExports, firstLineIn, importedNames, type ExportSet } from "../analyzers/exports.js";
+import type { Limitations } from "../analysis/limitations.js";
 import { manifestEntries, parseJsonObject } from "../graph/workspaces.js";
 import type { Snapshot } from "../snapshot/snapshot.js";
 import type {
@@ -10,6 +12,7 @@ import type {
   Evidence,
   Finding,
   FindingCategory,
+  FindingStatus,
   Provenance,
   Severity,
 } from "../types.js";
@@ -30,6 +33,7 @@ export interface RuleContext {
   blastRadiusThreshold: number;
   maxDepth: number;
   securityPathPatterns: string[];
+  limitations: Limitations;
 }
 
 type Draft = Omit<Finding, "id">;
@@ -47,32 +51,69 @@ function ev(
   line: number | null = null,
   endLine: number | null = null
 ): Evidence {
-  return { kind, path, side, line, endLine: endLine ?? line, detail };
+  // `commit` is filled in by the analysis orchestrator, which knows which commit each side refers to.
+  return { kind, path, side, line_start: line, line_end: endLine ?? line, commit: null, detail };
 }
+
+/** Fixed, rule-specific guidance for the reviewer (addendum: recommended_human_action). */
+const ACTIONS: Record<string, string> = {
+  "broken-import": "Update or remove the import, or restore the module; then run the listed test candidates.",
+  "removed-export-still-imported": "Update the importing modules or restore the export before merging.",
+  "export-removed":
+    "Confirm the removal is intended and check consumers outside this repository (published packages, other services).",
+  "export-surface-changed":
+    "Check whether the signature change is backward compatible for every listed dependent.",
+  "deleted-module-with-dependents":
+    "Verify that no remaining code (including dynamic imports and other repositories) relies on the old path.",
+  "package-entry-changed":
+    "Review the change for effects on consumers of the package outside this repository.",
+  "package-manifest-changed":
+    "Review dependency, script and entry-point changes for compatibility and supply-chain impact.",
+  "migration-changed":
+    "Review migration ordering, reversibility and data impact, and plan the deployment sequence.",
+  "api-contract-changed": "Check backward compatibility of the contract for all API consumers.",
+  "config-changed":
+    "Review the build, CI or runtime configuration change; confirm no credentials or permissions changed unintentionally.",
+  "security-sensitive-change": "Request a focused security review of this change.",
+  "tests-removed":
+    "Confirm the deleted tests were obsolete or moved, and that coverage of the changed behavior remains.",
+  "source-without-test-change": "Run the test candidates and consider adding tests for the changed behavior.",
+  "wide-blast-radius":
+    "Prioritize review and testing of the listed dependents; consider splitting the change.",
+};
 
 function draft(
   ruleId: string,
   category: FindingCategory,
   severity: Severity,
   confidence: Confidence,
-  isHeuristic: boolean,
+  /** Boolean shorthand: true = hypothesis, false = verified_static_fact. */
+  statusOrHeuristic: boolean | FindingStatus,
   provenance: Provenance,
-  title: string,
+  summary: string,
   explanation: string,
   evidence: Evidence[],
-  relatedModules: string[] = []
+  affectedModules: string[] = []
 ): Draft {
+  const status: FindingStatus =
+    typeof statusOrHeuristic === "string"
+      ? statusOrHeuristic
+      : statusOrHeuristic
+        ? "hypothesis"
+        : "verified_static_fact";
   return {
-    ruleId,
+    rule_id: ruleId,
     category,
     severity,
+    status,
     confidence,
-    isHeuristic,
+    is_heuristic: status !== "verified_static_fact",
     provenance,
-    title,
+    summary,
     explanation,
+    recommended_human_action: ACTIONS[ruleId] ?? "Review the evidence.",
     evidence: evidence.slice(0, MAX_EVIDENCE),
-    relatedModules: [...new Set(relatedModules)].sort(compareStrings),
+    affected_modules: [...new Set(affectedModules)].sort(compareStrings),
   };
 }
 
@@ -88,7 +129,7 @@ function deletedModules(ctx: RuleContext): Draft[] {
   const headFiles = new Set(ctx.headSnapshot.files);
   for (const file of ctx.files) {
     const oldPath =
-      file.status === "deleted" ? file.path : file.status === "renamed" ? file.previousPath : null;
+      file.status === "deleted" ? file.path : file.status === "renamed" ? file.previous_path : null;
     if (oldPath === null || !isJsTs(oldPath)) continue;
     const baseDependents = [...(ctx.base.rdeps.get(oldPath) ?? [])].sort(compareStrings);
     if (baseDependents.length === 0) continue;
@@ -176,63 +217,47 @@ function packageEntrySet(ctx: RuleContext): Map<string, { pkg: string; declared:
   return entries;
 }
 
-function exportChanges(ctx: RuleContext): Draft[] {
+const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+/**
+ * Parser-based export analysis for modified/renamed JS/TS modules: removed exports (fact), removed exports still
+ * imported by direct dependents (fact), and changed signature lines of surviving exports (hypothesis).
+ */
+async function exportChanges(ctx: RuleContext): Promise<Draft[]> {
   const out: Draft[] = [];
   const entries = packageEntrySet(ctx);
   for (const file of ctx.files) {
-    if (!isJsTs(file.path) || file.kind === "test" || file.status === "deleted" || file.status === "added")
+    if (
+      !isJsTs(file.path) ||
+      file.kind === "test" ||
+      (file.status !== "modified" && file.status !== "renamed")
+    )
       continue;
-    const hunks = ctx.hunks.get(file.path);
-    if (!hunks) continue;
-    const added = hunks.added.flatMap((l) => {
-      const d = exportDescriptor(l.text);
-      return d ? [{ line: l.line, d }] : [];
-    });
-    const removed = hunks.removed.flatMap((l) => {
-      const d = exportDescriptor(l.text);
-      return d ? [{ line: l.line, d }] : [];
-    });
-    if (added.length + removed.length > 0) {
-      const addedNames = new Set(added.map((a) => a.d));
-      const removedNames = new Set(removed.map((r) => r.d));
-      const evidence = [
-        ...removed.map((r) =>
-          ev(
-            "export-declaration",
-            file.previousPath ?? file.path,
-            "base",
-            `${addedNames.has(r.d) ? "modified" : "removed"}: ${r.d}`,
-            r.line
-          )
-        ),
-        ...added
-          .filter((a) => !removedNames.has(a.d))
-          .map((a) => ev("export-declaration", file.path, "head", `added: ${a.d}`, a.line)),
-        ...added
-          .filter((a) => removedNames.has(a.d))
-          .map((a) => ev("export-declaration", file.path, "head", `modified: ${a.d}`, a.line)),
-      ];
-      const dependents = ctx.head.rdeps.get(file.path)?.size ?? 0;
-      const entry = entries.get(file.path);
-      const touchesExisting = removed.length > 0;
-      const severity: Severity =
-        touchesExisting && (dependents > 0 || entry !== undefined) ? "medium" : "low";
-      out.push(
-        draft(
-          "export-surface-changed",
-          "public-api",
-          severity,
-          "medium",
-          true,
-          "inferred",
-          `Potential public interface change in ${file.path}`,
-          `Diff lines that declare exports were ${touchesExisting ? "removed or modified" : "added"} (${removed.length} removed/modified, ${added.length} added line(s)). The module has ${dependents} direct dependent(s) in the head graph${entry ? ` and is an entry point of package ${entry.pkg}` : ""}. ChangeLens compares lines, not types: this may be fully compatible.`,
-          evidence,
-          [file.path, ...(ctx.head.rdeps.get(file.path) ?? [])]
-        )
+    const basePath = file.previous_path ?? file.path;
+    const [baseText, headText] = [await ctx.readBase(basePath), ctx.headSnapshot.read(file.path)];
+    if (baseText === null || headText === null) {
+      ctx.limitations.add(
+        "export-analysis-incomplete",
+        "Export analysis was skipped or incomplete for these modules (unreadable, too large, CommonJS exports, transitive re-exports or namespace imports).",
+        file.path
+      );
+      continue;
+    }
+    const base = extractExports(baseText, basePath);
+    const head = extractExports(headText, file.path);
+    if (base.parseErrors + head.parseErrors > 0 || base.commonJs || head.commonJs) {
+      ctx.limitations.add(
+        "export-analysis-incomplete",
+        "Export analysis was skipped or incomplete for these modules (unreadable, too large, CommonJS exports, transitive re-exports or namespace imports).",
+        file.path
       );
     }
+    const open = head.starReexports.length > 0 || head.commonJs;
+    const dependents = [...(ctx.head.rdeps.get(file.path) ?? [])].sort(compareStrings);
     const entry = entries.get(file.path);
+    const exposed = dependents.length > 0 || entry !== undefined;
+    out.push(...removedExports(ctx, file.path, basePath, base, head, open, dependents, exposed));
+    out.push(...signatureChanges(ctx, file.path, base, head, dependents, exposed));
     if (entry) {
       out.push(
         draft(
@@ -258,6 +283,168 @@ function exportChanges(ctx: RuleContext): Draft[] {
     }
   }
   return out;
+}
+
+function removedExports(
+  ctx: RuleContext,
+  path: string,
+  basePath: string,
+  base: ExportSet,
+  head: ExportSet,
+  open: boolean,
+  dependents: string[],
+  exposed: boolean
+): Draft[] {
+  const removed = [...base.exports.keys()].filter((n) => !head.exports.has(n)).sort(compareStrings);
+  if (removed.length === 0) return [];
+  const added = [...head.exports.keys()].filter((n) => !base.exports.has(n)).sort(compareStrings);
+  const status: FindingStatus = open ? "unknown" : "verified_static_fact";
+  const rename =
+    removed.length === 1 &&
+    added.length === 1 &&
+    base.exports.get(removed[0] as string)?.kind === head.exports.get(added[0] as string)?.kind
+      ? ` (possibly renamed to ${added[0]})`
+      : "";
+  const out: Draft[] = [];
+  const openNote = open
+    ? " The head module re-exports other modules (`export *`) or uses CommonJS, so the names may still be exported indirectly; status is unknown."
+    : "";
+  out.push(
+    draft(
+      "export-removed",
+      "public-api",
+      exposed ? "medium" : "low",
+      "high",
+      status,
+      "graph",
+      `Export removed from ${path}: ${removed.join(", ")}${rename}`,
+      `The TypeScript parser finds ${plural(removed.length, "named export")} in the base version that ${removed.length === 1 ? "is" : "are"} absent in the head version. The module has ${plural(dependents.length, "direct dependent")}.${openNote}`,
+      [
+        ...removed.map((n) => {
+          const info = base.exports.get(n);
+          return ev(
+            "export-declaration",
+            basePath,
+            "base",
+            `removed: ${info?.kind ?? "export"} ${n}`,
+            info?.line ?? null
+          );
+        }),
+        ...(rename
+          ? [
+              ev(
+                "export-declaration",
+                path,
+                "head",
+                `added: ${head.exports.get(added[0] as string)?.kind ?? "export"} ${added[0]}`,
+                head.exports.get(added[0] as string)?.line ?? null
+              ),
+            ]
+          : []),
+      ],
+      [path, ...dependents]
+    )
+  );
+
+  const removedSet = new Set(removed);
+  const importers: Evidence[] = [];
+  const importerPaths: string[] = [];
+  for (const dependent of dependents) {
+    const specifiers = ctx.head.deps.get(dependent)?.get(path)?.specifiers ?? [];
+    const text = ctx.headSnapshot.read(dependent);
+    if (text === null) continue;
+    for (const imp of importedNames(text, dependent)) {
+      if (!specifiers.includes(imp.specifier)) continue;
+      if (imp.name === "*") {
+        ctx.limitations.add(
+          "export-analysis-incomplete",
+          "Export analysis was skipped or incomplete for these modules (unreadable, too large, CommonJS exports, transitive re-exports or namespace imports).",
+          dependent
+        );
+        continue;
+      }
+      if (!removedSet.has(imp.name)) continue;
+      importers.push(
+        ev(
+          "import-edge",
+          dependent,
+          "head",
+          `imports "${imp.name}" from "${imp.specifier}" (not exported in head)`,
+          imp.line
+        )
+      );
+      importerPaths.push(dependent);
+    }
+    // A dependent that re-exports everything (`export * from`) passes removed names on; its consumers are not followed.
+    if (extractExports(text, dependent).starReexports.some((s) => specifiers.includes(s))) {
+      ctx.limitations.add(
+        "export-analysis-incomplete",
+        "Export analysis was skipped or incomplete for these modules (unreadable, too large, CommonJS exports, transitive re-exports or namespace imports).",
+        dependent
+      );
+    }
+  }
+  if (importers.length > 0) {
+    out.push(
+      draft(
+        "removed-export-still-imported",
+        "broken-import",
+        open ? "medium" : "high",
+        "high",
+        status,
+        "graph",
+        `Removed export still imported by ${plural(new Set(importerPaths).size, "module")}: ${[...new Set(importers.map((e) => e.detail.split('"')[1]))].join(", ")} from ${path}`,
+        `These dependents import names that the parser no longer finds among the exports of ${path}.${openNote || " Unless the names are provided some other way the parser cannot see, these imports are broken."}`,
+        importers,
+        [path, ...importerPaths]
+      )
+    );
+  }
+  return out;
+}
+
+function signatureChanges(
+  ctx: RuleContext,
+  path: string,
+  base: ExportSet,
+  head: ExportSet,
+  dependents: string[],
+  exposed: boolean
+): Draft[] {
+  const hunks = ctx.hunks.get(path);
+  if (!hunks) return [];
+  const addedLines = hunks.added.map((l) => l.line);
+  const removedLines = hunks.removed.map((l) => l.line);
+  const evidence: Evidence[] = [];
+  const names: string[] = [];
+  for (const [name, info] of [...head.exports.entries()].sort(([a], [b]) => compareStrings(a, b))) {
+    const before = base.exports.get(name);
+    if (!before) continue; // new exports do not change an existing interface
+    const headLine = firstLineIn(info.signature, addedLines);
+    const baseLine = firstLineIn(before.signature, removedLines);
+    if (headLine === null && baseLine === null) continue;
+    names.push(name);
+    evidence.push(
+      headLine !== null
+        ? ev("export-declaration", path, "head", `signature lines changed: ${info.kind} ${name}`, headLine)
+        : ev("export-declaration", path, "base", `signature lines changed: ${before.kind} ${name}`, baseLine)
+    );
+  }
+  if (names.length === 0) return [];
+  return [
+    draft(
+      "export-surface-changed",
+      "public-api",
+      exposed ? "medium" : "low",
+      "medium",
+      "hypothesis",
+      "inferred",
+      `Potential public interface change in ${path}: ${names.join(", ")}`,
+      `Changed lines fall inside the signature of ${plural(names.length, "exported declaration")} (parameters, return type, type members or exported value). The module has ${plural(dependents.length, "direct dependent")}. ChangeLens does not type-check: the change may be fully compatible.`,
+      evidence,
+      [path, ...dependents]
+    ),
+  ];
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -296,7 +483,7 @@ async function manifestChanges(ctx: RuleContext): Promise<Draft[]> {
     if (basenameOf(file.path) !== "package.json" || !live(file)) continue;
     const head = parseJsonObject(ctx.headSnapshot.read(file.path));
     const base =
-      file.status === "added" ? {} : parseJsonObject(await ctx.readBase(file.previousPath ?? file.path));
+      file.status === "added" ? {} : parseJsonObject(await ctx.readBase(file.previous_path ?? file.path));
     if (!head || !base) {
       out.push(
         draft(
@@ -304,7 +491,7 @@ async function manifestChanges(ctx: RuleContext): Promise<Draft[]> {
           "package-manifest",
           "low",
           "low",
-          true,
+          "unknown",
           "observed",
           `Package manifest changed (unparseable): ${file.path}`,
           "The manifest could not be parsed as JSON on one side; field-level comparison was skipped.",
@@ -339,7 +526,7 @@ async function manifestChanges(ctx: RuleContext): Promise<Draft[]> {
         "package-manifest",
         severity,
         "high",
-        true,
+        "verified_static_fact",
         "observed",
         `Package manifest fields changed: ${file.path}`,
         severity === "medium"
@@ -407,8 +594,8 @@ function pathRule(
           f.path,
           f.status === "deleted" ? "base" : "head",
           f.status,
-          f.changedLines[0]?.start ?? null,
-          f.changedLines[0]?.end ?? null
+          f.changed_lines[0]?.start ?? null,
+          f.changed_lines[0]?.end ?? null
         )
       ),
       matched.map((f) => f.path)
@@ -554,7 +741,7 @@ function blastRadius(ctx: RuleContext): Draft[] {
         "blast-radius",
         count >= 50 ? "low" : "info",
         "high",
-        true,
+        "verified_static_fact",
         "graph",
         `${count} modules transitively depend on ${root}`,
         `Changes to ${root} can reach ${count} module(s) within ${ctx.maxDepth} reverse-dependency hops. Breadth is a review prompt, not evidence of breakage.`,
@@ -570,7 +757,7 @@ function blastRadius(ctx: RuleContext): Draft[] {
 export async function runRules(ctx: RuleContext): Promise<Finding[]> {
   const drafts: Draft[] = [
     ...deletedModules(ctx),
-    ...exportChanges(ctx),
+    ...(await exportChanges(ctx)),
     ...(await manifestChanges(ctx)),
     ...pathRule(
       ctx,
@@ -595,15 +782,15 @@ export async function runRules(ctx: RuleContext): Promise<Finding[]> {
   ];
   const findings = drafts.map((d) => ({
     id: findingId(
-      d.ruleId,
-      `${d.title}\0${d.evidence.map((e) => `${e.path}:${e.line ?? ""}:${e.detail}`).join("|")}`
+      d.rule_id,
+      `${d.summary}\0${d.evidence.map((e) => `${e.path}:${e.line_start ?? ""}:${e.detail}`).join("|")}`
     ),
     ...d,
   }));
   findings.sort(
     (a, b) =>
       SEVERITY_ORDER[b.severity] - SEVERITY_ORDER[a.severity] ||
-      compareStrings(a.ruleId, b.ruleId) ||
+      compareStrings(a.rule_id, b.rule_id) ||
       compareStrings(a.evidence[0]?.path ?? "", b.evidence[0]?.path ?? "") ||
       compareStrings(a.id, b.id)
   );

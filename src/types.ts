@@ -1,10 +1,11 @@
-// Report contract types. Must stay in sync with schema/changelens-report.schema.json (validated in tests).
+// Report contract types (schema 2.0). Must stay in sync with schema/changelens-report.schema.json (validated in tests).
 
-export const SCHEMA_VERSION = "1.0" as const;
+export const SCHEMA_VERSION = "2.0" as const;
 
 export type Provenance = "observed" | "graph" | "inferred";
 export type Severity = "high" | "medium" | "low" | "info";
 export type Confidence = "high" | "medium" | "low";
+export type FindingStatus = "verified_static_fact" | "hypothesis" | "unknown";
 export type FileStatus = "added" | "modified" | "deleted" | "renamed" | "type-changed" | "unmerged";
 export type Language = "typescript" | "javascript" | "json" | "other";
 export type FileKind = "source" | "test" | "config" | "other";
@@ -28,25 +29,17 @@ export interface LineRange {
 
 export interface ChangedFile {
   path: string;
-  previousPath: string | null;
+  previous_path: string | null;
   status: FileStatus;
   binary: boolean;
+  generated: boolean;
   language: Language;
   kind: FileKind;
   additions: number | null;
   deletions: number | null;
   origin: Origin;
-  changedLines: LineRange[];
+  changed_lines: LineRange[];
   provenance: "observed";
-}
-
-export interface AffectedModule {
-  path: string;
-  reason: "changed" | "dependent";
-  distance: number;
-  provenance: Provenance;
-  via: string[];
-  changedRoots: string[];
 }
 
 export type EvidenceKind =
@@ -62,33 +55,46 @@ export interface Evidence {
   kind: EvidenceKind;
   path: string;
   side: "base" | "head";
-  line: number | null;
-  endLine: number | null;
+  line_start: number | null;
+  line_end: number | null;
+  commit: string | null;
   detail: string;
+}
+
+export interface AffectedModule {
+  path: string;
+  reason: "changed" | "dependent";
+  distance: number;
+  provenance: Provenance;
+  via: string[];
+  changed_roots: string[];
+  evidence: Evidence[];
 }
 
 export interface Finding {
   id: string;
-  ruleId: string;
+  rule_id: string;
   category: FindingCategory;
   severity: Severity;
+  status: FindingStatus;
   confidence: Confidence;
-  isHeuristic: boolean;
+  is_heuristic: boolean;
   provenance: Provenance;
-  title: string;
+  summary: string;
   explanation: string;
+  recommended_human_action: string;
   evidence: Evidence[];
-  relatedModules: string[];
+  affected_modules: string[];
 }
 
 export type TestReason = "changed-test" | "imports-affected-module" | "naming-convention";
 
-export interface SuggestedTest {
+export interface TestCandidate {
   path: string;
   reasons: TestReason[];
-  relatedTo: string[];
+  related_to: string[];
   provenance: Provenance;
-  status: "not-run";
+  execution_status: "not_run";
 }
 
 export interface Limitation {
@@ -101,51 +107,75 @@ export interface Limitation {
 export interface GraphStats {
   modules: number;
   edges: number;
-  unresolvedLocal: number;
+  unresolved_local: number;
+}
+
+export interface RepositoryContext {
+  languages: { language: string; files: number }[];
+  module_type: "module" | "commonjs" | "unknown";
+  workspace_tools: string[];
+  test_frameworks: string[];
+  module_resolution: string | null;
 }
 
 export interface Report {
-  schemaVersion: typeof SCHEMA_VERSION;
-  toolVersion: string;
-  generatedAt: string;
-  repository: {
-    name: string;
-    isShallow: boolean;
-    tsConfig: string | null;
-    workspacePackages: { name: string; path: string }[];
-  };
-  comparison: {
-    baseRef: string;
-    baseCommit: string;
-    mergeBase: string | null;
-    diffMode: "merge-base" | "direct";
-    headRef: string;
-    headCommit: string;
-    headKind: "commit" | "worktree";
+  schema_version: typeof SCHEMA_VERSION;
+  repo_revision: {
+    ref: string;
+    commit: string;
+    kind: "commit" | "worktree";
     worktree: { included: boolean; staged: number; unstaged: number; untracked: number };
   };
-  summary: {
-    filesChanged: number;
-    jsTsFilesChanged: number;
-    affectedModules: number;
-    findingsBySeverity: Record<Severity, number>;
-    suggestedTests: number;
-    coverageLimitations: number;
+  base_revision: {
+    ref: string;
+    commit: string;
+    merge_base: string | null;
+    diff_mode: "merge-base" | "direct";
   };
-  filesChanged: ChangedFile[];
-  affectedModules: AffectedModule[];
-  riskFindings: Finding[];
-  suggestedTests: SuggestedTest[];
-  coverageLimitations: Limitation[];
-  analysis: {
+  repository: {
+    name: string;
+    is_shallow: boolean;
+    ts_config: string | null;
+    workspace_packages: { name: string; path: string }[];
+    context: RepositoryContext;
+  };
+  summary: {
+    analysis_mode: "full" | "degraded";
+    files_changed: number;
+    js_ts_files_changed: number;
+    affected_modules: number;
+    findings_by_severity: Record<Severity, number>;
+    findings_by_status: Record<FindingStatus, number>;
+    test_candidates: number;
+    coverage_limitations: number;
+  };
+  changed_files: ChangedFile[];
+  affected_modules: AffectedModule[];
+  findings: Finding[];
+  test_candidates: TestCandidate[];
+  coverage_limitations: Limitation[];
+  run_metadata: {
+    tool: "changelens";
+    tool_version: string;
+    generated_at: string;
+    duration_ms: number;
+    timings_ms: Record<string, number>;
+    node_version: string;
     engine: "dependency-cruiser";
-    engineVersion: string;
-    parserVersion: string;
-    headGraph: GraphStats;
-    baseGraph: GraphStats | null;
-    limits: { maxDepth: number; maxAffected: number; truncated: boolean };
+    engine_version: string;
+    parser_version: string;
+    head_graph: GraphStats;
+    base_graph: GraphStats | null;
+    limits: { max_depth: number; max_affected: number; truncated: boolean };
+    config_source: string;
     network: false;
-    executedRepositoryCode: false;
+    executed_repository_code: false;
+    model_usage: null;
+    review_effort: {
+      files_to_review: number;
+      findings_requiring_human_action: number;
+      test_candidates: number;
+    };
   };
 }
 

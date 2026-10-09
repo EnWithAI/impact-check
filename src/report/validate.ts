@@ -55,56 +55,65 @@ export function parseReport(text: string): Report {
     fail("not valid JSON");
   }
   if (!isObj(raw)) fail("top level must be an object");
-  if (raw["schemaVersion"] !== "1.0") fail(`unsupported schemaVersion`);
-  strings(raw, ["toolVersion", "generatedAt"], "report");
-  for (const key of ["repository", "comparison", "summary", "analysis"])
+  if (raw["schema_version"] !== "2.0") fail(`unsupported schema_version (expected "2.0")`);
+  for (const key of ["repo_revision", "base_revision", "repository", "summary", "run_metadata"]) {
     if (!isObj(raw[key])) fail(`${key} must be an object`);
-  const comparison = raw["comparison"] as Record<string, unknown>;
-  strings(
-    comparison,
-    ["baseRef", "baseCommit", "diffMode", "headRef", "headCommit", "headKind"],
-    "comparison"
-  );
-  if (!isObj(comparison["worktree"])) fail("comparison.worktree must be an object");
+  }
+  const head = raw["repo_revision"] as Record<string, unknown>;
+  strings(head, ["ref", "commit", "kind"], "repo_revision");
+  if (!isObj(head["worktree"])) fail("repo_revision.worktree must be an object");
+  const base = raw["base_revision"] as Record<string, unknown>;
+  strings(base, ["ref", "commit", "diff_mode"], "base_revision");
+  if (base["merge_base"] !== null && typeof base["merge_base"] !== "string") fail("base_revision.merge_base");
   const summary = raw["summary"] as Record<string, unknown>;
+  oneOf(summary, "analysis_mode", ["full", "degraded"], "summary");
   for (const k of [
-    "filesChanged",
-    "jsTsFilesChanged",
-    "affectedModules",
-    "suggestedTests",
-    "coverageLimitations",
+    "files_changed",
+    "js_ts_files_changed",
+    "affected_modules",
+    "test_candidates",
+    "coverage_limitations",
   ]) {
     if (!Number.isInteger(summary[k])) fail(`summary.${k} must be an integer`);
   }
-  if (!isObj(summary["findingsBySeverity"])) fail("summary.findingsBySeverity must be an object");
-  const analysis = raw["analysis"] as Record<string, unknown>;
-  strings(analysis, ["engineVersion", "parserVersion"], "analysis");
-  if (!isObj(analysis["headGraph"])) fail("analysis.headGraph must be an object");
+  for (const k of ["findings_by_severity", "findings_by_status"])
+    if (!isObj(summary[k])) fail(`summary.${k} must be an object`);
+  const meta = raw["run_metadata"] as Record<string, unknown>;
+  strings(meta, ["tool_version", "generated_at", "engine_version", "parser_version"], "run_metadata");
+  if (!isObj(meta["head_graph"])) fail("run_metadata.head_graph must be an object");
 
-  list(raw, "filesChanged", "report", (f, at) => {
+  const evidence = (e: Record<string, unknown>, at: string): void => {
+    strings(e, ["path", "side", "detail"], at);
+    for (const k of ["line_start", "line_end"])
+      if (e[k] !== null && !Number.isInteger(e[k])) fail(`${at}.${k}`);
+    if (e["commit"] !== null && typeof e["commit"] !== "string") fail(`${at}.commit`);
+  };
+  list(raw, "changed_files", "report", (f, at) => {
     strings(f, ["path", "status", "kind", "origin"], at);
-    if (f["previousPath"] !== null && typeof f["previousPath"] !== "string") fail(`${at}.previousPath`);
+    if (f["previous_path"] !== null && typeof f["previous_path"] !== "string") fail(`${at}.previous_path`);
+    if (typeof f["generated"] !== "boolean") fail(`${at}.generated`);
   });
-  list(raw, "affectedModules", "report", (m, at) => {
+  list(raw, "affected_modules", "report", (m, at) => {
     strings(m, ["path", "reason", "provenance"], at);
     if (!Number.isInteger(m["distance"])) fail(`${at}.distance must be an integer`);
     stringArray(m, "via", at);
+    list(m, "evidence", at, evidence);
   });
-  list(raw, "riskFindings", "report", (f, at) => {
-    strings(f, ["id", "ruleId", "title", "explanation", "confidence"], at);
+  list(raw, "findings", "report", (f, at) => {
+    strings(f, ["id", "rule_id", "summary", "explanation", "confidence", "recommended_human_action"], at);
     oneOf(f, "severity", ["high", "medium", "low", "info"], at);
+    oneOf(f, "status", ["verified_static_fact", "hypothesis", "unknown"], at);
     oneOf(f, "provenance", ["observed", "graph", "inferred"], at);
-    if (typeof f["isHeuristic"] !== "boolean") fail(`${at}.isHeuristic must be a boolean`);
-    list(f, "evidence", at, (e, eat) => {
-      strings(e, ["path", "side", "detail"], eat);
-      for (const k of ["line", "endLine"]) if (e[k] !== null && !Number.isInteger(e[k])) fail(`${eat}.${k}`);
-    });
+    if (typeof f["is_heuristic"] !== "boolean") fail(`${at}.is_heuristic must be a boolean`);
+    stringArray(f, "affected_modules", at);
+    list(f, "evidence", at, evidence);
   });
-  list(raw, "suggestedTests", "report", (t, at) => {
+  list(raw, "test_candidates", "report", (t, at) => {
     strings(t, ["path", "provenance"], at);
     stringArray(t, "reasons", at);
+    if (t["execution_status"] !== "not_run") fail(`${at}.execution_status must be "not_run"`);
   });
-  list(raw, "coverageLimitations", "report", (l, at) => {
+  list(raw, "coverage_limitations", "report", (l, at) => {
     strings(l, ["code", "message"], at);
     stringArray(l, "paths", at);
     if (!Number.isInteger(l["count"])) fail(`${at}.count must be an integer`);

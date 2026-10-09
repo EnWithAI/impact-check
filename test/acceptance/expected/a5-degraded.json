@@ -3,7 +3,17 @@
   "description": "No JS/TS dependency graph -> degraded mode, no impact claims beyond observed changes.",
   "analysis_mode": "degraded",
   "affected_dependents": "none",
-  "forbidden_rule_ids": ["export-surface-changed", "export-removed", "removed-export-still-imported", "broken-import", "wide-blast-radius", "deleted-module-with-dependents"],
+  "forbidden_rule_ids": [
+    "export-surface-changed",
+    "export-removed",
+    "removed-export-still-imported",
+    "broken-import",
+    "wide-blast-radius",
+    "deleted-module-with-dependents"
+  ],
   "max_severity": "low",
-  "limitations": [{ "code": "no-dependency-graph" }, { "code": "unsupported-language", "paths_include": ["app/util.py"] }]
+  "limitations": [
+    { "code": "no-dependency-graph" },
+    { "code": "unsupported-language", "paths_include": ["app/util.py"] }
+  ]
 }
