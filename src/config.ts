@@ -1,7 +1,12 @@
+/**
+ * Configuration (.impact-check.json): defaults, strict validation and simple glob matching.
+ * Configuration is data only: no JavaScript configs, no user-supplied regular expressions, unknown keys rejected.
+ */
 import { readFileSync } from "node:fs";
 import { usageError } from "./errors.js";
 import type { Severity } from "./types.js";
 
+/** Policy applied by `impact-check check`. */
 export interface Policy {
   /** Fail `check` when any finding has at least this severity. "none" disables. */
   failOnSeverity: Severity | "none";
@@ -11,6 +16,7 @@ export interface Policy {
   maxAffectedModules: number | null;
 }
 
+/** Validated configuration with defaults applied. See docs/CONFIG.md. */
 export interface Config {
   base: string | null;
   tsconfig: string | null;
@@ -25,6 +31,7 @@ export interface Config {
   policy: Policy;
 }
 
+/** Defaults used when no config file exists or a field is omitted. */
 export const DEFAULT_CONFIG: Config = {
   base: null,
   tsconfig: null,
@@ -41,20 +48,24 @@ export const DEFAULT_CONFIG: Config = {
 const SEVERITIES = ["high", "medium", "low", "info", "none"];
 const MAX_CONFIG_BYTES = 256 * 1024;
 
+/** Throws a usage error describing an invalid config field. */
 function fail(source: string, message: string): never {
   throw usageError(`Invalid config (${source}): ${message}`, "See docs/CONFIG.md for the supported fields.");
 }
 
+/** True for plain (non-array) objects. */
 function isObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+/** Rejects unknown fields so that typos never silently disable a setting. */
 function checkKeys(source: string, where: string, value: Record<string, unknown>, allowed: string[]): void {
   for (const key of Object.keys(value)) {
     if (!allowed.includes(key)) fail(source, `unknown field "${where}${key}"`);
   }
 }
 
+/** Validates an integer within [min, max]. */
 function positiveInt(source: string, name: string, value: unknown, max: number, min = 1): number {
   if (typeof value !== "number" || !Number.isInteger(value) || value < min || value > max) {
     fail(source, `"${name}" must be an integer between ${min} and ${max}`);
@@ -62,6 +73,7 @@ function positiveInt(source: string, name: string, value: unknown, max: number, 
   return value;
 }
 
+/** Validates a bounded list of non-empty strings. */
 function stringList(source: string, name: string, value: unknown): string[] {
   if (!Array.isArray(value) || value.some((v) => typeof v !== "string" || v.length === 0 || v.length > 512)) {
     fail(source, `"${name}" must be an array of non-empty strings`);
@@ -70,6 +82,7 @@ function stringList(source: string, name: string, value: unknown): string[] {
   return value as string[];
 }
 
+/** Validates a non-empty string or null. */
 function optionalString(source: string, name: string, value: unknown): string | null {
   if (value === null) return null;
   if (typeof value !== "string" || value.length === 0 || value.length > 512)
@@ -152,6 +165,10 @@ export function parseConfig(raw: unknown, source: string): Config {
   return config;
 }
 
+/**
+ * Parses and validates JSON config text.
+ * @throws ImpactCheckError (exit 2) for invalid JSON, unknown fields or invalid values.
+ */
 export function parseConfigText(text: string, source: string): Config {
   if (text.length > MAX_CONFIG_BYTES) fail(source, "file is too large");
   let raw: unknown;
@@ -163,6 +180,10 @@ export function parseConfigText(text: string, source: string): Config {
   return parseConfig(raw, source);
 }
 
+/**
+ * Reads and validates a config file from disk.
+ * @throws ImpactCheckError (exit 2) when unreadable or invalid.
+ */
 export function loadConfigFile(path: string): Config {
   let text: string;
   try {
@@ -197,6 +218,7 @@ export function globToRegExp(glob: string): RegExp {
   return new RegExp(`^${out}$`);
 }
 
+/** True when the path matches at least one glob. */
 export function matchesAny(path: string, globs: readonly string[]): boolean {
   return globs.some((g) => globToRegExp(g).test(path));
 }

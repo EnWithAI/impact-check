@@ -1,3 +1,7 @@
+/**
+ * Git edge cases: rename/delete/add/binary, empty diffs, missing or option-like refs, detached HEAD,
+ * shallow clones, symlinks, dirty working trees and hostile file names.
+ */
 import { spawnSync } from "node:child_process";
 import { symlinkSync } from "node:fs";
 import { join } from "node:path";

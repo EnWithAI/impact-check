@@ -1,3 +1,8 @@
+/**
+ * Acceptance fixtures A1–A5 (Google SDLC addendum): evidence-linked consumers, internal-only changes,
+ * removed/renamed exports, dynamic loading and generated code, and degraded mode. Expectations live in ./expected
+ * and were written before the analyzers.
+ */
 import { describe, expect, it } from "vitest";
 import { Repo, cli } from "../helpers.js";
 import { acceptanceRepo, FORMAT_TS, TAX_TS } from "./fixtures.js";

@@ -1,3 +1,7 @@
+/**
+ * Shared test utilities: deterministic synthetic git repositories (fixed identity, dates and directory
+ * name), an in-process CLI runner and small report accessors.
+ */
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

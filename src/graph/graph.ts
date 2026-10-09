@@ -1,3 +1,8 @@
+/**
+ * Module graph construction on top of dependency-cruiser's public API. Produces dependencies, reverse
+ * dependencies, unresolved local imports and external imports for a snapshot, and records graph-related coverage
+ * limitations (tsconfig problems, workspace inference, dynamic loading, parse gaps).
+ */
 import { cruise } from "dependency-cruiser";
 import extractTSConfig from "dependency-cruiser/config-utl/extract-ts-config";
 import { writeFileSync } from "node:fs";
@@ -15,12 +20,14 @@ import {
 } from "./workspaces.js";
 import { hasDynamicLoading, literalSpecifiers, scanNonLiteralImports } from "./lexical.js";
 
+/** A dependency edge: the import specifiers used, how it was established, and whether it is type-only. */
 export interface Edge {
   specifiers: string[];
   provenance: "graph" | "inferred";
   typeOnly: boolean;
 }
 
+/** Dependency graph of one snapshot (base or head). */
 export interface ModuleGraph {
   /** All module nodes (JS/TS sources and resolved non-JS targets such as JSON/CSS). */
   modules: Set<string>;
@@ -50,10 +57,12 @@ interface CruiseModule {
   coreModule?: boolean;
 }
 
+/** True for relative import specifiers (`./x`, `../x`, `.`, `..`). */
 function isRelative(specifier: string): boolean {
   return specifier.startsWith("./") || specifier.startsWith("../") || specifier === "." || specifier === "..";
 }
 
+/** Prefixes of tsconfig `paths` aliases (e.g. `@utils/`), used to classify unresolved imports as local. */
 function tsconfigAliasPrefixes(text: string | null): string[] {
   if (!text) return [];
   // tsconfig is JSONC; extract "paths" keys conservatively without evaluating anything.
@@ -106,6 +115,7 @@ function loadTsConfig(
   }
 }
 
+/** Selects the tsconfig used for path aliases: the requested one, else tsconfig.json, else jsconfig.json. */
 export function chooseTsConfig(snapshot: Snapshot, requested: string | null): string | null {
   if (requested !== null) return snapshot.files.includes(requested) ? requested : null;
   for (const candidate of ["tsconfig.json", "jsconfig.json"])

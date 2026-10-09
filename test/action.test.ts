@@ -1,3 +1,7 @@
+/**
+ * GitHub Action entry point under a simulated runner environment, base-branch policy configuration, input
+ * validation, re-rendering of tampered artifacts, and a security lint of every workflow file.
+ */
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";

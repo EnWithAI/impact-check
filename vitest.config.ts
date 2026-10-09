@@ -1,3 +1,7 @@
+/**
+ * Vitest configuration: test discovery, process isolation (forks), generous timeouts for git-heavy tests and
+ * coverage thresholds for src/.
+ */
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({

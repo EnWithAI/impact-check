@@ -1,3 +1,7 @@
+/**
+ * Report contract: JSON Schema 2.0 validation across scenarios, schema command output, and determinism across
+ * runs and between commit and worktree modes.
+ */
 import { readFileSync } from "node:fs";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import addFormatsModule from "ajv-formats";

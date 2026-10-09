@@ -1,3 +1,6 @@
+# Impact Check composite GitHub Action. Produces a job summary plus JSON/Markdown report files for a pull
+# request. Inputs, outputs and the security model are documented below and in docs/ACTION.md.
+
 name: "Impact Check report"
 description: "Offline, evidence-backed change-impact report for JS/TS pull requests. Never executes repository code."
 author: "EnWithAI Technologies"

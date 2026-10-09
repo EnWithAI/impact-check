@@ -1,3 +1,7 @@
+/**
+ * CLI contract: help/version, usage errors (exit 2), output files, --cwd, and the check command's policy
+ * handling (exit 4) including configuration from .impact-check.json.
+ */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";

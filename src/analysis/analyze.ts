@@ -1,3 +1,8 @@
+/**
+ * Analysis orchestrator: resolves revisions, collects git changes, builds snapshots and graphs, computes
+ * impact, runs analyzers/rules and assembles the schema 2.0 report. Never executes repository code and never uses
+ * the network. Snapshots are always cleaned up.
+ */
 import { lstatSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { repoError } from "../errors.js";
@@ -34,6 +39,7 @@ import { detectContext } from "../analyzers/context.js";
 import { isGenerated } from "../analyzers/generated.js";
 import { findSpecifierLine } from "../graph/lexical.js";
 
+/** Options for analyze(). Explicit options take precedence over the config file. */
 export interface AnalyzeOptions {
   cwd: string;
   /** Base ref; null = config or default ("main", falling back to origin/main, master, origin/master). */
@@ -52,11 +58,13 @@ export interface AnalyzeOptions {
 }
 
 const MAX_RANGES_PER_FILE = 50;
+/** Maximum number of changed files analyzed and listed; the rest are reported as a limitation. */
 export const MAX_FILES_CHANGED = 5000;
 const UNSUPPORTED_LANGUAGE =
   /\.(py|go|rb|java|kt|kts|rs|cs|php|swift|scala|c|cc|cpp|h|hpp|m|mm|dart|ex|exs|clj|lua|r|pl|sh)$/i;
 const DEFAULT_BASES = ["main", "origin/main", "master", "origin/master"];
 
+/** Resolves the base ref; without an explicit ref tries main, origin/main, master, origin/master. */
 async function resolveBase(root: string, requested: string | null): Promise<{ ref: string; commit: string }> {
   const candidates = requested === null ? DEFAULT_BASES : [validateRef(requested, "--base")];
   for (const ref of candidates) {
@@ -74,6 +82,7 @@ async function resolveBase(root: string, requested: string | null): Promise<{ re
   );
 }
 
+/** Number of lines in a buffer (a final line without newline counts). */
 function lineCount(buffer: Buffer): number {
   if (buffer.length === 0) return 0;
   let n = 0;
@@ -81,6 +90,7 @@ function lineCount(buffer: Buffer): number {
   return buffer[buffer.length - 1] === 0x0a ? n : n + 1;
 }
 
+/** Line count and binary flag of an untracked file (regular files up to MAX_FILE_BYTES only). */
 function readUntracked(root: string, path: string): { binary: boolean; lines: number | null } {
   try {
     const stat = lstatSync(join(root, path));

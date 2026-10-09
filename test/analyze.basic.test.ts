@@ -1,3 +1,7 @@
+/**
+ * Core impact behavior on the basic fixture: exact reverse dependents (no invented edges), no impact for
+ * unrelated changes, alias resolution, and limitations for dynamic and unresolved imports.
+ */
 import { describe, expect, it } from "vitest";
 import { analyzeJson, dependents, limitationCodes, Repo, ruleIds } from "./helpers.js";
 import { basicTs } from "./fixtures/basic-ts.js";

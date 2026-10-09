@@ -1,3 +1,8 @@
+/**
+ * Snapshots: private temporary copies of the base or head state that the graph engine analyzes.
+ * Content is read from git objects (commit mode) or regular files (worktree mode); symlinks and submodules are
+ * skipped, paths are validated, non-code files become empty placeholders. Nothing in the repository is modified.
+ */
 import {
   lstatSync,
   mkdirSync,
@@ -13,7 +18,9 @@ import { lsTree, readBlobs, worktreeFiles } from "../git/repo.js";
 import { Limitations } from "../analysis/limitations.js";
 import { isIgnoredDir, isSafeRelativePath, isSnapshotFile } from "../util/classify.js";
 
+/** Files larger than this are not parsed (reported as `file-too-large`). */
 export const MAX_FILE_BYTES = 1024 * 1024;
+/** Maximum number of files materialized per snapshot (reported as `file-limit-exceeded`). */
 export const MAX_SNAPSHOT_FILES = 50_000;
 const BLOB_BATCH_BYTES = 64 * 1024 * 1024;
 
@@ -29,17 +36,20 @@ export interface Snapshot {
   cleanup(): void;
 }
 
+/** Creates the private snapshot directory (real path, so resolver results stay inside it). */
 function createDir(): string {
   // realpath: on macOS tmpdir() is a symlink (/var -> /private/var); the resolver returns real paths.
   return realpathSync(mkdtempSync(join(tmpdir(), "impact-check-")));
 }
 
+/** Absolute target path inside the snapshot, or null when the path is unsafe or would escape it. */
 function safeTarget(dir: string, path: string): string | null {
   if (!isSafeRelativePath(path)) return null;
   const target = resolve(dir, path);
   return target.startsWith(dir + sep) ? target : null;
 }
 
+/** Wraps a materialized directory in the Snapshot interface (reads limited to analyzable files). */
 function makeSnapshot(
   dir: string,
   files: string[],
@@ -68,6 +78,7 @@ function makeSnapshot(
   };
 }
 
+/** Creates empty placeholder files (best effort, within the remaining file budget). */
 function writePlaceholders(dir: string, paths: string[], budget: number): string[] {
   const written: string[] = [];
   for (const path of paths.slice(0, Math.max(0, budget))) {
@@ -84,6 +95,7 @@ function writePlaceholders(dir: string, paths: string[], budget: number): string
   return written;
 }
 
+/** Applies the snapshot file limit deterministically (sorted order) and records a limitation. */
 function capFiles(paths: string[], limitations: Limitations): string[] {
   if (paths.length <= MAX_SNAPSHOT_FILES) return paths;
   limitations.addCount(

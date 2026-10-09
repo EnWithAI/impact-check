@@ -1,3 +1,7 @@
+/**
+ * Security invariants: no network/shell/eval primitives in src/, no execution of package scripts, JS configs
+ * or hostile git configuration (with a positive control), no file contents or environment variables in output.
+ */
 import { spawnSync } from "node:child_process";
 import { chmodSync, existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";

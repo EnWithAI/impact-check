@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+/**
+ * Executable entry point for the `impact-check` command. Delegates to run() and sets the exit code.
+ */
 import { run } from "./run.js";
 
 const code = await run(process.argv.slice(2), {

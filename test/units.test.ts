@@ -1,3 +1,7 @@
+/**
+ * Unit tests for pure building blocks: git output parsers, lexical helpers, impact BFS, limitations,
+ * classification, policy, workspace resolution and batched object reads.
+ */
 import { describe, expect, it } from "vitest";
 import {
   parseNameStatus,

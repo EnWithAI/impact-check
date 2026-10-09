@@ -11,6 +11,10 @@ const GENERATED_PATH = [
 const MARKER =
   /@generated\b|\bDO NOT EDIT\b|\bauto-?generated\b|\bThis file (was|is) (automatically )?generated\b/i;
 
+/**
+ * True when a file looks generated: a known generated path, a configured glob, or a marker such as
+ * `@generated` or "DO NOT EDIT" in its first five lines.
+ */
 export function isGenerated(path: string, text: string | null, extraGlobs: readonly string[]): boolean {
   if (GENERATED_PATH.some((re) => re.test(path))) return true;
   if (extraGlobs.length > 0 && matchesAny(path, extraGlobs)) return true;

@@ -1,3 +1,6 @@
+/**
+ * Configuration validation (accepted and rejected shapes) and glob matching without regex injection.
+ */
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CONFIG, globToRegExp, matchesAny, parseConfigText } from "../src/config.js";
 import { ImpactCheckError } from "../src/errors.js";

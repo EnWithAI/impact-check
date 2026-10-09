@@ -1,3 +1,7 @@
+/**
+ * README quickstart with the built CLI as a separate process: the demo repository must reproduce the
+ * committed sample reports byte-for-byte (apart from run metadata).
+ */
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";

@@ -2,14 +2,26 @@
 
 export const SCHEMA_VERSION = "2.0" as const;
 
+/** Where a claim comes from: observed = git diff; graph = resolver or parser; inferred = heuristic. */
 export type Provenance = "observed" | "graph" | "inferred";
+/** Review priority of a finding (not a probability). */
 export type Severity = "high" | "medium" | "low" | "info";
+/** Categorical confidence of a finding; never a percentage. */
 export type Confidence = "high" | "medium" | "low";
+/**
+ * Epistemic status: verified_static_fact = determined by git/resolver/parser; hypothesis = inferred
+ * from conventions or positions; unknown = the analyzer could not decide.
+ */
 export type FindingStatus = "verified_static_fact" | "hypothesis" | "unknown";
+/** Change status of a file between base and head. */
 export type FileStatus = "added" | "modified" | "deleted" | "renamed" | "type-changed" | "unmerged";
+/** Language of a changed file, by extension. */
 export type Language = "typescript" | "javascript" | "json" | "other";
+/** Role of a changed file, by path convention (and `conventions.testPatterns`). */
 export type FileKind = "source" | "test" | "config" | "other";
+/** Where a change came from in working-tree mode; always "committed" in commit mode. */
 export type Origin = "committed" | "staged" | "unstaged" | "untracked" | "mixed";
+/** Finding categories (see docs/RULES.md). */
 export type FindingCategory =
   | "public-api"
   | "package-manifest"
@@ -22,11 +34,13 @@ export type FindingCategory =
   | "test-change"
   | "blast-radius";
 
+/** Inclusive 1-based line range. */
 export interface LineRange {
   start: number;
   end: number;
 }
 
+/** One changed file (`changed_files[]`). */
 export interface ChangedFile {
   path: string;
   previous_path: string | null;
@@ -42,6 +56,7 @@ export interface ChangedFile {
   provenance: "observed";
 }
 
+/** Kind of evidence backing a finding or an affected module. */
 export type EvidenceKind =
   | "diff-hunk"
   | "file-status"
@@ -51,6 +66,10 @@ export type EvidenceKind =
   | "manifest-field"
   | "graph-count";
 
+/**
+ * A source reference: path and line range on one side of the comparison, the commit it refers to
+ * (null for uncommitted content) and a short redacted descriptor (never file contents).
+ */
 export interface Evidence {
   kind: EvidenceKind;
   path: string;
@@ -61,6 +80,7 @@ export interface Evidence {
   detail: string;
 }
 
+/** A changed module (distance 0) or a module that depends on one (`affected_modules[]`). */
 export interface AffectedModule {
   path: string;
   reason: "changed" | "dependent";
@@ -71,6 +91,7 @@ export interface AffectedModule {
   evidence: Evidence[];
 }
 
+/** One finding (`findings[]`). `is_heuristic` is true exactly when `status` is not verified_static_fact. */
 export interface Finding {
   id: string;
   rule_id: string;
@@ -87,8 +108,10 @@ export interface Finding {
   affected_modules: string[];
 }
 
+/** Why a test file is a candidate. */
 export type TestReason = "changed-test" | "imports-affected-module" | "naming-convention";
 
+/** A test file worth running for this change. Never executed by Impact Check. */
 export interface TestCandidate {
   path: string;
   reasons: TestReason[];
@@ -97,6 +120,7 @@ export interface TestCandidate {
   execution_status: "not_run";
 }
 
+/** Something the analysis could not see or decide (`coverage_limitations[]`). */
 export interface Limitation {
   code: string;
   message: string;
@@ -104,12 +128,14 @@ export interface Limitation {
   count: number;
 }
 
+/** Size of a dependency graph. */
 export interface GraphStats {
   modules: number;
   edges: number;
   unresolved_local: number;
 }
 
+/** Detected repository context (names and counts only). */
 export interface RepositoryContext {
   languages: { language: string; files: number }[];
   module_type: "module" | "commonjs" | "unknown";
@@ -118,6 +144,7 @@ export interface RepositoryContext {
   module_resolution: string | null;
 }
 
+/** The complete report (schema 2.0). */
 export interface Report {
   schema_version: typeof SCHEMA_VERSION;
   repo_revision: {
@@ -179,4 +206,5 @@ export interface Report {
   };
 }
 
+/** Numeric order of severities, used for sorting and policy thresholds. */
 export const SEVERITY_ORDER: Record<Severity, number> = { high: 3, medium: 2, low: 1, info: 0 };

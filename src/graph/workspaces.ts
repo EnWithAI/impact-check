@@ -1,6 +1,11 @@
+/**
+ * Workspace package discovery (every package.json with a name) and convention-based mapping of
+ * cross-package imports to source entry files. Edges created this way are labelled `inferred`.
+ */
 import type { Snapshot } from "../snapshot/snapshot.js";
 import { compareStrings } from "../analysis/limitations.js";
 
+/** A package found in the snapshot (any package.json with a name). */
 export interface WorkspacePackage {
   name: string;
   /** Repo-relative directory ("" for the root package). */
@@ -8,6 +13,7 @@ export interface WorkspacePackage {
   manifest: Record<string, unknown>;
 }
 
+/** Parses JSON text and returns it only if it is a plain object; null otherwise (never throws). */
 export function parseJsonObject(text: string | null): Record<string, unknown> | null {
   if (text === null) return null;
   try {
@@ -38,11 +44,13 @@ export function findPackages(snapshot: Snapshot): WorkspacePackage[] {
 
 const ENTRY_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"];
 
+/** Joins a package directory and a manifest-relative path. */
 function join(dir: string, rel: string): string {
   const clean = rel.replace(/^\.\//, "");
   return dir ? `${dir}/${clean}` : clean;
 }
 
+/** Collects every string value of a (possibly nested) manifest field such as `exports`. */
 function collectStrings(value: unknown, out: string[]): void {
   if (typeof value === "string") out.push(value);
   else if (Array.isArray(value)) for (const v of value) collectStrings(v, out);
@@ -88,6 +96,7 @@ export function resolveWorkspaceSpecifier(
   return null;
 }
 
+/** Removes a JS/TS (or .d.ts) extension so that dist entries can be mapped to sources. */
 function stripExt(path: string): string {
   return path.replace(/\.(d\.ts|[cm]?[jt]sx?)$/, "");
 }

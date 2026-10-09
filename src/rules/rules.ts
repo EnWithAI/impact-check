@@ -1,3 +1,8 @@
+/**
+ * Rules that turn changes, graphs and parsed exports into findings. Each finding carries a rule id,
+ * severity, tri-state status (verified_static_fact / hypothesis / unknown), evidence and a recommended human
+ * action. See docs/RULES.md for the rule table.
+ */
 import { createHash } from "node:crypto";
 import type { FileHunks } from "../git/repo.js";
 import type { ModuleGraph } from "../graph/graph.js";
@@ -21,6 +26,7 @@ import { basenameOf, isConfigPath, isJsTs } from "../util/classify.js";
 import { compareStrings } from "../analysis/limitations.js";
 import { matchesAny } from "../config.js";
 
+/** Everything a rule may look at. Rules are pure apart from the limitation collector. */
 export interface RuleContext {
   files: ChangedFile[];
   hunks: Map<string, FileHunks>;
@@ -39,10 +45,12 @@ export interface RuleContext {
 type Draft = Omit<Finding, "id">;
 const MAX_EVIDENCE = 25;
 
+/** Stable finding id: `<rule>:<first 8 hex of sha256(rule + key)>`, identical across runs. */
 export function findingId(ruleId: string, key: string): string {
   return `${ruleId}:${createHash("sha256").update(`${ruleId}\0${key}`).digest("hex").slice(0, 8)}`;
 }
 
+/** Creates an evidence entry. `commit` is filled in later by the orchestrator, which knows the commits. */
 function ev(
   kind: Evidence["kind"],
   path: string,
@@ -82,6 +90,7 @@ const ACTIONS: Record<string, string> = {
     "Prioritize review and testing of the listed dependents; consider splitting the change.",
 };
 
+/** Creates a finding (without id). A boolean status is shorthand: true = hypothesis, false = verified fact. */
 function draft(
   ruleId: string,
   category: FindingCategory,
@@ -117,6 +126,7 @@ function draft(
   };
 }
 
+/** True for files that still exist in head. */
 const live = (f: ChangedFile): boolean => f.status !== "deleted";
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -217,6 +227,7 @@ function packageEntrySet(ctx: RuleContext): Map<string, { pkg: string; declared:
   return entries;
 }
 
+/** "1 module" / "2 modules". */
 const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 /**
@@ -285,6 +296,7 @@ async function exportChanges(ctx: RuleContext): Promise<Draft[]> {
   return out;
 }
 
+/** Findings for exports that disappeared: the removal itself, and dependents that still import them by name. */
 function removedExports(
   ctx: RuleContext,
   path: string,
@@ -403,6 +415,7 @@ function removedExports(
   return out;
 }
 
+/** Hypothesis finding when changed lines fall inside the signature region of a surviving export. */
 function signatureChanges(
   ctx: RuleContext,
   path: string,
@@ -466,6 +479,7 @@ const ENTRY_FIELDS = [
 ];
 const DEP_FIELDS = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"];
 
+/** JSON with sorted keys, so manifest fields compare independently of key order. */
 function stableJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
   if (value && typeof value === "object") {
@@ -477,6 +491,7 @@ function stableJson(value: unknown): string {
   return JSON.stringify(value);
 }
 
+/** Field-level comparison of package.json between base and head (field and dependency names only). */
 async function manifestChanges(ctx: RuleContext): Promise<Draft[]> {
   const out: Draft[] = [];
   for (const file of ctx.files) {
@@ -568,6 +583,7 @@ const SECURITY_PATH =
 const SECURITY_PACKAGES =
   /^(node:)?crypto$|^(jsonwebtoken|jose|bcrypt|bcryptjs|argon2|scrypt|helmet|cors|csurf|express-session|cookie-session|next-auth|passport(-[\w-]+)?|@auth\/[\w-]+|oauth[\w-]*|openid-client|@node-saml\/[\w-]+|crypto-js|tweetnacl|libsodium[\w-]*)$/;
 
+/** Generic rule: one hypothesis finding listing every changed path that matches the patterns. */
 function pathRule(
   ctx: RuleContext,
   ruleId: string,
@@ -603,6 +619,7 @@ function pathRule(
   ];
 }
 
+/** Configuration changes, split into elevated (CI, env, registry, containers) and ordinary tooling config. */
 function configChanges(ctx: RuleContext): Draft[] {
   const matched = ctx.files.filter((f) => isConfigPath(f.path) && basenameOf(f.path) !== "package.json");
   const elevated = matched.filter((f) => ELEVATED_CONFIG.some((re) => re.test(f.path)));
@@ -645,6 +662,7 @@ function configChanges(ctx: RuleContext): Draft[] {
   return out;
 }
 
+/** Security-sensitive changes by path vocabulary, configured globs or imports of security packages. */
 function securityChanges(ctx: RuleContext): Draft[] {
   const out: Draft[] = [];
   for (const file of ctx.files) {
@@ -731,6 +749,7 @@ function testChanges(ctx: RuleContext): Draft[] {
   return out;
 }
 
+/** Verified count of transitive dependents for changed modules above the configured threshold. */
 function blastRadius(ctx: RuleContext): Draft[] {
   const out: Draft[] = [];
   for (const [root, count] of [...ctx.dependentCounts.entries()].sort(([a], [b]) => compareStrings(a, b))) {

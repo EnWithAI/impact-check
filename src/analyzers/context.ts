@@ -64,6 +64,10 @@ const TEST_FRAMEWORKS: Record<string, string> = {
   tap: "tap",
 };
 
+/**
+ * Detects languages (by file count), module type, workspace tools, test frameworks and the tsconfig
+ * module resolution of the analyzed snapshot.
+ */
 export function detectContext(snapshot: Snapshot, tsConfig: string | null): RepositoryContext {
   const counts = new Map<string, number>();
   const all = [...snapshot.files, ...snapshot.placeholders];

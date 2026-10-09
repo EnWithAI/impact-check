@@ -1,6 +1,12 @@
+/**
+ * Hardened git process runner. Every git call goes through runGit(): argument arrays (never a shell),
+ * a minimal environment, configuration that disables fsmonitor and external tools, no lazy network fetches,
+ * timeouts and output caps.
+ */
 import { spawn } from "node:child_process";
 import { repoError } from "../errors.js";
 
+/** Options for a single git invocation. */
 export interface GitOptions {
   cwd: string;
   input?: Buffer | string;
@@ -10,6 +16,7 @@ export interface GitOptions {
   allowFailure?: boolean;
 }
 
+/** Raw result of a git invocation. */
 export interface GitResult {
   code: number;
   stdout: Buffer;
@@ -38,6 +45,10 @@ const SAFE_CONFIG = [
   "protocol.allow=never",
 ];
 
+/**
+ * Minimal environment for git: only what it needs to locate itself and the repository, plus variables
+ * that disable prompts, optional locks, pagers and lazy (network) object fetches.
+ */
 export function gitEnv(): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {};
   // Pass through only what git needs to locate itself and the repository.
@@ -124,6 +135,7 @@ export function runGit(args: readonly string[], options: GitOptions): Promise<Gi
   });
 }
 
+/** First non-empty line of a message, capped at 300 characters (used to summarize git stderr). */
 export function firstLine(text: string): string {
   const line = text.split(/\r?\n/).find((l) => l.trim().length > 0) ?? "";
   return line.length > 300 ? `${line.slice(0, 300)}…` : line;

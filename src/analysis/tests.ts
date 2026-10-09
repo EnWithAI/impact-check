@@ -1,9 +1,14 @@
+/**
+ * Test candidates: test files that import affected modules (graph), changed tests (observed) and tests
+ * matching a changed module's file name (inferred). Candidates are suggestions only; nothing is executed.
+ */
 import type { AffectedModule, ChangedFile, Provenance, TestCandidate, TestReason } from "../types.js";
 import { basenameOf, isTestPath } from "../util/classify.js";
 import { compareStrings } from "./limitations.js";
 
 const MAX_SUGGESTED = 1000;
 
+/** File name without extension and test suffix (`cart.test.ts` → `cart`). */
 function stem(path: string): string {
   return basenameOf(path)
     .replace(/\.[cm]?[jt]sx?$/i, "")

@@ -1,6 +1,11 @@
+/**
+ * Markdown reporter for humans and PR job summaries. All repository-derived text is escaped, paths are
+ * rendered as inert code spans, and the report states up front that repository strings are data, not instructions.
+ */
 import type { Evidence, Finding, FindingStatus, Report } from "../types.js";
 import { code, text } from "./escape.js";
 
+/** Rendering options for the Markdown report. */
 export interface MarkdownOptions {
   branding: boolean;
   /** Max rows per table section; the JSON report always has the full lists. */
@@ -26,14 +31,17 @@ const PROVENANCE_LABEL = {
   inferred: "inferred (heuristic)",
 } as const;
 
+/** Abbreviated commit SHA as a code span. */
 function short(sha: string | null): string {
   return sha ? code(sha.slice(0, 12)) : "—";
 }
 
+/** "…and N more" note for truncated sections. */
 function more(total: number, shown: number, what: string): string[] {
   return total > shown ? ["", `_…and ${total - shown} more ${what} (see the JSON report)._`] : [];
 }
 
+/** `:line` or `:start-end` suffix for an evidence location. */
 function location(e: Pick<Evidence, "line_start" | "line_end">): string {
   if (e.line_start === null) return "";
   return e.line_end !== null && e.line_end !== e.line_start
@@ -65,6 +73,10 @@ export function withPaths(value: string, paths: readonly string[]): string {
   return out;
 }
 
+/**
+ * Renders a report as Markdown: summary table, findings with status and recommended action, changed
+ * files, affected modules with import evidence, test candidates and limitations.
+ */
 export function renderMarkdown(report: Report, options: MarkdownOptions): string {
   const maxRows = options.maxRows ?? 100;
   const maxChars = options.maxChars ?? 60_000;

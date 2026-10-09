@@ -1,3 +1,5 @@
+# Issue template chooser: blank issues disabled; security reports are routed to private reporting.
+
 blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability

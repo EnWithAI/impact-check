@@ -1,3 +1,7 @@
+/**
+ * Acceptance fixture A8: schema 2.0 validation, identical output across runs and fresh repositories, and a
+ * reviewed golden snapshot that locks rule behavior against regressions.
+ */
 import { readFileSync } from "node:fs";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import addFormatsModule from "ajv-formats";

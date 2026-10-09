@@ -1,3 +1,8 @@
+/**
+ * Git adapter: ref validation and resolution, merge base, diffs (name-status, numstat, -U0 hunks),
+ * working-tree state (staged/unstaged/untracked/unmerged) and batched object reads. Pure parsers for git's
+ * NUL-separated and C-quoted output are exported for unit testing.
+ */
 import { basename } from "node:path";
 import { repoError, usageError } from "../errors.js";
 import { firstLine, runGit, splitZ } from "./exec.js";
@@ -12,17 +17,20 @@ const DIFF_FLAGS = [
   "--dst-prefix=b/",
 ];
 
+/** One entry of `git diff --name-status` (internal; converted to ChangedFile for the report). */
 export interface RawChange {
   path: string;
   previousPath: string | null;
   status: FileStatus;
 }
 
+/** An added or removed diff line with its line number on that side. */
 export interface DiffLine {
   line: number;
   text: string;
 }
 
+/** Changed line information of one file from `git diff -U0`. */
 export interface FileHunks {
   ranges: LineRange[];
   added: DiffLine[];
@@ -30,12 +38,14 @@ export interface FileHunks {
   truncated: boolean;
 }
 
+/** Added/deleted line counts of one file; null counts for binary files. */
 export interface NumStat {
   additions: number | null;
   deletions: number | null;
   binary: boolean;
 }
 
+/** Everything the analysis needs from one diff. */
 export interface DiffResult {
   changes: RawChange[];
   numstat: Map<string, NumStat>;
@@ -55,6 +65,10 @@ export function validateRef(ref: string, flag: string): string {
   return ref;
 }
 
+/**
+ * Absolute path of the working tree root containing `cwd`.
+ * @throws ImpactCheckError (exit 3) outside a git working tree.
+ */
 export async function repoRoot(cwd: string): Promise<string> {
   const result = await runGit(["rev-parse", "--show-toplevel"], { cwd, allowFailure: true }).catch(
     (error: Error) => {
@@ -72,6 +86,7 @@ export async function repoRoot(cwd: string): Promise<string> {
   return root;
 }
 
+/** Resolves a validated ref to a full commit SHA, or null when it does not exist. */
 export async function resolveCommit(root: string, ref: string): Promise<string | null> {
   const result = await runGit(["rev-parse", "--verify", "--quiet", "--end-of-options", `${ref}^{commit}`], {
     cwd: root,
@@ -81,17 +96,20 @@ export async function resolveCommit(root: string, ref: string): Promise<string |
   return result.stdout.toString("utf8").trim();
 }
 
+/** True for shallow clones (history may be missing for merge bases). */
 export async function isShallow(root: string): Promise<boolean> {
   const result = await runGit(["rev-parse", "--is-shallow-repository"], { cwd: root, allowFailure: true });
   return result.stdout.toString("utf8").trim() === "true";
 }
 
+/** Best common ancestor of two commits, or null when they share no history. */
 export async function mergeBase(root: string, a: string, b: string): Promise<string | null> {
   const result = await runGit(["merge-base", "--end-of-options", a, b], { cwd: root, allowFailure: true });
   if (result.code !== 0) return null;
   return result.stdout.toString("utf8").trim() || null;
 }
 
+/** Repository name used in reports: the basename of the root (absolute paths are never emitted). */
 export function repoName(root: string): string {
   return basename(root);
 }
@@ -186,6 +204,7 @@ export function unquoteGitPath(raw: string): string {
   return Buffer.from(bytes).toString("utf8");
 }
 
+/** Unquotes a diff header path and strips its `a/` or `b/` prefix; null for /dev/null. */
 function stripPrefix(header: string, prefix: string): string | null {
   const value = unquoteGitPath(header);
   if (value === "/dev/null") return null;
@@ -261,6 +280,7 @@ export async function diff(root: string, from: string, to: string | null): Promi
   };
 }
 
+/** Untracked, non-ignored files (repository-relative, sorted). */
 export async function untrackedFiles(root: string): Promise<string[]> {
   const result = await runGit(["ls-files", "--others", "--exclude-standard", "-z", "--full-name"], {
     cwd: root,
@@ -274,6 +294,7 @@ export async function unmergedPaths(root: string): Promise<Set<string>> {
   return new Set(splitZ(result.stdout).map((r) => r.slice(r.indexOf("\t") + 1)));
 }
 
+/** Paths with staged changes relative to HEAD. */
 export async function stagedPaths(root: string): Promise<string[]> {
   const result = await runGit(["diff", ...DIFF_FLAGS, "--cached", "--name-only", "-z", "HEAD", "--"], {
     cwd: root,
@@ -281,11 +302,13 @@ export async function stagedPaths(root: string): Promise<string[]> {
   return splitZ(result.stdout);
 }
 
+/** Paths with unstaged changes in the working tree. */
 export async function unstagedPaths(root: string): Promise<string[]> {
   const result = await runGit(["diff", ...DIFF_FLAGS, "--name-only", "-z", "--"], { cwd: root });
   return splitZ(result.stdout);
 }
 
+/** One blob/tree/commit entry of `git ls-tree --long`. */
 export interface TreeEntry {
   mode: string;
   type: string;
@@ -379,6 +402,7 @@ export async function readPathsAt(
   return result;
 }
 
+/** Reads one blob `<commit>:<path>`, or null when it does not exist. */
 export async function showFile(root: string, commit: string, path: string): Promise<Buffer | null> {
   const result = await runGit(["cat-file", "blob", `${commit}:${path}`], { cwd: root, allowFailure: true });
   return result.code === 0 ? result.stdout : null;

@@ -1,29 +1,39 @@
+/**
+ * File classification helpers: language, kind (source/test/config/other), analyzable snapshot files,
+ * ignored directories and repository-relative path safety checks.
+ */
 import type { FileKind, Language } from "../types.js";
 
 const TS_EXT = [".ts", ".tsx", ".mts", ".cts"];
 const JS_EXT = [".js", ".jsx", ".mjs", ".cjs"];
+/** Extensions of JavaScript/TypeScript modules that are parsed. */
 export const SOURCE_EXTENSIONS = [...TS_EXT, ...JS_EXT];
 /** File types that may contain JS/TS modules but are not parsed in alpha. */
 const UNSUPPORTED_MODULE_EXT = [".vue", ".svelte", ".astro", ".coffee", ".ls"];
 
+/** Lower-case extension of a path, including the dot ("" when none). */
 export function extname(path: string): string {
   const base = path.slice(path.lastIndexOf("/") + 1);
   const dot = base.lastIndexOf(".");
   return dot > 0 ? base.slice(dot).toLowerCase() : "";
 }
 
+/** Last path segment of a repository-relative path. */
 export function basenameOf(path: string): string {
   return path.slice(path.lastIndexOf("/") + 1);
 }
 
+/** True for JavaScript/TypeScript module files. */
 export function isJsTs(path: string): boolean {
   return SOURCE_EXTENSIONS.includes(extname(path));
 }
 
+/** True for component formats that contain modules but are not parsed (.vue, .svelte, .astro, …). */
 export function isUnsupportedModule(path: string): boolean {
   return UNSUPPORTED_MODULE_EXT.includes(extname(path));
 }
 
+/** Language of a file by extension. */
 export function languageOf(path: string): Language {
   const ext = extname(path);
   if (TS_EXT.includes(ext)) return "typescript";
@@ -35,6 +45,7 @@ export function languageOf(path: string): Language {
 const TEST_FILE = /\.(test|spec|e2e|it)\.[cm]?[jt]sx?$/i;
 const TEST_DIR = /(^|\/)(__tests__|__test__|test|tests|spec|specs|e2e|cypress|playwright)\//i;
 
+/** True for JS/TS files that look like tests (test/spec file names or test directories). */
 export function isTestPath(path: string): boolean {
   if (!isJsTs(path)) return false;
   return TEST_FILE.test(path) || TEST_DIR.test(path);
@@ -52,10 +63,12 @@ const CONFIG_PATTERNS: RegExp[] = [
   /(^|\/)(pnpm-workspace\.yaml|lerna\.json|nx\.json|turbo\.json)$/,
 ];
 
+/** True for build, tooling, CI, container, environment and workspace configuration files. */
 export function isConfigPath(path: string): boolean {
   return CONFIG_PATTERNS.some((re) => re.test(path));
 }
 
+/** Kind of a file by path convention: test, config, source or other. */
 export function kindOf(path: string): FileKind {
   if (isTestPath(path)) return "test";
   if (isConfigPath(path)) return "config";

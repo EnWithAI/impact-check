@@ -1,7 +1,12 @@
+/**
+ * Version information reported in run_metadata: the Impact Check package version and the exact versions
+ * of the analysis engine (dependency-cruiser) and parser (TypeScript) resolved at runtime.
+ */
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+/** Reads the `version` field of a package.json ("0.0.0" when absent). */
 function readJsonVersion(url: URL): string {
   const parsed = JSON.parse(readFileSync(url, "utf8")) as { version?: unknown };
   return typeof parsed.version === "string" ? parsed.version : "0.0.0";
@@ -28,5 +33,7 @@ function dependencyVersion(name: string): string {
   return "unknown";
 }
 
+/** Version of the installed dependency-cruiser engine. */
 export const ENGINE_VERSION: string = dependencyVersion("dependency-cruiser");
+/** Version of the installed TypeScript parser. */
 export const PARSER_VERSION: string = dependencyVersion("typescript");

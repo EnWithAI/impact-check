@@ -3,6 +3,7 @@
 import ts from "typescript";
 import type { LineRange } from "../types.js";
 
+/** One named export of a module as seen by the parser. */
 export interface ExportInfo {
   name: string;
   kind: string;
@@ -12,6 +13,7 @@ export interface ExportInfo {
   signature: LineRange[];
 }
 
+/** All statically visible exports of one module, plus markers that make the set incomplete. */
 export interface ExportSet {
   exports: Map<string, ExportInfo>;
   /** Specifiers of `export * from "..."`: the export set is open and cannot be fully known statically. */
@@ -21,6 +23,7 @@ export interface ExportSet {
   parseErrors: number;
 }
 
+/** One name imported (or re-exported) from a module specifier. */
 export interface ImportedName {
   specifier: string;
   /** Imported (not local) name; "default" for default imports; "*" for namespace imports. */
@@ -29,6 +32,7 @@ export interface ImportedName {
   typeOnly: boolean;
 }
 
+/** TypeScript script kind for a path (JSX/TSX parsing depends on it). */
 function scriptKind(path: string): ts.ScriptKind {
   if (/\.tsx$/i.test(path)) return ts.ScriptKind.TSX;
   if (/\.jsx$/i.test(path)) return ts.ScriptKind.JSX;
@@ -36,22 +40,27 @@ function scriptKind(path: string): ts.ScriptKind {
   return ts.ScriptKind.TS;
 }
 
+/** Parses text into a syntax tree (parser only; no program, no file system access). */
 function parse(text: string, path: string): ts.SourceFile {
   return ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, scriptKind(path));
 }
 
+/** 1-based line of a character position. */
 function lineOf(sf: ts.SourceFile, pos: number): number {
   return sf.getLineAndCharacterOfPosition(pos).line + 1;
 }
 
+/** Line range covering two character positions. */
 function range(sf: ts.SourceFile, from: number, to: number): LineRange {
   return { start: lineOf(sf, from), end: lineOf(sf, to) };
 }
 
+/** Modifiers of a node (export, default, private, …), if it can have any. */
 function modifiers(node: ts.Node): readonly ts.ModifierLike[] {
   return ts.canHaveModifiers(node) ? (ts.getModifiers(node) ?? []) : [];
 }
 
+/** True when the node carries the given modifier keyword. */
 function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {
   return modifiers(node).some((m) => m.kind === kind);
 }
@@ -61,6 +70,7 @@ function headerRange(sf: ts.SourceFile, node: ts.Node, body: ts.Node | undefined
   return body ? range(sf, node.getStart(sf), body.getStart(sf)) : range(sf, node.getStart(sf), node.getEnd());
 }
 
+/** Signature ranges of a class: its header plus the headers of all non-private members. */
 function classSignature(sf: ts.SourceFile, node: ts.ClassDeclaration): LineRange[] {
   const ranges: LineRange[] = [range(sf, node.getStart(sf), node.members.pos)];
   for (const member of node.members) {
@@ -75,11 +85,13 @@ function classSignature(sf: ts.SourceFile, node: ts.ClassDeclaration): LineRange
   return ranges;
 }
 
+/** Names bound by a variable declaration, including destructuring patterns. */
 function bindingNames(name: ts.BindingName): string[] {
   if (ts.isIdentifier(name)) return [name.text];
   return name.elements.flatMap((e) => (ts.isOmittedExpression(e) ? [] : bindingNames(e.name)));
 }
 
+/** True for `module.exports = …`, `module.exports.x = …` and `exports.x = …` statements. */
 function isCommonJsExport(statement: ts.Statement): boolean {
   if (!ts.isExpressionStatement(statement) || !ts.isBinaryExpression(statement.expression)) return false;
   if (statement.expression.operatorToken.kind !== ts.SyntaxKind.EqualsToken) return false;
@@ -87,6 +99,10 @@ function isCommonJsExport(statement: ts.Statement): boolean {
   return left === "module.exports" || left.startsWith("module.exports.") || left.startsWith("exports.");
 }
 
+/**
+ * Parses a module and returns its named exports with lines and signature ranges. Tolerates syntax errors
+ * (the count is reported in `parseErrors`).
+ */
 export function extractExports(text: string, path: string): ExportSet {
   const sf = parse(text, path);
   const set: ExportSet = {
@@ -200,6 +216,10 @@ export function extractExports(text: string, path: string): ExportSet {
   return set;
 }
 
+/**
+ * Lists the names a module imports or re-exports by name, per specifier. Namespace imports are reported as
+ * name "*" and side-effect imports are omitted.
+ */
 export function importedNames(text: string, path: string): ImportedName[] {
   const sf = parse(text, path);
   const out: ImportedName[] = [];

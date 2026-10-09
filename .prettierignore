@@ -1,3 +1,5 @@
+# Generated or byte-compared files are excluded from formatting (samples and golden snapshots must stay
+# exactly as the tool writes them).
 dist/
 coverage/
 node_modules/

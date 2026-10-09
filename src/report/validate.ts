@@ -1,23 +1,29 @@
+/**
+ * Structural validation for reports read back from disk (`impact-check render`), e.g. a CI artifact produced
+ * by an untrusted PR run. Rendering escapes every string, so this guards against crashes and type confusion, not
+ * against content.
+ */
 import { usageError } from "../errors.js";
 import type { Report } from "../types.js";
 
-// Structural validation for reports read back from disk (e.g. a CI artifact produced by an untrusted PR run).
-// Rendering escapes every string, so this guards against crashes and type confusion, not content.
-
 const MAX_ITEMS = 100_000;
 
+/** True for plain (non-array) objects. */
 function isObj(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === "object" && !Array.isArray(v);
 }
 
+/** Throws a usage error describing why the report is invalid. */
 function fail(message: string): never {
   throw usageError(`Invalid Impact Check report: ${message}`);
 }
 
+/** Asserts that the given fields are strings. */
 function strings(obj: Record<string, unknown>, keys: string[], where: string): void {
   for (const k of keys) if (typeof obj[k] !== "string") fail(`${where}.${k} must be a string`);
 }
 
+/** Asserts that a field is a bounded array of objects and validates each item. */
 function list(
   obj: Record<string, unknown>,
   key: string,
@@ -32,12 +38,14 @@ function list(
   });
 }
 
+/** Asserts that a field is an array of strings. */
 function stringArray(obj: Record<string, unknown>, key: string, where: string): void {
   const value = obj[key];
   if (!Array.isArray(value) || value.some((v) => typeof v !== "string"))
     fail(`${where}.${key} must be an array of strings`);
 }
 
+/** Asserts that a field holds one of the allowed values. */
 const oneOf = (
   obj: Record<string, unknown>,
   key: string,
@@ -47,6 +55,10 @@ const oneOf = (
   if (!values.includes(obj[key])) fail(`${where}.${key} has an unexpected value`);
 };
 
+/**
+ * Parses and structurally validates a schema 2.0 report.
+ * @throws ImpactCheckError (exit 2) when the input is not a valid report.
+ */
 export function parseReport(text: string): Report {
   let raw: unknown;
   try {

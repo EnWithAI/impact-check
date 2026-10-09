@@ -1,3 +1,7 @@
+/**
+ * Command-line interface: argument parsing (node:util parseArgs), commands (analyze, check, render,
+ * schema), configuration loading, output writing and the mapping of every error to a documented exit code.
+ */
 import { existsSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
@@ -12,6 +16,7 @@ import { redactDeep } from "../report/redact.js";
 import { parseReport } from "../report/validate.js";
 import { TOOL_VERSION } from "../version.js";
 
+/** I/O seams for the CLI so it can run in-process in tests. */
 export interface CliIO {
   stdout: (text: string) => void;
   stderr: (text: string) => void;
@@ -19,6 +24,7 @@ export interface CliIO {
   now?: () => Date;
 }
 
+/** Text printed by `impact-check --help`. */
 export const HELP = `Impact Check ${TOOL_VERSION} — evidence-backed change-impact reports for JS/TS repositories.
 
 Usage:
@@ -54,6 +60,7 @@ Exit codes: 0 ok · 1 internal error · 2 usage/config error · 3 git/repository
 Privacy: no network access, no telemetry, no execution of repository code or package scripts.
 `;
 
+/** Parses a positive integer CLI flag value. */
 function positiveInt(value: string | undefined, flag: string): number | undefined {
   if (value === undefined) return undefined;
   if (!/^\d+$/.test(value) || Number(value) < 1 || Number(value) > 1_000_000) {
@@ -62,6 +69,7 @@ function positiveInt(value: string | undefined, flag: string): number | undefine
   return Number(value);
 }
 
+/** Writes a report file atomically (temp file + rename); the parent directory must exist. */
 function writeOutput(path: string, content: string): void {
   if (existsSync(path) && statSync(path).isDirectory())
     throw usageError(`--output points to a directory: ${path}`);
@@ -71,6 +79,7 @@ function writeOutput(path: string, content: string): void {
   renameSync(temp, path);
 }
 
+/** Returns the bundled report JSON Schema (works from both src/ and dist/). */
 export function readSchema(): string {
   return readFileSync(new URL("../../schema/impact-check-report.schema.json", import.meta.url), "utf8");
 }
@@ -78,6 +87,7 @@ export function readSchema(): string {
 /** Set by --on-error pass: tool/git errors become warnings with exit 0 (fail-open). */
 let failOpen = false;
 
+/** Parses arguments and runs one command. Throws ImpactCheckError for expected failures. */
 async function main(argv: string[], io: CliIO): Promise<number> {
   const { values, positionals } = (() => {
     try {

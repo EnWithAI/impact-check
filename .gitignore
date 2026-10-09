@@ -1,3 +1,4 @@
+# Build output, coverage, dependencies and locally generated reports are never committed.
 node_modules/
 dist/
 coverage/

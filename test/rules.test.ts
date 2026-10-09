@@ -1,3 +1,7 @@
+/**
+ * Rule behavior: verified facts vs hypotheses for exports and broken imports, path-convention rules,
+ * manifest changes, test-change rules, package entries, blast radius and workspace (monorepo) inference.
+ */
 import { describe, expect, it } from "vitest";
 import { analyzeJson, dependents, limitationCodes, Repo, ruleIds } from "./helpers.js";
 import { basicTs } from "./fixtures/basic-ts.js";

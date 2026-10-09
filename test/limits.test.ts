@@ -1,3 +1,7 @@
+/**
+ * Safe degradation and limits: size caps, truncation, unsupported files, tsconfig fallbacks, malformed
+ * manifests, conflicts, untracked node_modules, and performance on large synthetic repositories.
+ */
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

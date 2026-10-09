@@ -1,7 +1,12 @@
+/**
+ * Reverse-dependency impact ("blast radius"): breadth-first search from every changed module with
+ * shortest import chains, nearest-root distances, provenance propagation and depth/size limits.
+ */
 import type { AffectedModule, Provenance } from "../types.js";
 import type { ModuleGraph } from "../graph/graph.js";
 import { compareStrings } from "./limitations.js";
 
+/** Input for computeImpact(). */
 export interface ImpactInput {
   graph: ModuleGraph;
   /** Changed module paths present in the head graph (or deleted paths with extra seed dependents). */
@@ -12,6 +17,7 @@ export interface ImpactInput {
   maxAffected: number;
 }
 
+/** Result of computeImpact(): changed roots first, then dependents sorted by distance and path. */
 export interface ImpactResult {
   affected: AffectedModule[];
   truncated: boolean;
@@ -28,6 +34,7 @@ interface NodeState {
   roots: Set<string>;
 }
 
+/** Direct dependents of a node (head graph plus extra base-graph edges), sorted, with edge provenance. */
 function reverseNeighbors(input: ImpactInput, node: string): { path: string; provenance: Provenance }[] {
   const out = new Map<string, Provenance>();
   for (const dependent of input.graph.rdeps.get(node) ?? []) {

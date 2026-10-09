@@ -1,5 +1,10 @@
+/**
+ * JSON reporter and report normalization (masks the run-specific metadata fields so that identical inputs
+ * produce byte-identical output for determinism checks).
+ */
 import type { Report } from "../types.js";
 
+/** Serializes a report as pretty-printed JSON with a trailing newline. */
 export function renderJson(report: Report): string {
   return `${JSON.stringify(report, null, 2)}\n`;
 }

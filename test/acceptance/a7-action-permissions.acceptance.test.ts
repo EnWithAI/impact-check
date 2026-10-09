@@ -1,3 +1,7 @@
+/**
+ * Acceptance fixture A7: fork PRs with minimal permissions. The Action must never read tokens or
+ * secrets, and fail-open/fail-closed behavior on tool errors must be explicit (Action on-error, CLI --on-error).
+ */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";

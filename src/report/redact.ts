@@ -15,8 +15,13 @@ const PATTERNS: RegExp[] = [
   /\b[a-z][a-z0-9+.-]*:\/\/[^\s:/@]+:[^\s/@]+@/gi,
 ];
 
+/** Replacement text for masked secrets. */
 export const REDACTED = "[REDACTED]";
 
+/**
+ * Masks token-like substrings (GitHub, AWS, Slack, OpenAI/Anthropic, Google, npm, Stripe, JWT, private
+ * key headers, credentials in URLs).
+ */
 export function redact(text: string): string {
   let out = text;
   for (const re of PATTERNS) out = out.replace(re, REDACTED);

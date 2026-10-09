@@ -1,3 +1,6 @@
+/**
+ * Markdown escaping, secret redaction and reporter caps (row limits, size limit, branding toggle).
+ */
 import { describe, expect, it } from "vitest";
 import { code, text, visible } from "../src/report/escape.js";
 import { redact, redactDeep, REDACTED } from "../src/report/redact.js";

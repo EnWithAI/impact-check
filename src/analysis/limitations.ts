@@ -1,3 +1,7 @@
+/**
+ * Collector for coverage limitations: what the analysis could not see or decide. Deterministic output
+ * (sorted codes and paths, capped example lists with true counts).
+ */
 import type { Limitation } from "../types.js";
 
 const MAX_EXAMPLE_PATHS = 20;
@@ -50,6 +54,7 @@ export class Limitations {
   }
 }
 
+/** Locale-independent string comparison used for every sort, so output order is identical on all machines. */
 export function compareStrings(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }

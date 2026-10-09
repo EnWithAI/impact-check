@@ -1,3 +1,7 @@
+/**
+ * ESLint flat config: recommended + strict typescript-eslint rules, plus project invariants
+ * (no network modules, no exec/execSync in source).
+ */
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
