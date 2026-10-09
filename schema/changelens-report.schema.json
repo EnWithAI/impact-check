@@ -28,9 +28,15 @@
       "additionalProperties": false,
       "required": ["name", "isShallow", "tsConfig", "workspacePackages"],
       "properties": {
-        "name": { "type": "string", "description": "Basename of the repository root directory. No absolute paths are emitted." },
+        "name": {
+          "type": "string",
+          "description": "Basename of the repository root directory. No absolute paths are emitted."
+        },
         "isShallow": { "type": "boolean" },
-        "tsConfig": { "type": ["string", "null"], "description": "Repository-relative tsconfig/jsconfig used for alias resolution, or null." },
+        "tsConfig": {
+          "type": ["string", "null"],
+          "description": "Repository-relative tsconfig/jsconfig used for alias resolution, or null."
+        },
         "workspacePackages": {
           "type": "array",
           "items": {
@@ -45,14 +51,26 @@
     "comparison": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["baseRef", "baseCommit", "mergeBase", "diffMode", "headRef", "headCommit", "headKind", "worktree"],
+      "required": [
+        "baseRef",
+        "baseCommit",
+        "mergeBase",
+        "diffMode",
+        "headRef",
+        "headCommit",
+        "headKind",
+        "worktree"
+      ],
       "properties": {
         "baseRef": { "type": "string" },
         "baseCommit": { "$ref": "#/$defs/sha" },
         "mergeBase": { "anyOf": [{ "$ref": "#/$defs/sha" }, { "type": "null" }] },
         "diffMode": { "enum": ["merge-base", "direct"] },
         "headRef": { "type": "string", "description": "The ref given by the user, or \"WORKTREE\"." },
-        "headCommit": { "$ref": "#/$defs/sha", "description": "Commit analyzed, or HEAD's commit when analyzing the working tree." },
+        "headCommit": {
+          "$ref": "#/$defs/sha",
+          "description": "Commit analyzed, or HEAD's commit when analyzing the working tree."
+        },
         "headKind": { "enum": ["commit", "worktree"] },
         "worktree": {
           "description": "Uncommitted change counts. In worktree mode these are included; in commit mode they are excluded (see coverageLimitations).",
@@ -71,7 +89,14 @@
     "summary": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["filesChanged", "jsTsFilesChanged", "affectedModules", "findingsBySeverity", "suggestedTests", "coverageLimitations"],
+      "required": [
+        "filesChanged",
+        "jsTsFilesChanged",
+        "affectedModules",
+        "findingsBySeverity",
+        "suggestedTests",
+        "coverageLimitations"
+      ],
       "properties": {
         "filesChanged": { "type": "integer", "minimum": 0 },
         "jsTsFilesChanged": { "type": "integer", "minimum": 0 },
@@ -96,7 +121,19 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["path", "previousPath", "status", "binary", "language", "kind", "additions", "deletions", "origin", "changedLines", "provenance"],
+        "required": [
+          "path",
+          "previousPath",
+          "status",
+          "binary",
+          "language",
+          "kind",
+          "additions",
+          "deletions",
+          "origin",
+          "changedLines",
+          "provenance"
+        ],
         "properties": {
           "path": { "type": "string" },
           "previousPath": { "type": ["string", "null"] },
@@ -104,7 +141,11 @@
           "binary": { "type": "boolean" },
           "language": { "enum": ["typescript", "javascript", "json", "other"] },
           "kind": { "enum": ["source", "test", "config", "other"] },
-          "additions": { "type": ["integer", "null"], "minimum": 0, "description": "Null for binary or unavailable." },
+          "additions": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "description": "Null for binary or unavailable."
+          },
           "deletions": { "type": ["integer", "null"], "minimum": 0 },
           "origin": { "enum": ["committed", "staged", "unstaged", "untracked", "mixed"] },
           "changedLines": {
@@ -125,10 +166,22 @@
         "properties": {
           "path": { "type": "string" },
           "reason": { "enum": ["changed", "dependent"] },
-          "distance": { "type": "integer", "minimum": 0, "description": "0 = directly changed; n = shortest reverse-dependency hops from a changed module." },
+          "distance": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "0 = directly changed; n = shortest reverse-dependency hops from a changed module."
+          },
           "provenance": { "$ref": "#/$defs/provenance" },
-          "via": { "type": "array", "items": { "type": "string" }, "description": "Shortest dependency chain from a changed module to this module (inclusive)." },
-          "changedRoots": { "type": "array", "items": { "type": "string" }, "description": "Changed modules this module (transitively) depends on." }
+          "via": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Shortest dependency chain from a changed module to this module (inclusive)."
+          },
+          "changedRoots": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Changed modules this module (transitively) depends on."
+          }
         }
       }
     },
@@ -141,7 +194,11 @@
         "required": ["path", "reasons", "relatedTo", "provenance", "status"],
         "properties": {
           "path": { "type": "string" },
-          "reasons": { "type": "array", "minItems": 1, "items": { "enum": ["changed-test", "imports-affected-module", "naming-convention"] } },
+          "reasons": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "enum": ["changed-test", "imports-affected-module", "naming-convention"] }
+          },
           "relatedTo": { "type": "array", "items": { "type": "string" } },
           "provenance": { "$ref": "#/$defs/provenance" },
           "status": { "const": "not-run", "description": "ChangeLens never executes tests." }
@@ -157,7 +214,11 @@
         "properties": {
           "code": { "type": "string", "pattern": "^[a-z0-9-]+$" },
           "message": { "type": "string" },
-          "paths": { "type": "array", "items": { "type": "string" }, "description": "Example paths (capped). `count` is the total." },
+          "paths": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Example paths (capped). `count` is the total."
+          },
           "count": { "type": "integer", "minimum": 0 }
         }
       }
@@ -165,11 +226,23 @@
     "analysis": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["engine", "engineVersion", "parserVersion", "headGraph", "baseGraph", "limits", "network", "executedRepositoryCode"],
+      "required": [
+        "engine",
+        "engineVersion",
+        "parserVersion",
+        "headGraph",
+        "baseGraph",
+        "limits",
+        "network",
+        "executedRepositoryCode"
+      ],
       "properties": {
         "engine": { "const": "dependency-cruiser" },
         "engineVersion": { "type": "string" },
-        "parserVersion": { "type": "string", "description": "TypeScript version used by the engine to parse TS sources." },
+        "parserVersion": {
+          "type": "string",
+          "description": "TypeScript version used by the engine to parse TS sources."
+        },
         "headGraph": { "$ref": "#/$defs/graphStats" },
         "baseGraph": { "anyOf": [{ "$ref": "#/$defs/graphStats" }, { "type": "null" }] },
         "limits": {
@@ -197,7 +270,10 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["start", "end"],
-      "properties": { "start": { "type": "integer", "minimum": 1 }, "end": { "type": "integer", "minimum": 1 } }
+      "properties": {
+        "start": { "type": "integer", "minimum": 1 },
+        "end": { "type": "integer", "minimum": 1 }
+      }
     },
     "graphStats": {
       "type": "object",
@@ -214,23 +290,59 @@
       "additionalProperties": false,
       "required": ["kind", "path", "side", "line", "endLine", "detail"],
       "properties": {
-        "kind": { "enum": ["diff-hunk", "file-status", "import-edge", "export-declaration", "path-pattern", "manifest-field", "graph-count"] },
+        "kind": {
+          "enum": [
+            "diff-hunk",
+            "file-status",
+            "import-edge",
+            "export-declaration",
+            "path-pattern",
+            "manifest-field",
+            "graph-count"
+          ]
+        },
         "path": { "type": "string" },
         "side": { "enum": ["base", "head"] },
         "line": { "type": ["integer", "null"], "minimum": 1 },
         "endLine": { "type": ["integer", "null"], "minimum": 1 },
-        "detail": { "type": "string", "description": "Short, redacted descriptor (e.g. an export name, import specifier, matched pattern). Never file contents." }
+        "detail": {
+          "type": "string",
+          "description": "Short, redacted descriptor (e.g. an export name, import specifier, matched pattern). Never file contents."
+        }
       }
     },
     "finding": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "ruleId", "category", "severity", "confidence", "isHeuristic", "provenance", "title", "explanation", "evidence", "relatedModules"],
+      "required": [
+        "id",
+        "ruleId",
+        "category",
+        "severity",
+        "confidence",
+        "isHeuristic",
+        "provenance",
+        "title",
+        "explanation",
+        "evidence",
+        "relatedModules"
+      ],
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z0-9-]+:[0-9a-f]{8}$" },
         "ruleId": { "type": "string" },
         "category": {
-          "enum": ["public-api", "package-manifest", "broken-import", "deleted-module", "migration", "api-contract", "configuration", "security-sensitive", "test-change", "blast-radius"]
+          "enum": [
+            "public-api",
+            "package-manifest",
+            "broken-import",
+            "deleted-module",
+            "migration",
+            "api-contract",
+            "configuration",
+            "security-sensitive",
+            "test-change",
+            "blast-radius"
+          ]
         },
         "severity": { "enum": ["high", "medium", "low", "info"] },
         "confidence": { "enum": ["high", "medium", "low"] },
