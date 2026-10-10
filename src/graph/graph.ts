@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Module graph construction on top of dependency-cruiser's public API. Produces dependencies, reverse
  * dependencies, unresolved local imports and external imports for a snapshot, and records graph-related coverage

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Hardened git process runner. Every git call goes through runGit(): argument arrays (never a shell),
  * a minimal environment, configuration that disables fsmonitor and external tools, no lazy network fetches,

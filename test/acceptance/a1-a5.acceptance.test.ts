@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Acceptance fixtures A1–A5 (Google SDLC addendum): evidence-linked consumers, internal-only changes,
  * removed/renamed exports, dynamic loading and generated code, and degraded mode. Expectations live in ./expected

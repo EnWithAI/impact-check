@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Rule behavior: verified facts vs hypotheses for exports and broken imports, path-convention rules,
  * manifest changes, test-change rules, package entries, blast radius and workspace (monorepo) inference.

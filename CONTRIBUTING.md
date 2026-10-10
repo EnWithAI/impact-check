@@ -31,6 +31,19 @@ Tests create throwaway git repositories in your temp directory (see `test/helper
 - Describe user-visible changes in `CHANGELOG.md` under "Unreleased".
 - By contributing you agree your contribution is licensed under the MIT License.
 
+## Licensing of contributions and attribution
+
+- Contributions are accepted under this repository's MIT License, inbound = outbound. By opening a pull request you
+  confirm you have the right to submit the work under that license.
+- Do not paste code, text or diagrams from other projects or publications. If third-party material is genuinely
+  needed, open an issue first; it must keep its original license notice and be listed in [NOTICE.md](NOTICE.md).
+- New source files start with `// SPDX-License-Identifier: MIT` (or `#` for YAML and shell).
+- Do not add framework (CLEAR/TRACE) or product (CrewPE) claims unless
+  [commons-provenance.yaml](commons-provenance.yaml) records an evidenced relationship. See
+  [ATTRIBUTION.md](ATTRIBUTION.md).
+- AI-assisted contributions are welcome. You are responsible for reviewing them and for their licensing; mention
+  significant AI assistance in the PR description.
+
 ## Code of conduct
 
 This project follows the [Code of Conduct](CODE_OF_CONDUCT.md).

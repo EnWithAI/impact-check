@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Test candidates: test files that import affected modules (graph), changed tests (observed) and tests
  * matching a changed module's file name (inferred). Candidates are suggestions only; nothing is executed.

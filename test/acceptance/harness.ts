@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 // Verification-first harness: expectations are hand-written JSON files in ./expected, authored before the analyzers
 // they test. A report must contain everything listed and nothing forbidden.
 import { readFileSync } from "node:fs";

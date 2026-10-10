@@ -22,7 +22,7 @@ Every finding carries a `status` — `verified_static_fact`, `hypothesis` or `un
 Requires Node.js 22, 24 or ≥ 26 and git.
 
 ```bash
-git clone <this repository> impact-check && cd impact-check
+git clone https://github.com/enwithai/impact-check.git impact-check && cd impact-check
 npm ci --ignore-scripts && npm run build
 node examples/demo/create-demo.mjs /tmp/impact-check-demo   # synthetic repo with a feature branch
 node dist/cli/main.js analyze --cwd /tmp/impact-check-demo --base main
@@ -46,13 +46,13 @@ The demo commits use fixed dates, so you get byte-identical output (apart from `
 
 ## Install
 
-Until a release is published, install from a local build:
-
 ```bash
-npm pack                                    # in this repository, after npm run build
-npm install --save-dev --ignore-scripts ./enwithai-impact-check-0.2.0-alpha.0.tgz   # in your project
+npm install --save-dev --ignore-scripts @enwithai/impact-check@alpha
 npx impact-check --help
 ```
+
+Alpha releases are published under the `alpha` dist-tag. To build from source instead:
+`git clone https://github.com/enwithai/impact-check.git && cd impact-check && npm ci --ignore-scripts && npm run build`.
 
 Uninstall with `npm uninstall @enwithai/impact-check`. Impact Check writes nothing outside the report files you ask
 for (and private temp directories it deletes after each run). No account, token, telemetry or network access.
@@ -115,4 +115,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Licensed 
 
 ---
 
-<sub>**Check the spec. Check the impact. Check the outcome.** Impact Check is one of three EnWithAI checks (Spec Check and Outcome Check are planned) · Built by EnWithAI · Part of CrewPE Engineering Commons · [crewpe.ai](https://crewpe.ai) · Enterprise advisory: [NetworkGain](https://networkgain.com). Not affiliated with or endorsed by GitHub, Anthropic or the dependency-cruiser maintainers.</sub>
+<sub>**Check the spec. Check the impact. Check the outcome.** Impact Check is one of three checks, with
+[Spec Check](https://github.com/enwithai/spec-check) and [Outcome Check](https://github.com/enwithai/outcome-check).</sub>
+
+<sub>An **EnWithAI Engineering Commons** initiative. Developed and maintained by EnWithAI Technologies, contributing to
+open, verifiable and accountable AI-assisted software engineering. Part of the broader [CrewPE](https://crewpe.ai)
+engineering ecosystem. Impact Check is independently usable and does not require CrewPE. Enterprise advisory and
+transformation perspectives are supported through [NetworkGain Consulting](https://networkgain.com).
+Attribution: [ATTRIBUTION.md](ATTRIBUTION.md) · Notices: [NOTICE.md](NOTICE.md) · Trademarks:
+[TRADEMARKS.md](TRADEMARKS.md) · References: [REFERENCES.md](REFERENCES.md). Not affiliated with or endorsed by GitHub,
+Anthropic or the dependency-cruiser maintainers.</sub>

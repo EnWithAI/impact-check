@@ -34,7 +34,7 @@ cli/run.ts ─┐                                     action/run.ts ─┐   (bo
 
 ## Design choices
 
-See `progress/DECISIONS.md` in the CrewPE Engineering Commons workspace. Key points:
+See `progress/DECISIONS.md` in the EnWithAI Engineering Commons internal workspace. Key points:
 
 - Snapshots instead of in-place analysis, so there's no `node_modules` influence and no repository mutation.
 - TypeScript 6.0.x is pinned, because dependency-cruiser 18.5 supports `typescript < 7` and TS 7 has no JS compiler API.

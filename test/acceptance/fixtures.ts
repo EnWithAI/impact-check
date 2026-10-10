@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 // Synthetic acceptance fixture (extends the basic TS fixture). Line numbers matter: expectations cite them.
 import { basicTs } from "../fixtures/basic-ts.js";
 

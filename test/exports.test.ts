@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 // Written before src/analyzers/exports.ts (verification-first).
 import { describe, expect, it } from "vitest";
 import { extractExports, importedNames } from "../src/analyzers/exports.js";

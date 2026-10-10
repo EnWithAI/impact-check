@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 # CI for Impact Check: typecheck, lint, format, build, tests with coverage, license audit and package dry-run
 # on Node 22/24/26, plus a self-test of this repository's Action on pull requests. Read-only token; actions pinned
 # by commit SHA.

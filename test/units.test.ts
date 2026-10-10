@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Unit tests for pure building blocks: git output parsers, lexical helpers, impact BFS, limitations,
  * classification, policy, workspace resolution and batched object reads.

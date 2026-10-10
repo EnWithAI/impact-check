@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 // Report contract types (schema 2.0). Must stay in sync with schema/impact-check-report.schema.json (validated in tests).
 
 export const SCHEMA_VERSION = "2.0" as const;

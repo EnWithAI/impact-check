@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 // Generated-code detection (inferred): path conventions, configured globs, or a marker in the first lines.
 import { matchesAny } from "../config.js";
 

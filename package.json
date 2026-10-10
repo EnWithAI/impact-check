@@ -4,6 +4,14 @@
   "description": "Local-first, evidence-backed change-impact reports for JavaScript/TypeScript pull requests.",
   "license": "MIT",
   "author": "EnWithAI Technologies",
+  "homepage": "https://github.com/enwithai/impact-check#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/enwithai/impact-check.git"
+  },
+  "bugs": {
+    "url": "https://github.com/enwithai/impact-check/issues"
+  },
   "type": "module",
   "bin": {
     "impact-check": "dist/cli/main.js"
@@ -23,7 +31,10 @@
     "README.md",
     "LICENSE",
     "SECURITY.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "NOTICE.md",
+    "ATTRIBUTION.md",
+    "TRADEMARKS.md"
   ],
   "engines": {
     "node": "^22 || ^24 || >=26"
@@ -60,5 +71,9 @@
     "prettier": "3.9.9",
     "typescript-eslint": "8.71.1",
     "vitest": "5.0.3"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
   }
 }

@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: MIT
+# Machine-readable Commons provenance. Standard: EnWithAI Engineering Commons attribution standard v1.0.
+schema_version: "0.1"
+commons:
+  program: engineering-commons
+  publisher: "EnWithAI Technologies"
+  project: impact-check
+  former_names: [ChangeLens]
+license:
+  spdx: MIT
+  file: LICENSE
+  copyright_holder: "EnWithAI Technologies"
+  copyright_holder_confirmed: true # 2026-10-10: employee work, company property
+attribution:
+  file: ATTRIBUTION.md
+  notice: NOTICE.md
+  trademarks: TRADEMARKS.md
+  references: REFERENCES.md
+development:
+  vendored_third_party_code: false
+  ai_assisted: true # Claude Code; Co-Authored-By trailers in git history
+  synthetic_fixtures_only: true
+ecosystem:
+  related_product: CrewPE
+  dependency: none
+  integration: none
+frameworks:
+  clear:
+    owner: NetworkGain Consulting
+    relationship: none
+    spec_version: null
+    evidence: "No structured-reasoning methodology is used."
+  trace:
+    owner: EnWithAI Technologies
+    relationship: not-assessed
+    spec_version: null
+    evidence: "TRACE specification not available; candidate evidence features: status, evidence[] with path/line/commit, provenance."
+upstream:
+  - { name: dependency-cruiser, version: "18.5.0", license: MIT, use: runtime dependency (graph) }
+  - { name: typescript, version: "6.0.3", license: Apache-2.0, use: runtime dependency (parser) }
+references: REFERENCES.md
+review_items: [HR-5, HR-11]

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Configuration (.impact-check.json): defaults, strict validation and simple glob matching.
  * Configuration is data only: no JavaScript configs, no user-supplied regular expressions, unknown keys rejected.

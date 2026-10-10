@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Acceptance fixture A7: fork PRs with minimal permissions. The Action must never read tokens or
  * secrets, and fail-open/fail-closed behavior on tool errors must be explicit (Action on-error, CLI --on-error).

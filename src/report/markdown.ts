@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Markdown reporter for humans and PR job summaries. All repository-derived text is escaped, paths are
  * rendered as inert code spans, and the report states up front that repository strings are data, not instructions.
@@ -223,10 +225,7 @@ export function renderMarkdown(report: Report, options: MarkdownOptions): string
     `<sub>Impact Check ${text(m.tool_version)} · schema ${report.schema_version} · dependency-cruiser ${text(m.engine_version)} · TypeScript ${text(m.parser_version)} · head graph ${m.head_graph.modules} modules / ${m.head_graph.edges} edges · offline, no model, no telemetry</sub>`
   );
   if (options.branding) {
-    out.push(
-      "",
-      "<sub>Built by EnWithAI · Part of CrewPE Engineering Commons · [crewpe.ai](https://crewpe.ai)</sub>"
-    );
+    out.push("", "<sub>An EnWithAI Engineering Commons tool · [crewpe.ai](https://crewpe.ai)</sub>");
   }
 
   let md = out.join("\n") + "\n";

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Collector for coverage limitations: what the analysis could not see or decide. Deterministic output
  * (sorted codes and paths, capped example lists with true counts).

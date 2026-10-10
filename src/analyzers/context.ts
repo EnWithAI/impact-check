@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 // Repository context detection (addendum invariant 2). Reads only names, counts and manifest fields.
 import ts from "typescript";
 import type { Snapshot } from "../snapshot/snapshot.js";

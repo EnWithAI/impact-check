@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * GitHub Action entry point (composite action, see action.yml). All inputs arrive as environment variables set
  * via `env:` in action.yml — never interpolated into shell. The action only reads the checked-out repository,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Policy evaluation for `impact-check check`. Turns a report plus the configured policy into pass/fail
  * with human-readable violations. A policy result is a signal for humans; it never approves or merges anything.

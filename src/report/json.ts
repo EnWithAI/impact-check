@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * JSON reporter and report normalization (masks the run-specific metadata fields so that identical inputs
  * produce byte-identical output for determinism checks).

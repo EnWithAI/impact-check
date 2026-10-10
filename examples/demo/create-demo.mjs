@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 // Creates a small synthetic TypeScript repository with a feature branch, for trying Impact Check.
 // Usage: node examples/demo/create-demo.mjs <empty-target-dir>
 // Uses only git and the filesystem; installs nothing and runs no package scripts.

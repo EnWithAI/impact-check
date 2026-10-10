@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Structural validation for reports read back from disk (`impact-check render`), e.g. a CI artifact produced
  * by an untrusted PR run. Rendering escapes every string, so this guards against crashes and type confusion, not

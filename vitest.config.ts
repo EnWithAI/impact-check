@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Vitest configuration: test discovery, process isolation (forks), generous timeouts for git-heavy tests and
  * coverage thresholds for src/.

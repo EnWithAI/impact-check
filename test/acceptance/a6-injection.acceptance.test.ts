@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Acceptance fixture A6: instruction-like content in diffs and file names is treated as data. Findings
  * must be invariant to injected comments, and injected text must never appear unescaped in reports.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Workspace package discovery (every package.json with a name) and convention-based mapping of
  * cross-package imports to source entry files. Edges created this way are labelled `inferred`.

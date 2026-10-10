@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Safe degradation and limits: size caps, truncation, unsupported files, tsconfig fallbacks, malformed
  * manifests, conflicts, untracked node_modules, and performance on large synthetic repositories.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 // Regenerates examples/demo/output/* from the reproducible demo repository using the built CLI.
 // Usage: npm run build && node scripts/generate-demo-output.mjs
 import { spawnSync } from "node:child_process";

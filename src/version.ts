@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Version information reported in run_metadata: the Impact Check package version and the exact versions
  * of the analysis engine (dependency-cruiser) and parser (TypeScript) resolved at runtime.

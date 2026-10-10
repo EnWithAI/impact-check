@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Configuration validation (accepted and rejected shapes) and glob matching without regex injection.
  */

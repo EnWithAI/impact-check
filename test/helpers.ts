@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Shared test utilities: deterministic synthetic git repositories (fixed identity, dates and directory
  * name), an in-process CLI runner and small report accessors.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Core impact behavior on the basic fixture: exact reverse dependents (no invented edges), no impact for
  * unrelated changes, alias resolution, and limitations for dynamic and unresolved imports.

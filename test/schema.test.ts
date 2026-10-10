@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Report contract: JSON Schema 2.0 validation across scenarios, schema command output, and determinism across
  * runs and between commit and worktree modes.

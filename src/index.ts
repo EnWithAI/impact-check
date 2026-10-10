@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Public library API of Impact Check. Re-exports the analysis entry point, reporters, policy
  * evaluation, configuration helpers, error types and the report contract types (schema 2.0).

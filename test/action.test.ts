@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * GitHub Action entry point under a simulated runner environment, base-branch policy configuration, input
  * validation, re-rendering of tampered artifacts, and a security lint of every workflow file.

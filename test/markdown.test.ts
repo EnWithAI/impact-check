@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Markdown escaping, secret redaction and reporter caps (row limits, size limit, branding toggle).
  */
@@ -73,7 +75,7 @@ describe("markdown reporter", () => {
     expect(md).toContain("`tests-not-executed`");
     expect(md).toContain("…and 20 more files (see the JSON report)");
     expect(md).not.toContain("crewpe.ai");
-    expect(renderMarkdown(report, { branding: true })).toContain("Built by EnWithAI");
+    expect(renderMarkdown(report, { branding: true })).toContain("An EnWithAI Engineering Commons tool");
     const small = renderMarkdown(report, { branding: false, maxChars: 1500 });
     expect(small.length).toBeLessThanOrEqual(1500);
     expect(small).toContain("Report truncated");

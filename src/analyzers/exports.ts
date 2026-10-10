@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 // Parser-based export analysis. Uses the TypeScript *parser* only (no program, no type checker, no module loading),
 // so it never reads other files and never executes anything.
 import ts from "typescript";

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * File classification helpers: language, kind (source/test/config/other), analyzable snapshot files,
  * ignored directories and repository-relative path safety checks.

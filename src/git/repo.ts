@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Git adapter: ref validation and resolution, merge base, diffs (name-status, numstat, -U0 hunks),
  * working-tree state (staged/unstaged/untracked/unmerged) and batched object reads. Pure parsers for git's

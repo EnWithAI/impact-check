@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * CLI contract: help/version, usage errors (exit 2), output files, --cwd, and the check command's policy
  * handling (exit 4) including configuration from .impact-check.json.

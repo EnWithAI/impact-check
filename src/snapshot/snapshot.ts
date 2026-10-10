@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Snapshots: private temporary copies of the base or head state that the graph engine analyzes.
  * Content is read from git objects (commit mode) or regular files (worktree mode); symlinks and submodules are

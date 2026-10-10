@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Security invariants: no network/shell/eval primitives in src/, no execution of package scripts, JS configs
  * or hostile git configuration (with a positive control), no file contents or environment variables in output.

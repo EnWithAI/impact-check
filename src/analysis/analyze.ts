@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Analysis orchestrator: resolves revisions, collects git changes, builds snapshots and graphs, computes
  * impact, runs analyzers/rules and assembles the schema 2.0 report. Never executes repository code and never uses

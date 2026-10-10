@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 // Masks token-like strings in any repository-derived text before it is rendered.
 // Impact Check never emits file contents, but paths, specifiers and names can still carry secrets.
 

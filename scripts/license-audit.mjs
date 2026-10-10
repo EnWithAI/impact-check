@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 // Lists licenses of all installed runtime (production) dependencies and fails on non-allowlisted licenses.
 // Usage: node scripts/license-audit.mjs [--all]   (--all includes dev dependencies)
 import { spawnSync } from "node:child_process";

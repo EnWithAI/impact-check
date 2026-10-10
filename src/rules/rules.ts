@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Rules that turn changes, graphs and parsed exports into findings. Each finding carries a rule id,
  * severity, tri-state status (verified_static_fact / hypothesis / unknown), evidence and a recommended human

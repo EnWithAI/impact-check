@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Reverse-dependency impact ("blast radius"): breadth-first search from every changed module with
  * shortest import chains, nearest-root distances, provenance propagation and depth/size limits.

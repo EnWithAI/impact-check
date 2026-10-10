@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 // Markdown escaping for untrusted, repository-derived strings.
 
 /** Make control characters (incl. newlines, tabs, bidi overrides) visible and inert. */

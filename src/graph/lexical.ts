@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 // Lightweight lexical helpers. These never evaluate code; they are used only to locate lines and to
 // flag constructs the resolver cannot see. Results are treated as inferred evidence.
 

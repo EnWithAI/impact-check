@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
 /**
  * Acceptance fixture A8: schema 2.0 validation, identical output across runs and fresh repositories, and a
  * reviewed golden snapshot that locks rule behavior against regressions.
