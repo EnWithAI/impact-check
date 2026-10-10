@@ -8,6 +8,7 @@
 - **Copyright holder:** EnWithAI Technologies (as stated in [LICENSE](LICENSE)).
 - **License:** MIT. It applies to all code, documentation, schemas and examples in this repository.
 - **Maintainer:** Koushik Ramani ([@aiwithrk](https://github.com/aiwithrk)), EnWithAI Technologies.
+- **Contact:** [hello@enwithai.com](mailto:hello@enwithai.com)
 - **Security issues:** see [SECURITY.md](SECURITY.md).
 
 ## Development provenance

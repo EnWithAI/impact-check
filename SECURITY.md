@@ -6,7 +6,8 @@ Only the latest `0.x` alpha receives fixes.
 
 ## Reporting a vulnerability
 
-Security contact: **Koushik Ramani** ([@aiwithrk](https://github.com/aiwithrk)), maintainer, EnWithAI Technologies.
+Security contact: **Koushik Ramani** ([@aiwithrk](https://github.com/aiwithrk)), maintainer, EnWithAI Technologies ·
+[hello@enwithai.com](mailto:hello@enwithai.com) (if you cannot use GitHub's private reporting).
 
 Please **do not open a public issue**. Use GitHub's private vulnerability reporting ("Report a vulnerability" on the
 Security tab of this repository). Include the Impact Check version, the command you ran
