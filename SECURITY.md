@@ -6,11 +6,12 @@ Only the latest `0.x` alpha receives fixes.
 
 ## Reporting a vulnerability
 
+Security contact: **Koushik Ramani** ([@aiwithrk](https://github.com/aiwithrk)), maintainer, EnWithAI Technologies.
+
 Please **do not open a public issue**. Use GitHub's private vulnerability reporting ("Report a vulnerability" on the
-Security tab of this repository) once the repository is public. Include the Impact Check version, the command you ran
+Security tab of this repository). Include the Impact Check version, the command you ran
 and a minimal synthetic reproduction — never real secrets or proprietary code. We aim to acknowledge within 5
-business days. _(The private reporting channel is enabled at publication time; until then report directly to the
-maintainers at EnWithAI.)_
+business days.
 
 ## Security properties Impact Check is designed to keep
 

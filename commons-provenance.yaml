@@ -11,6 +11,8 @@ license:
   file: LICENSE
   copyright_holder: "EnWithAI Technologies"
   copyright_holder_confirmed: true # 2026-10-10: employee work, company property
+maintainers:
+  - { name: Koushik Ramani, github: aiwithrk, role: maintainer and security contact }
 attribution:
   file: ATTRIBUTION.md
   notice: NOTICE.md

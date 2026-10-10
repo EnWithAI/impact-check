@@ -10,7 +10,7 @@ private information; sustained disruption; any conduct that would be inappropria
 
 **Scope:** all project spaces (issues, pull requests, discussions) and public spaces where someone represents the project.
 
-**Enforcement:** report incidents privately to the maintainers (EnWithAI). Reports are handled confidentially.
+**Enforcement:** report incidents privately to the maintainer, Koushik Ramani ([@aiwithrk](https://github.com/aiwithrk)), EnWithAI Technologies. Reports are handled confidentially.
 Maintainers may remove content and warn, suspend or ban participants in proportion to the behavior.
 
 This code is inspired by the [Contributor Covenant](https://www.contributor-covenant.org/), version 2.1.

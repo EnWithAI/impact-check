@@ -7,7 +7,7 @@
   reviewable._
 - **Copyright holder:** EnWithAI Technologies (as stated in [LICENSE](LICENSE)).
 - **License:** MIT. It applies to all code, documentation, schemas and examples in this repository.
-- **Maintainers:** EnWithAI Technologies. Individual maintainers will be listed at publication.
+- **Maintainer:** Koushik Ramani ([@aiwithrk](https://github.com/aiwithrk)), EnWithAI Technologies.
 - **Security issues:** see [SECURITY.md](SECURITY.md).
 
 ## Development provenance
