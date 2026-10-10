@@ -41,7 +41,7 @@ jobs:
       # Pinned exact version from the npm registry (not from the PR). --ignore-scripts prevents install scripts.
       - name: Re-render report with a trusted Impact Check
         run: |
-          npm install --no-save --ignore-scripts --no-audit --no-fund @enwithai/impact-check@0.2.0-alpha.0
+          npm install --no-save --ignore-scripts --no-audit --no-fund @enwithai/impact-check@0.2.0-alpha.1
           npx --no-install impact-check render --input untrusted-report/impact-check-report.json --output comment.md
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:

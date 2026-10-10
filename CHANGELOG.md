@@ -5,7 +5,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.2.0-alpha.0] — unreleased (release candidate, 2026-10-09)
+## 0.2.0-alpha.1 — 2026-10-10
+
+Documentation-only release, so the npm page shows the current project information. No code or report changes.
+
+- Maintainer and security contact: Koushik Ramani (@aiwithrk), EnWithAI Technologies; contact hello@enwithai.com.
+- GitHub private vulnerability reporting enabled and documented in SECURITY.md.
+
+## [0.2.0-alpha.0] — 2026-10-10 (published to npm)
 
 ### Changed (breaking, pre-release)
 

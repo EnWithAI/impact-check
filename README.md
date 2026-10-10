@@ -15,7 +15,7 @@ Every finding carries a `status` — `verified_static_fact`, `hypothesis` or `un
 
 > Formerly developed under the working name _ChangeLens_.
 >
-> Status: **alpha** (`0.2.0-alpha.0`, report schema 2.0). Not yet published to npm; see [Install](#install).
+> Status: **alpha** (`0.2.0-alpha.1`, report schema 2.0). Published on npm as [`@enwithai/impact-check`](https://www.npmjs.com/package/@enwithai/impact-check); see [Install](#install).
 
 ## 60-second demo
 
