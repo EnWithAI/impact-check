@@ -132,6 +132,6 @@ Changed modules themselves are listed under *Changed files*. Hops count reverse-
 
 </details>
 
-<sub>Impact Check 0.2.0-alpha.1 · schema 2.0 · dependency-cruiser 18.5.0 · TypeScript 6.0.3 · head graph 7 modules / 5 edges · offline, no model, no telemetry</sub>
+<sub>Impact Check 0.2.0 · schema 2.0 · dependency-cruiser 18.5.0 · TypeScript 6.0.3 · head graph 7 modules / 5 edges · offline, no model, no telemetry</sub>
 
 <sub>An EnWithAI Engineering Commons tool · [crewpe.ai](https://crewpe.ai)</sub>

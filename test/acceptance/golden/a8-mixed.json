@@ -531,7 +531,7 @@
   ],
   "run_metadata": {
     "tool": "impact-check",
-    "tool_version": "0.2.0-alpha.1",
+    "tool_version": "0.2.0",
     "generated_at": "<generated_at>",
     "duration_ms": 0,
     "timings_ms": {},

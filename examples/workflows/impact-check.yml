@@ -25,7 +25,7 @@ jobs:
           node-version: "24"
       # Replace <RELEASE_COMMIT_SHA> with the full commit SHA of an Impact Check release tag (do not use a branch).
       - id: impact-check
-        uses: enwithai/impact-check@<RELEASE_COMMIT_SHA> # v0.2.0-alpha.1
+        uses: enwithai/impact-check@<RELEASE_COMMIT_SHA> # v0.2.0
         with:
           fail-on-policy: "false" # set "true" to fail the job on confirmed broken imports (default policy)
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

@@ -15,7 +15,7 @@ Every finding carries a `status` — `verified_static_fact`, `hypothesis` or `un
 
 > Formerly developed under the working name _ChangeLens_.
 >
-> Status: **alpha** (`0.2.0-alpha.1`, report schema 2.0). Published on npm as [`@enwithai/impact-check`](https://www.npmjs.com/package/@enwithai/impact-check); see [Install](#install).
+> Status: **early release** (`0.2.0`, pre-1.0, report schema 2.0). Published on npm as [`@enwithai/impact-check`](https://www.npmjs.com/package/@enwithai/impact-check); see [Install](#install).
 
 ## 60-second demo
 
@@ -47,11 +47,11 @@ The demo commits use fixed dates, so you get byte-identical output (apart from `
 ## Install
 
 ```bash
-npm install --save-dev --ignore-scripts @enwithai/impact-check@alpha
+npm install --save-dev --ignore-scripts @enwithai/impact-check
 npx impact-check --help
 ```
 
-Alpha releases are published under the `alpha` dist-tag. To build from source instead:
+To build from source instead:
 `git clone https://github.com/enwithai/impact-check.git && cd impact-check && npm ci --ignore-scripts && npm run build`.
 
 Uninstall with `npm uninstall @enwithai/impact-check`. Impact Check writes nothing outside the report files you ask
@@ -79,7 +79,7 @@ impact-check schema                                    # print the report JSON S
 Runs on `pull_request` with a read-only token, writes a job summary and a report artifact. Works for fork PRs and
 never executes PR code. See [docs/ACTION.md](docs/ACTION.md) and
 [examples/workflows/impact-check.yml](examples/workflows/impact-check.yml). Posting a PR comment is optional and uses a
-separate, permission-scoped workflow ([example](examples/workflows/impact-check-comment.yml); untested remotely in alpha).
+separate, permission-scoped workflow ([example](examples/workflows/impact-check-comment.yml); not yet tested on GitHub).
 
 ## What Impact Check does not do (limitations)
 
