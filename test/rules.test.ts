@@ -107,7 +107,10 @@ describe("risk rules (acceptance D)", () => {
     const migration = report.findings.find((f) => f.rule_id === "migration-changed")!;
     expect(migration.evidence.map((e) => e.path)).toEqual(["db/migrations/002_add_price.sql"]);
     const contract = report.findings.find((f) => f.rule_id === "api-contract-changed")!;
-    expect(contract.evidence.map((e) => e.path).sort()).toEqual(["api/openapi.yaml", "schema.graphql"]);
+    // OpenAPI files go through the structural contract diff (docs/CONTRACT_DIFF.md); a newly added contract has no
+    // previous consumers, so it produces no contract finding and no longer triggers the path rule.
+    expect(contract.evidence.map((e) => e.path).sort()).toEqual(["schema.graphql"]);
+    expect(ids.filter((id) => id.startsWith("contract-"))).toEqual([]);
     const configs = report.findings.filter((f) => f.rule_id === "config-changed");
     expect(configs.map((f) => f.severity)).toEqual(["medium", "low"]);
     expect(configs[0]!.evidence.map((e) => e.path).sort()).toEqual([
