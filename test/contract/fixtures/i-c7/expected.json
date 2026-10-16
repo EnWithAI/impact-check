@@ -1,0 +1,30 @@
+{
+  "case": "I-C7",
+  "description": "Server removed; trailing slash and description changes on the remaining server are not changes",
+  "findings": [
+    {
+      "rule_id": "contract-breaking-change",
+      "status": "verified_static_fact",
+      "severity": "medium",
+      "path": "openapi.yaml",
+      "evidence": [
+        {
+          "change": "server-removed",
+          "pointer": "/servers/0",
+          "side": "base",
+          "base_line": 6,
+          "head_line": 5,
+          "detail_includes": "server removed"
+        }
+      ]
+    }
+  ],
+  "limitations": [],
+  "forbidden_rule_ids": [
+    "api-contract-changed"
+  ],
+  "forbidden_strings": [
+    "schemas.example.com",
+    "api.example.com"
+  ]
+}

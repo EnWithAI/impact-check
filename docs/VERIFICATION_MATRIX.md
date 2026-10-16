@@ -19,6 +19,26 @@ observed failing before the implementation (verification-first, `docs/evidence/a
 | A7  | Fork PR: no token/secret ever read; explicit fail-open/closed                                        | `a7-action-permissions.acceptance.test.ts`                         | yes (fork test already passed; on-error tests red) | pass locally; **remote fork run not performed** |
 | A8  | Schema 2.0 validation; identical output across runs and fresh repos; golden snapshot                 | `a8-determinism.acceptance.test.ts`, `golden/a8-mixed.json`        | yes                                                | pass                                            |
 
+## Contract diff and graph export (0.3.0 candidate, design notes §7.1)
+
+Red run before implementation: `docs/evidence/contract-graph-red-run.txt` (spec commit `5acb549`). Pointers and lines
+in `test/contract/fixtures/*/expected.json` and `test/expected/g1-graph.json` were computed by hand.
+
+| ID    | Requirement                                                                                      | Test                                                  | Red first | Status |
+| ----- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------- | --------- | ------ |
+| I-C1  | Path, operation (OpenAPI); channel, operation, message (AsyncAPI 2.6) removed → verified break   | `test/contract/contract.acceptance.test.ts` + `i-c1/` | yes       | pass   |
+| I-C2  | Response status (incl. `default`) removed, JSON file                                             | `i-c2/`                                               | yes       | pass   |
+| I-C3  | Required parameter / request property added (new and existing, through `$ref`)                   | `i-c3/`                                               | yes       | pass   |
+| I-C4  | Response property removed (nested, through `$ref`); renamed path parameter is not a break        | `i-c4/`                                               | yes       | pass   |
+| I-C5  | Payload type narrowed (AsyncAPI 3.0); widening only unclassified                                 | `i-c5/`                                               | yes       | pass   |
+| I-C6  | Request enum value removed; added request enum value compatible                                  | `i-c6/`                                               | yes       | pass   |
+| I-C7  | Server removed; trailing slash/description changes ignored                                       | `i-c7/`                                               | yes       | pass   |
+| I-C8  | Security scheme removed; server security change unclassified                                     | `i-c8/`                                               | yes       | pass   |
+| I-C9  | Cosmetic-only change → zero contract findings                                                    | `i-c9/`                                               | yes       | pass   |
+| I-C10 | Remote `$ref` → `unknown` + `contract-diff-incomplete`; URL never printed                        | `i-c10/`                                              | yes       | pass   |
+| —     | Unknowns (parse, version, format, size, aliases, depth), AsyncAPI 3.0, request bodies, fallbacks | `test/contract/contract.unit.test.ts`                 | no        | pass   |
+| G1    | `graph` output equals the hand-written graph; schema-valid; deterministic; usage errors          | `test/graph.test.ts` + `test/expected/g1-graph.json`  | yes       | pass   |
+
 ## Engineering invariants
 
 | #   | Invariant                         | Evidence                                                                                                                                                                                       |

@@ -1,0 +1,25 @@
+asyncapi: 3.0.0
+info:
+  title: Billing
+  version: 1.0.0
+channels:
+  invoices:
+    address: billing.invoices
+    messages:
+      invoiceIssued:
+        payload:
+          type: object
+          properties:
+            amount:
+              type: number
+            reference:
+              type:
+                - string
+                - "null"
+            note:
+              type: string
+operations:
+  publishInvoice:
+    action: send
+    channel:
+      $ref: "#/channels/invoices"

@@ -8,7 +8,16 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist/", "coverage/", "node_modules/", "test/fixtures/**", "examples/**/output/**"] },
+  {
+    ignores: [
+      "dist/",
+      "coverage/",
+      "node_modules/",
+      "test/fixtures/**",
+      "test/contract/fixtures/**",
+      "examples/**/output/**",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.strict,
   {

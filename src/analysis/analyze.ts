@@ -31,7 +31,14 @@ import { runRules } from "../rules/rules.js";
 import { redactDeep } from "../report/redact.js";
 import { DEFAULT_CONFIG, matchesAny, type Config } from "../config.js";
 import { ENGINE_VERSION, PARSER_VERSION, TOOL_VERSION } from "../version.js";
-import { isIgnoredDir, isJsTs, isUnsupportedModule, kindOf, languageOf } from "../util/classify.js";
+import {
+  isIgnoredDir,
+  isJsTs,
+  isSafeRelativePath,
+  isUnsupportedModule,
+  kindOf,
+  languageOf,
+} from "../util/classify.js";
 import type { ChangedFile, Origin, Report } from "../types.js";
 import { SCHEMA_VERSION } from "../types.js";
 import { computeImpact } from "./impact.js";
@@ -444,6 +451,19 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
       head,
       base: baseGraph,
       headSnapshot,
+      readHead: async (path) => {
+        if (!worktreeMode) {
+          const buffer = await showFile(root, headCommit, path);
+          return buffer && buffer.length <= MAX_FILE_BYTES ? buffer.toString("utf8") : null;
+        }
+        if (!isSafeRelativePath(path)) return null;
+        try {
+          const stat = lstatSync(join(root, path));
+          return stat.isFile() && stat.size <= MAX_FILE_BYTES ? readFileSync(join(root, path), "utf8") : null;
+        } catch {
+          return null;
+        }
+      },
       readBase: async (path) => {
         const buffer = baseTexts.has(path) ? baseTexts.get(path) : await showFile(root, from, path);
         return buffer && buffer.length <= MAX_FILE_BYTES ? buffer.toString("utf8") : null;

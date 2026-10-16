@@ -13,7 +13,8 @@ These conventions apply inside this repository. They never override the EnWithAI
 ## Scope
 
 Deterministic, offline JS/TS change-impact CLI + GitHub Action. Out of scope for alpha: LLM features, semantic analysis,
-other languages, hosted services, telemetry, executing tests or repository code.
+other languages, hosted services, telemetry, executing tests or repository code. Exception: OpenAPI/AsyncAPI contract
+files are compared structurally (docs/CONTRACT_DIFF.md); `impact-check graph` exports the module graph (docs/GRAPH.md).
 
 ## Invariants (tests enforce most of these)
 

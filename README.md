@@ -7,7 +7,8 @@ Impact Check answers three questions about a change: _what might it affect, how 
 - which files changed (added / modified / deleted / renamed / binary, staged / unstaged / untracked);
 - which modules **depend on** them, with the shortest import chain as evidence (reverse-dependency "blast radius");
 - which imports are **confirmed broken** — a deleted module still imported, or a removed export still imported by name (parser-verified);
-- which changes **might** matter — exported declarations, package entry points and manifests, migrations, API contracts, CI/config, auth/crypto code — clearly labelled as heuristics;
+- which **API contract changes break consumers** — OpenAPI 3.0/3.1 and AsyncAPI 2.6/3.0 files are compared structurally (removed paths, operations, channels, messages, response statuses, response properties, servers or security schemes; new required parameters or properties; narrowed types; removed enum values), each with a JSON pointer and base/head line;
+- which changes **might** matter — exported declarations, package entry points and manifests, migrations, other API contracts (GraphQL, protobuf, …), CI/config, auth/crypto code — clearly labelled as heuristics;
 - which tests are candidates to run (it never claims to have run them);
 - what it could **not** analyze (dynamic imports, unresolved aliases, unsupported files, truncation, …).
 
@@ -66,12 +67,15 @@ impact-check analyze --base main --head HEAD --format json --output impact-check
 impact-check check   --base main --head HEAD --config .impact-check.json   # exit 4 when the policy fails
 impact-check render  --input impact-check-report.json    # re-render a saved JSON report
 impact-check schema                                    # print the report JSON Schema
+impact-check graph --head HEAD --output graph.json     # module graph of one revision as JSON (schema: `impact-check schema graph`)
 ```
 
 - Comparison uses **merge-base** semantics by default (like a GitHub PR); `--diff-mode direct` compares base directly.
 - Exit codes: `0` ok · `1` internal error · `2` usage/config error · `3` git/repository error · `4` policy failure.
   `--on-error pass` makes tool/git errors non-blocking (fail-open, with a warning); usage errors and policy failures are never masked.
 - `analyze` is informational; `check` is a policy signal. Impact Check never approves or merges anything.
+- `graph` exports the resolved module graph (modules, edges with import lines, unresolved and external imports) for
+  other tools; see [docs/GRAPH.md](docs/GRAPH.md).
 - Full contract: [docs/CLI.md](docs/CLI.md). Configuration and policy: [docs/CONFIG.md](docs/CONFIG.md). Rules: [docs/RULES.md](docs/RULES.md).
 
 ## GitHub Action
@@ -83,7 +87,10 @@ separate, permission-scoped workflow ([example](examples/workflows/impact-check-
 
 ## What Impact Check does not do (limitations)
 
-- **No semantic analysis.** It reads module imports, export declarations (TypeScript parser, no type checker) and diff
+- **OpenAPI/AsyncAPI only for contract diffs.** Other contract formats keep a file-name hypothesis. External `$ref`s
+  (other files, URLs) are never fetched; they make the result `unknown`. Swagger 2.0 and OpenAPI 3.2 are unsupported
+  (`unknown`). See [docs/CONTRACT_DIFF.md](docs/CONTRACT_DIFF.md).
+- **No semantic analysis of code.** It reads module imports, export declarations (TypeScript parser, no type checker) and diff
   lines. "Potential public interface change" means lines in an exported signature changed, not that something broke.
   Single-line declarations count any edit on that line. `export *` makes export removal `unknown`.
 - **No dependency graph → degraded mode.** Without JS/TS modules, only observed changes are listed (`analysis_mode: degraded`).
@@ -104,7 +111,9 @@ separate, permission-scoped workflow ([example](examples/workflows/impact-check-
    `package.json`/`tsconfig` files with content; other files as empty placeholders. Symlinks and submodules are skipped.
 3. [dependency-cruiser](https://github.com/sverweij/dependency-cruiser) (MIT) builds the import graph through its
    public API; TypeScript 6.0 is used as its parser.
-4. Reverse-dependency BFS, rules and test suggestions run on that data; reporters render JSON (schema 2.0) and
+4. Changed OpenAPI/AsyncAPI files are read from git (or the working tree), parsed with
+   [yaml](https://github.com/eemeli/yaml) (ISC, YAML 1.2 core schema) and compared base → head.
+5. Reverse-dependency BFS, rules and test suggestions run on that data; reporters render JSON (schema 2.0) and
    escaped Markdown.
 
 Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Threat model: [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).

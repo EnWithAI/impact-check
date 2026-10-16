@@ -8,6 +8,7 @@ import { existsSync, readFileSync, renameSync, statSync, writeFileSync } from "n
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { analyze } from "../analysis/analyze.js";
+import { exportGraph } from "../graph/export.js";
 import { DEFAULT_CONFIG, loadConfigFile, type Config } from "../config.js";
 import { ImpactCheckError, ExitCode, usageError } from "../errors.js";
 import { repoRoot } from "../git/repo.js";
@@ -32,7 +33,8 @@ export const HELP = `Impact Check ${TOOL_VERSION} — evidence-backed change-imp
 Usage:
   impact-check analyze [options]   Analyze changes and print/write a report (exit 0 unless a fatal error occurs)
   impact-check check   [options]   Analyze, then apply the policy from the config (exit 4 on policy failure)
-  impact-check schema              Print the JSON Schema of the report
+  impact-check graph   [options]   Print/write the module graph of one revision as JSON (--head or working tree)
+  impact-check schema [graph]      Print the JSON Schema of the report (or of the graph)
   impact-check render --input <report.json> [--format markdown|json] [--output <file>]
                                  Re-render a saved JSON report (validates it; escapes all content)
   impact-check --help | --version
@@ -86,6 +88,11 @@ export function readSchema(): string {
   return readFileSync(new URL("../../schema/impact-check-report.schema.json", import.meta.url), "utf8");
 }
 
+/** Returns the bundled graph JSON Schema (works from both src/ and dist/). */
+export function readGraphSchema(): string {
+  return readFileSync(new URL("../../schema/impact-check-graph.schema.json", import.meta.url), "utf8");
+}
+
 /** Set by --on-error pass: tool/git errors become warnings with exit 0 (fail-open). */
 let failOpen = false;
 
@@ -136,9 +143,17 @@ async function main(argv: string[], io: CliIO): Promise<number> {
     io.stderr(HELP);
     return ExitCode.Usage;
   }
-  if (positionals.length > 1) throw usageError(`Unexpected argument: ${positionals[1]}`);
+  const maxPositionals = command === "schema" ? 2 : 1;
+  if (positionals.length > maxPositionals)
+    throw usageError(`Unexpected argument: ${positionals[maxPositionals]}`);
   if (command === "schema") {
-    io.stdout(readSchema());
+    const which = positionals[1];
+    if (which !== undefined && which !== "graph")
+      throw usageError(
+        `Unknown schema: ${which}`,
+        "Use `impact-check schema` or `impact-check schema graph`."
+      );
+    io.stdout(which === "graph" ? readGraphSchema() : readSchema());
     return ExitCode.Ok;
   }
   if (command === "render") {
@@ -162,8 +177,8 @@ async function main(argv: string[], io: CliIO): Promise<number> {
     else io.stdout(rendered);
     return ExitCode.Ok;
   }
-  if (command !== "analyze" && command !== "check") {
-    throw usageError(`Unknown command: ${command}`, "Commands: analyze, check, render, schema.");
+  if (command !== "analyze" && command !== "check" && command !== "graph") {
+    throw usageError(`Unknown command: ${command}`, "Commands: analyze, check, graph, render, schema.");
   }
 
   const onError = values["on-error"] ?? "fail";
@@ -171,6 +186,13 @@ async function main(argv: string[], io: CliIO): Promise<number> {
   failOpen = onError === "pass";
   if (values.head !== undefined && values.worktree)
     throw usageError("--head and --worktree cannot be combined");
+  if (command === "graph") {
+    for (const flag of ["base", "diff-mode", "max-depth", "max-affected", "no-branding", "input"] as const) {
+      if (values[flag] !== undefined)
+        throw usageError(`--${flag} is not supported by graph`, "See docs/GRAPH.md.");
+    }
+    if ((values.format ?? "json") !== "json") throw usageError(`graph supports only --format json`);
+  }
   const format = values.format ?? "markdown";
   if (format !== "markdown" && format !== "json") throw usageError(`--format must be "markdown" or "json"`);
   const diffMode = values["diff-mode"] ?? "merge-base";
@@ -197,6 +219,22 @@ async function main(argv: string[], io: CliIO): Promise<number> {
   }
 
   const log = values.quiet ? undefined : (message: string): void => io.stderr(`impact-check: ${message}\n`);
+  if (command === "graph") {
+    const graph = await exportGraph({
+      cwd,
+      head: values.head ?? null,
+      tsConfig: values.tsconfig ?? null,
+      config,
+      ...(io.now ? { now: io.now } : {}),
+      ...(log ? { log } : {}),
+    });
+    const rendered = `${JSON.stringify(graph, null, 2)}\n`;
+    if (values.output !== undefined) {
+      writeOutput(isAbsolute(values.output) ? values.output : resolve(io.cwd, values.output), rendered);
+      log?.(`Graph written to ${values.output}`);
+    } else io.stdout(rendered);
+    return ExitCode.Ok;
+  }
   const options = {
     cwd,
     base: values.base ?? null,

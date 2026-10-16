@@ -1,0 +1,37 @@
+{
+  "case": "I-C10",
+  "description": "Remote $ref in both revisions: unknown, the URL is never printed or fetched",
+  "findings": [
+    {
+      "rule_id": "contract-breaking-change",
+      "status": "unknown",
+      "severity": "medium",
+      "path": "openapi.yaml",
+      "evidence": [
+        {
+          "change": "unresolved-ref",
+          "pointer": "/paths/~1pets/get/responses/200/content/application~1json/schema/$ref",
+          "side": "head",
+          "base_line": 14,
+          "head_line": 14,
+          "detail_includes": "unresolved $ref"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    {
+      "code": "contract-diff-incomplete",
+      "paths_include": [
+        "openapi.yaml"
+      ]
+    }
+  ],
+  "forbidden_rule_ids": [
+    "api-contract-changed"
+  ],
+  "forbidden_strings": [
+    "schemas.example.com",
+    "api.example.com"
+  ]
+}

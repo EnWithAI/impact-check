@@ -1,0 +1,38 @@
+{
+  "case": "I-C2",
+  "description": "Response statuses (including default) removed, OpenAPI 3.1 JSON",
+  "findings": [
+    {
+      "rule_id": "contract-breaking-change",
+      "status": "verified_static_fact",
+      "severity": "medium",
+      "path": "openapi.json",
+      "evidence": [
+        {
+          "change": "response-status-removed",
+          "pointer": "/paths/~1orders/get/responses/404",
+          "side": "base",
+          "base_line": 9,
+          "head_line": 7,
+          "detail_includes": "response status removed: GET /orders 404"
+        },
+        {
+          "change": "response-status-removed",
+          "pointer": "/paths/~1orders/get/responses/default",
+          "side": "base",
+          "base_line": 10,
+          "head_line": 7,
+          "detail_includes": "response status removed: GET /orders default"
+        }
+      ]
+    }
+  ],
+  "limitations": [],
+  "forbidden_rule_ids": [
+    "api-contract-changed"
+  ],
+  "forbidden_strings": [
+    "schemas.example.com",
+    "api.example.com"
+  ]
+}

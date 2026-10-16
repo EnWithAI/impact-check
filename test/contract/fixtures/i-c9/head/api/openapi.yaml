@@ -1,0 +1,36 @@
+# Pets API
+openapi: "3.0.3"
+info:
+  version: 1.1.0
+  title: Pet store
+  description: Now with docs
+x-owner: team-pets
+paths:
+  /pets:
+    get:
+      tags: [animals]
+      summary: List all pets
+      x-rate-limit: 100
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/Pet"
+                type: array
+          description: OK
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            example: 20
+            type: integer
+components:
+  schemas:
+    Pet:
+      properties:
+        name:
+          description: The pet's name
+          type: string
+      type: object

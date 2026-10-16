@@ -11,12 +11,15 @@ its output. (Invariant 2, "context-aware", and invariant 10, "PR content is data
 | Changes            | git diff name-status, numstat, `-U0` hunks                                                                                                | ≤ 5,000 files; ≤ 5,000 diff lines per file inspected.                           |
 | Module graph       | JS/TS sources, `package.json`, `tsconfig*.json`/`jsconfig.json` of base/head                                                              | ≤ 50,000 files; ≤ 1 MiB per parsed file; symlinks/submodules skipped.           |
 | Export sets        | Base/head text of modified JS/TS modules and import declarations of their direct dependents                                               | TypeScript AST only, no type checker.                                           |
+| Contracts          | Base/head text of changed OpenAPI/AsyncAPI files (by name or top-level `openapi`/`asyncapi` key), from git objects or the working tree    | ≤ 1 MiB per side; YAML 1.2 core schema; local `$ref` only, nothing fetched.     |
 | Repository context | File-extension counts, root `package.json` `type`, workspace tool marker files, test framework package names, tsconfig `moduleResolution` | Names and counts only.                                                          |
 | Conventions        | Optional `.impact-check.json` (`conventions.testPatterns`, `conventions.generatedPaths`, `securityPathPatterns`, `ignorePaths`)           | JSON data only; globs, no regex. In the Action it is read from the base commit. |
 
 ## 2. Context Impact Check deliberately ignores
 
-- Contents of non-JS/TS files (assets/JSON are empty placeholders), `.env*` files, binary files.
+- Contents of non-JS/TS files (assets/JSON are empty placeholders), except changed OpenAPI/AsyncAPI contracts;
+  `.env*` files, binary files.
+- Targets of external `$ref`s in contracts (other files, URLs).
 - `node_modules`, installed packages, bundler and babel configs (reading them would require executing JS).
 - Commit messages, PR titles/descriptions, issue text and comments. They are not read at all.
 - Network resources of any kind.
@@ -25,7 +28,10 @@ its output. (Invariant 2, "context-aware", and invariant 10, "PR content is data
 
 Contains: repository-relative paths, line ranges, commit SHAs, export/declaration **names**, import **specifiers**,
 manifest **field names** and dependency names, counts, rule IDs, and fixed explanatory text authored by Impact Check.
-Never contains: file contents, string/numeric values, environment variables, absolute paths, temp paths.
+For contract findings also: JSON pointers, contract keys (paths, methods, statuses, property, channel, message, server
+and security-scheme names), type names and removed/added **enum values**.
+Never contains: file contents, other string/numeric values (server URLs, defaults, examples, `const`), environment
+variables, absolute paths, temp paths.
 All repository-derived strings are redacted (token patterns) and escaped in Markdown.
 
 ## 4. Instructions to downstream consumers (humans and AI agents)

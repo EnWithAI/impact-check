@@ -1,0 +1,38 @@
+{
+  "case": "I-C6",
+  "description": "Request enum values removed (query parameter and body property); an added request enum value is compatible",
+  "findings": [
+    {
+      "rule_id": "contract-breaking-change",
+      "status": "verified_static_fact",
+      "severity": "medium",
+      "path": "openapi.yaml",
+      "evidence": [
+        {
+          "change": "enum-value-removed",
+          "pointer": "/paths/~1search/post/parameters/0/schema/enum/2",
+          "side": "base",
+          "base_line": 13,
+          "head_line": 13,
+          "detail_includes": "enum value removed: relevance"
+        },
+        {
+          "change": "enum-value-removed",
+          "pointer": "/paths/~1search/post/requestBody/content/application~1json/schema/properties/scope/enum/2",
+          "side": "base",
+          "base_line": 25,
+          "head_line": 22,
+          "detail_includes": "enum value removed: body"
+        }
+      ]
+    }
+  ],
+  "limitations": [],
+  "forbidden_rule_ids": [
+    "api-contract-changed"
+  ],
+  "forbidden_strings": [
+    "schemas.example.com",
+    "api.example.com"
+  ]
+}

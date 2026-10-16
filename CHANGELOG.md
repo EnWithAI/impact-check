@@ -5,6 +5,33 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Structural contract diff** for OpenAPI 3.0/3.1 and AsyncAPI 2.6/3.0 (docs/CONTRACT_DIFF.md, design notes §7.1,
+  D-085). New rules `contract-breaking-change` (`verified_static_fact`, medium: path/operation/channel/message
+  removed, response status removed, required parameter/request property added, response property removed, type
+  narrowed, enum value removed, server or security scheme removed; `unknown` when a side is unparseable, unsupported or
+  has an unresolved `$ref`) and `contract-change-unclassified` (`hypothesis`, low). Cosmetic edits are not reported.
+  Contract files are found by name or by a top-level `openapi`/`asyncapi` key.
+- Evidence kind `contract-element` with a `contract` object (`change`, RFC 6901 `pointer`, `base_line`,
+  `head_line`); Markdown shows the pointer and both lines.
+- **`impact-check graph --format json`**: the module graph of one revision (modules, edges with provenance, type-only
+  flag and import lines, unresolved and external imports) for other Commons tools (docs/GRAPH.md, D-081), with its own
+  schema `schema/impact-check-graph.schema.json` (graph schema 1.0, `impact-check schema graph`). Library: `exportGraph`.
+- Limitation code `contract-diff-incomplete`.
+- Runtime dependency `yaml` 2.9.1 (ISC, no dependencies), exact-pinned (D-082).
+
+### Changed
+
+- `api-contract-changed` no longer fires for OpenAPI/AsyncAPI documents; it stays for GraphQL, protobuf, Avro, Thrift,
+  Prisma, `*.schema.json` and OpenAPI/AsyncAPI-named files that are not such documents. A newly added OpenAPI/AsyncAPI
+  file produces no finding (no previous consumers).
+- Report schema stays **2.0** with an additive revision (D-090): the evidence `kind` enum gains `contract-element` and
+  evidence may carry `contract`. Validators using the 0.2.0 schema reject reports that contain contract evidence;
+  Product Check's `--impact-check` importer is unaffected (it reads only `schema_version`, `findings[].severity`,
+  `affected_modules`, `test_candidates` and `repo_revision.commit`). The default `check` policy outcome is unchanged
+  (contract breaks are `medium`).
+
 ## 0.2.0 — 2026-10-12
 
 First release without a pre-release suffix, so `npm install @enwithai/impact-check` and `npx @enwithai/impact-check` work without a

@@ -1,6 +1,8 @@
 # Architecture
 
 ```
+cli/run.ts graph ──► graph/export.ts  snapshot + graph.ts → graph schema 1.0 document (no diff)
+
 cli/run.ts ─┐                                     action/run.ts ─┐   (both call the same pipeline)
             ▼                                                     ▼
        analysis/analyze.ts  ── orchestrates one run, assembles the schema 2.0 report
@@ -13,6 +15,7 @@ cli/run.ts ─┐                                     action/run.ts ─┐   (bo
             │    └─ lexical.ts     dynamic-loading scans, specifier line lookup
             ├─ analyzers/
             │    ├─ exports.ts     TypeScript-parser export sets, signature regions, imported names
+            │    ├─ contract.ts    OpenAPI/AsyncAPI parse (yaml), local $ref resolution, structural base→head diff
             │    ├─ context.ts     languages, module type, workspace tools, test frameworks
             │    └─ generated.ts   generated-code detection
             ├─ analysis/impact.ts reverse BFS: distance, shortest `via` chain, changed roots
@@ -28,7 +31,7 @@ cli/run.ts ─┐                                     action/run.ts ─┐   (bo
 2. **Changes:** three diffs in parallel (`--name-status -z`, `--numstat -z`, `-U0`) with `--no-ext-diff --no-textconv`. In working-tree mode, staged, unstaged, untracked and unmerged lists are collected too.
 3. **Snapshots:** head (and base, when JS/TS modules were deleted or renamed). Analyzable files get content; everything else becomes an empty placeholder so imports of JSON or assets still resolve.
 4. **Graph:** `cruise(["."], { baseDir: snapshot, tsPreCompilationDeps: true, tsConfig })`. Unresolved bare specifiers are mapped to workspace packages (inferred) or classified as external.
-5. **Analyzers and rules:** export sets of base and head (batched base reads), impact BFS, rules, test candidates and limitations. These are pure functions over the data above.
+5. **Analyzers and rules:** export sets of base and head (batched base reads), the contract diff of changed OpenAPI/AsyncAPI files (read from git objects or the working tree, not from the snapshot), impact BFS, rules, test candidates and limitations. These are pure functions over the data above.
 6. **Evidence commits:** base-side evidence → merge base (or base); head-side → head commit (null in worktree mode).
 7. **Redaction** over every string, then JSON or escaped Markdown rendering.
 

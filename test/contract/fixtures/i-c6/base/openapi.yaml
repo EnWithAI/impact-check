@@ -1,0 +1,28 @@
+openapi: 3.1.0
+info:
+  title: Search
+  version: 1.0.0
+paths:
+  /search:
+    post:
+      parameters:
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc, relevance]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scope:
+                  type: string
+                  enum:
+                    - all
+                    - title
+                    - body
+      responses:
+        "200":
+          description: ok

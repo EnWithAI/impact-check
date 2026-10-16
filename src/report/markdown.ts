@@ -138,7 +138,13 @@ export function renderMarkdown(report: Report, options: MarkdownOptions): string
     out.push(`**Recommended human action:** ${text(f.recommended_human_action)}`, "");
     for (const e of f.evidence) {
       const at = e.commit ? ` @ ${short(e.commit)}` : "";
-      out.push(`- ${code(`${e.path}${location(e)}`)} (${e.side}${at}) — ${withPaths(e.detail, paths)}`);
+      const c = e.contract;
+      const pointer = c
+        ? ` · ${code(c.pointer === "" ? "(document)" : c.pointer)} (base line ${c.base_line ?? "–"}, head line ${c.head_line ?? "–"})`
+        : "";
+      out.push(
+        `- ${code(`${e.path}${location(e)}`)} (${e.side}${at}) — ${withPaths(e.detail, paths)}${pointer}`
+      );
     }
     out.push("");
   }
