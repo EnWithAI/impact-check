@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:impact-check:report:2.0",
   "title": "Impact Check report",
-  "description": "Output of `impact-check analyze --format json`, schema version 2.0. Normalization for determinism: run_metadata.generated_at, run_metadata.duration_ms, run_metadata.timings_ms and run_metadata.node_version vary between runs; everything else is identical for identical inputs.",
+  "description": "Output of `impact-check analyze --format json`, schema version 2.0 (additive revision in 0.3.0, D-090: evidence kind `contract-element` with an optional `contract` object). Normalization for determinism: run_metadata.generated_at, run_metadata.duration_ms, run_metadata.timings_ms and run_metadata.node_version vary between runs; everything else is identical for identical inputs.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -345,7 +345,8 @@
             "export-declaration",
             "path-pattern",
             "manifest-field",
-            "graph-count"
+            "graph-count",
+            "contract-element"
           ]
         },
         "path": { "type": "string" },
@@ -356,7 +357,30 @@
           "anyOf": [{ "$ref": "#/$defs/sha" }, { "type": "null" }],
           "description": "Commit the evidence refers to; null for uncommitted working-tree content."
         },
-        "detail": { "type": "string", "description": "Short redacted descriptor. Never file contents." }
+        "detail": { "type": "string", "description": "Short redacted descriptor. Never file contents." },
+        "contract": {
+          "description": "Only on contract-element evidence (OpenAPI/AsyncAPI diff, docs/CONTRACT_DIFF.md §6).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["change", "pointer", "base_line", "head_line"],
+          "properties": {
+            "change": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+            "pointer": {
+              "type": "string",
+              "description": "RFC 6901 JSON pointer into the side named by `side`."
+            },
+            "base_line": {
+              "type": ["integer", "null"],
+              "minimum": 1,
+              "description": "Line in base of the element, or of its deepest ancestor that exists in base; null if none."
+            },
+            "head_line": {
+              "type": ["integer", "null"],
+              "minimum": 1,
+              "description": "Line in head of the element, or of its deepest ancestor that exists in head; null if none."
+            }
+          }
+        }
       }
     },
     "finding": {

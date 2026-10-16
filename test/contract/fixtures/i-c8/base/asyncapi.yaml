@@ -1,0 +1,23 @@
+asyncapi: 2.6.0
+info:
+  title: Telemetry
+  version: 1.0.0
+servers:
+  production:
+    url: broker.example.com
+    protocol: mqtt
+    security:
+      - userPassword: []
+      - certs: []
+channels:
+  telemetry:
+    publish:
+      message:
+        payload:
+          type: object
+components:
+  securitySchemes:
+    userPassword:
+      type: userPassword
+    certs:
+      type: X509

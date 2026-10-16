@@ -1,0 +1,13 @@
+{
+  "case": "I-C9",
+  "description": "Cosmetic-only changes: comments, key order, quoting, descriptions, summaries, examples, tags, info, x- extensions",
+  "findings": [],
+  "limitations": [],
+  "forbidden_rule_ids": [
+    "api-contract-changed"
+  ],
+  "forbidden_strings": [
+    "schemas.example.com",
+    "api.example.com"
+  ]
+}

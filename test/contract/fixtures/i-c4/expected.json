@@ -1,0 +1,38 @@
+{
+  "case": "I-C4",
+  "description": "Response properties removed through a $ref, nested; path parameter renamed (not a break)",
+  "findings": [
+    {
+      "rule_id": "contract-breaking-change",
+      "status": "verified_static_fact",
+      "severity": "medium",
+      "path": "openapi.yaml",
+      "evidence": [
+        {
+          "change": "response-property-removed",
+          "pointer": "/components/schemas/Pet/properties/name",
+          "side": "base",
+          "base_line": 28,
+          "head_line": 25,
+          "detail_includes": "response property removed: name"
+        },
+        {
+          "change": "response-property-removed",
+          "pointer": "/components/schemas/Pet/properties/owner/properties/phone",
+          "side": "base",
+          "base_line": 35,
+          "head_line": 30,
+          "detail_includes": "response property removed: phone"
+        }
+      ]
+    }
+  ],
+  "limitations": [],
+  "forbidden_rule_ids": [
+    "api-contract-changed"
+  ],
+  "forbidden_strings": [
+    "schemas.example.com",
+    "api.example.com"
+  ]
+}

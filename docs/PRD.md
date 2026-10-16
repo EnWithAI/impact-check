@@ -29,13 +29,18 @@ Findings carry `isHeuristic`, `severity`, `confidence`, a rule ID and evidence (
 4. Base graph when modules are deleted/renamed → dependents in base and confirmed broken imports in head.
 5. Heuristic risk rules (see RULES.md), always labelled heuristic unless graph-confirmed.
 6. Candidate tests (graph + naming convention + changed tests), all `status: not-run`.
-7. Markdown and JSON (schema 1.0) reporters; explicit coverage limitations.
+7. Markdown and JSON (schema 2.0) reporters; explicit coverage limitations.
 8. Policy `check` with `.impact-check.json` and a distinct exit code.
 9. Composite GitHub Action producing a job summary and artifact under `contents: read`.
+10. Structural OpenAPI 3.0/3.1 and AsyncAPI 2.6/3.0 contract diff (0.3.0, D-085): verified breaking changes with JSON
+    pointers and base/head lines, unclassified semantic changes as hypotheses, `unknown` when it cannot decide
+    ([CONTRACT_DIFF.md](CONTRACT_DIFF.md)).
+11. `impact-check graph --format json`: the module graph of one revision for other Commons tools (0.3.0, D-081;
+    [GRAPH.md](GRAPH.md)).
 
 ## Out of scope (alpha)
 
-Semantic/type-level program analysis; non-JS languages; vulnerability scanning; executing tests or package scripts;
+Semantic/type-level program analysis (contract files excepted, item 10); resolving external `$ref`s; non-JS languages; vulnerability scanning; executing tests or package scripts;
 LLM features; hosted service; telemetry; PR comment posting as a default.
 
 ## Success criterion

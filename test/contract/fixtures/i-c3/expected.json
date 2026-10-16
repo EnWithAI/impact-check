@@ -1,0 +1,54 @@
+{
+  "case": "I-C3",
+  "description": "Required parameter and required request property added (new and existing), via a $ref component",
+  "findings": [
+    {
+      "rule_id": "contract-breaking-change",
+      "status": "verified_static_fact",
+      "severity": "medium",
+      "path": "api/openapi.yaml",
+      "evidence": [
+        {
+          "change": "required-added",
+          "pointer": "/components/schemas/NewUser/properties/name",
+          "side": "head",
+          "base_line": 34,
+          "head_line": 42,
+          "detail_includes": "request property became required: name"
+        },
+        {
+          "change": "required-added",
+          "pointer": "/components/schemas/NewUser/properties/role",
+          "side": "head",
+          "base_line": 31,
+          "head_line": 44,
+          "detail_includes": "required request property added: role"
+        },
+        {
+          "change": "required-added",
+          "pointer": "/paths/~1users/get/parameters/0",
+          "side": "head",
+          "base_line": 9,
+          "head_line": 9,
+          "detail_includes": "parameter became required: query limit"
+        },
+        {
+          "change": "required-added",
+          "pointer": "/paths/~1users/get/parameters/1",
+          "side": "head",
+          "base_line": 8,
+          "head_line": 14,
+          "detail_includes": "required parameter added: query tenant"
+        }
+      ]
+    }
+  ],
+  "limitations": [],
+  "forbidden_rule_ids": [
+    "api-contract-changed"
+  ],
+  "forbidden_strings": [
+    "schemas.example.com",
+    "api.example.com"
+  ]
+}

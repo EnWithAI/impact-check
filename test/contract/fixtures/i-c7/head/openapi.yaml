@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: Status
+  version: 1.0.0
+servers:
+  - url: https://eu.api.example.com/v1
+    description: European Union
+paths:
+  /status:
+    get:
+      responses:
+        "200":
+          description: ok

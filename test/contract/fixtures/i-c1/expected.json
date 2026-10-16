@@ -1,0 +1,70 @@
+{
+  "case": "I-C1",
+  "description": "Path, operation, channel and message removals in OpenAPI 3.0 and AsyncAPI 2.6",
+  "findings": [
+    {
+      "rule_id": "contract-breaking-change",
+      "status": "verified_static_fact",
+      "severity": "medium",
+      "path": "api/openapi.yaml",
+      "evidence": [
+        {
+          "change": "operation-removed",
+          "pointer": "/paths/~1pets~1{petId}/delete",
+          "side": "base",
+          "base_line": 22,
+          "head_line": 11,
+          "detail_includes": "operation removed: DELETE /pets/{petId}"
+        },
+        {
+          "change": "path-removed",
+          "pointer": "/paths/~1stores",
+          "side": "base",
+          "base_line": 32,
+          "head_line": 5,
+          "detail_includes": "path removed: /stores"
+        }
+      ]
+    },
+    {
+      "rule_id": "contract-breaking-change",
+      "status": "verified_static_fact",
+      "severity": "medium",
+      "path": "events/asyncapi.yaml",
+      "evidence": [
+        {
+          "change": "operation-removed",
+          "pointer": "/channels/pet~1adopted/subscribe",
+          "side": "base",
+          "base_line": 28,
+          "head_line": 13,
+          "detail_includes": "operation removed: subscribe pet/adopted"
+        },
+        {
+          "change": "message-removed",
+          "pointer": "/channels/pet~1created/subscribe/message/oneOf/1",
+          "side": "base",
+          "base_line": 13,
+          "head_line": 9,
+          "detail_includes": "message removed: petImported"
+        },
+        {
+          "change": "channel-removed",
+          "pointer": "/channels/pet~1deleted",
+          "side": "base",
+          "base_line": 16,
+          "head_line": 5,
+          "detail_includes": "channel removed: pet/deleted"
+        }
+      ]
+    }
+  ],
+  "limitations": [],
+  "forbidden_rule_ids": [
+    "api-contract-changed"
+  ],
+  "forbidden_strings": [
+    "schemas.example.com",
+    "api.example.com"
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "repo_revision": { "ref": "HEAD", "commit": "<head>", "kind": "commit" },
+  "repository": {
+    "name": "fixture-repo",
+    "ts_config": "tsconfig.json",
+    "workspace_packages": [
+      { "name": "shop", "path": "." },
+      { "name": "@shop/core", "path": "packages/core" },
+      { "name": "@shop/web", "path": "packages/web" }
+    ]
+  },
+  "modules": [
+    {
+      "path": "packages/core/src/index.ts",
+      "language": "typescript",
+      "kind": "source",
+      "package": "@shop/core"
+    },
+    {
+      "path": "packages/core/src/money.ts",
+      "language": "typescript",
+      "kind": "source",
+      "package": "@shop/core"
+    },
+    {
+      "path": "packages/core/src/price.ts",
+      "language": "typescript",
+      "kind": "source",
+      "package": "@shop/core"
+    },
+    {
+      "path": "packages/web/src/app.test.ts",
+      "language": "typescript",
+      "kind": "test",
+      "package": "@shop/web"
+    },
+    { "path": "packages/web/src/app.ts", "language": "typescript", "kind": "source", "package": "@shop/web" }
+  ],
+  "edges": [
+    {
+      "from": "packages/core/src/index.ts",
+      "to": "packages/core/src/price.ts",
+      "provenance": "graph",
+      "type_only": false,
+      "imports": [{ "specifier": "./price.js", "line": 1 }]
+    },
+    {
+      "from": "packages/core/src/price.ts",
+      "to": "packages/core/src/money.ts",
+      "provenance": "graph",
+      "type_only": true,
+      "imports": [{ "specifier": "./money.js", "line": 1 }]
+    },
+    {
+      "from": "packages/web/src/app.test.ts",
+      "to": "packages/web/src/app.ts",
+      "provenance": "graph",
+      "type_only": false,
+      "imports": [{ "specifier": "./app.js", "line": 1 }]
+    },
+    {
+      "from": "packages/web/src/app.ts",
+      "to": "packages/core/src/index.ts",
+      "provenance": "inferred",
+      "type_only": false,
+      "imports": [{ "specifier": "@shop/core", "line": 1 }]
+    }
+  ],
+  "unresolved_imports": [{ "from": "packages/web/src/app.ts", "specifier": "./missing.js", "line": 3 }],
+  "external_imports": [
+    { "from": "packages/web/src/app.ts", "specifier": "node:fs", "line": 4 },
+    { "from": "packages/web/src/app.ts", "specifier": "react", "line": 2 }
+  ],
+  "stats": { "modules": 5, "edges": 4, "unresolved_local": 1 },
+  "coverage_limitations": [
+    {
+      "code": "unresolved-local-import",
+      "message": "Local imports that could not be resolved; their dependents may be missing.",
+      "paths": ["packages/web/src/app.ts → ./missing.js"],
+      "count": 1
+    },
+    {
+      "code": "workspace-edges-inferred",
+      "message": "Imports of workspace packages were mapped to package source entries by convention (provenance: inferred), because no installed node_modules are used.",
+      "paths": [],
+      "count": 1
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "case": "I-C5",
+  "description": "Payload types narrowed in AsyncAPI 3.0 (number to integer, null dropped); a widening is only unclassified",
+  "findings": [
+    {
+      "rule_id": "contract-breaking-change",
+      "status": "verified_static_fact",
+      "severity": "medium",
+      "path": "asyncapi.yaml",
+      "evidence": [
+        {
+          "change": "type-narrowed",
+          "pointer": "/channels/invoices/messages/invoiceIssued/payload/properties/amount/type",
+          "side": "head",
+          "base_line": 14,
+          "head_line": 14,
+          "detail_includes": "type narrowed: [number] → [integer]"
+        },
+        {
+          "change": "type-narrowed",
+          "pointer": "/channels/invoices/messages/invoiceIssued/payload/properties/reference/type",
+          "side": "head",
+          "base_line": 16,
+          "head_line": 16,
+          "detail_includes": "type narrowed: [null, string] → [string]"
+        }
+      ]
+    },
+    {
+      "rule_id": "contract-change-unclassified",
+      "status": "hypothesis",
+      "severity": "low",
+      "path": "asyncapi.yaml",
+      "evidence": [
+        {
+          "change": "type-widened",
+          "pointer": "/channels/invoices/messages/invoiceIssued/payload/properties/note/type",
+          "side": "head",
+          "base_line": 20,
+          "head_line": 18,
+          "detail_includes": "type widened: [string] → [null, string]"
+        }
+      ]
+    }
+  ],
+  "limitations": [],
+  "forbidden_rule_ids": [
+    "api-contract-changed"
+  ],
+  "forbidden_strings": [
+    "schemas.example.com",
+    "api.example.com"
+  ]
+}

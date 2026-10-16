@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:impact-check:graph:1.0",
+  "title": "Impact Check module graph",
+  "description": "Output of `impact-check graph --format json`, graph schema version 1.0: the JS/TS module graph of one revision, as resolved by dependency-cruiser. Normalization for determinism: run_metadata.generated_at and run_metadata.node_version vary between runs; everything else is identical for identical inputs. All arrays are sorted.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repo_revision",
+    "repository",
+    "modules",
+    "edges",
+    "unresolved_imports",
+    "external_imports",
+    "stats",
+    "coverage_limitations",
+    "run_metadata"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "repo_revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "commit", "kind"],
+      "properties": {
+        "ref": { "type": "string", "description": "The --head ref, or WORKTREE." },
+        "commit": { "$ref": "#/$defs/sha", "description": "The commit analyzed; HEAD for the working tree." },
+        "kind": { "enum": ["commit", "worktree"] }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "ts_config", "workspace_packages"],
+      "properties": {
+        "name": { "type": "string" },
+        "ts_config": { "type": ["string", "null"] },
+        "workspace_packages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "path"],
+            "properties": { "name": { "type": "string" }, "path": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "modules": {
+      "type": "array",
+      "description": "Every module node, sorted by path: JS/TS sources plus resolved non-JS targets (JSON, CSS, ...).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "language", "kind", "package"],
+        "properties": {
+          "path": { "type": "string" },
+          "language": { "enum": ["typescript", "javascript", "json", "other"] },
+          "kind": { "enum": ["source", "test", "config", "other"] },
+          "package": {
+            "type": ["string", "null"],
+            "description": "Name of the innermost workspace package whose directory contains the module; null if none."
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "description": "Resolved local dependencies, sorted by from, then to.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to", "provenance", "type_only", "imports"],
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "provenance": {
+            "enum": ["graph", "inferred"],
+            "description": "graph = resolved by dependency-cruiser; inferred = workspace package mapping by Impact Check."
+          },
+          "type_only": { "type": "boolean", "description": "Every import on this edge is type-only." },
+          "imports": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/import" } }
+        }
+      }
+    },
+    "unresolved_imports": {
+      "type": "array",
+      "description": "Local (relative or aliased) imports that did not resolve, sorted by from, then specifier.",
+      "items": { "$ref": "#/$defs/moduleImport" }
+    },
+    "external_imports": {
+      "type": "array",
+      "description": "Imports of npm packages and Node built-ins (not followed), sorted by from, then specifier.",
+      "items": { "$ref": "#/$defs/moduleImport" }
+    },
+    "stats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modules", "edges", "unresolved_local"],
+      "properties": {
+        "modules": { "type": "integer", "minimum": 0 },
+        "edges": { "type": "integer", "minimum": 0 },
+        "unresolved_local": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "coverage_limitations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message", "paths", "count"],
+        "properties": {
+          "code": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "message": { "type": "string" },
+          "paths": { "type": "array", "items": { "type": "string" } },
+          "count": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "run_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool",
+        "tool_version",
+        "generated_at",
+        "node_version",
+        "engine",
+        "engine_version",
+        "parser_version",
+        "network",
+        "executed_repository_code"
+      ],
+      "properties": {
+        "tool": { "const": "impact-check" },
+        "tool_version": { "type": "string" },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "node_version": { "type": "string" },
+        "engine": { "const": "dependency-cruiser" },
+        "engine_version": { "type": "string" },
+        "parser_version": { "type": "string" },
+        "network": { "const": false },
+        "executed_repository_code": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$" },
+    "import": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["specifier", "line"],
+      "properties": {
+        "specifier": { "type": "string" },
+        "line": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "First line containing the literal specifier; null when not found lexically."
+        }
+      }
+    },
+    "moduleImport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "specifier", "line"],
+      "properties": {
+        "from": { "type": "string" },
+        "specifier": { "type": "string" },
+        "line": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    }
+  }
+}

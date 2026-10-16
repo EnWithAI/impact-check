@@ -4,7 +4,8 @@
 impact-check analyze [options]     Analyze and print/write a report. Exit 0 unless a fatal error occurs.
 impact-check check   [options]     Analyze, then apply the policy from --config. Exit 4 on policy failure.
 impact-check render --input <f>    Re-render a saved JSON report (structure-validated; all strings escaped/redacted again).
-impact-check schema                Print the report JSON Schema.
+impact-check schema [graph]        Print the report JSON Schema (or, with `graph`, the graph JSON Schema).
+impact-check graph [options]       Print/write the module graph of one revision as JSON (docs/GRAPH.md).
 impact-check --help | -h           Usage.
 impact-check --version | -v        Tool version.
 ```
@@ -28,6 +29,12 @@ impact-check --version | -v        Tool version.
 | `--on-error <fail\|pass>`          | `fail`                                                   | Tool/git errors: `fail` = fail-closed (exit 1/3); `pass` = fail-open (warning on stderr, exit 0). Usage errors (2) and policy failures (4) are never masked. |
 | `--no-branding`                    | branding on                                              | Omit the one-line footer in Markdown.                                                                                                                        |
 | `--quiet`                          | off                                                      | Suppress progress messages on stderr.                                                                                                                        |
+
+## Options (graph)
+
+`--head <ref>` / `--worktree`, `--cwd`, `--tsconfig`, `--config` (for `conventions.testPatterns`), `--output`,
+`--format json` (the only format), `--on-error`, `--quiet`. `--base`, `--diff-mode`, `--max-depth`, `--max-affected`
+and `--no-branding` are usage errors for `graph`. See [GRAPH.md](GRAPH.md).
 
 ## Exit codes
 

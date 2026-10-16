@@ -1,0 +1,18 @@
+# Red run before implementation: contract diff (I-C1..I-C10) and graph (G1), 2026-10-16T02:32Z
+# Command: npx vitest run test/contract test/graph.test.ts
+     × matches the hand-written expected graph 75ms
+     × is deterministic and defaults to the working tree 61ms
+     × writes to --output and prints its schema with `schema graph` 69ms
+     × I-C1: Path, operation, channel and message removals in OpenAPI 3.0 and AsyncAPI 2.6 221ms
+     × I-C2: Response statuses (including default) removed, OpenAPI 3.1 JSON 184ms
+     × I-C3: Required parameter and required request property added (new and existing), via a $ref component 174ms
+     × I-C4: Response properties removed through a $ref, nested; path parameter renamed (not a break) 193ms
+     × I-C5: Payload types narrowed in AsyncAPI 3.0 (number to integer, null dropped); a widening is only unclassified 171ms
+     × I-C6: Request enum values removed (query parameter and body property); an added request enum value is compatible 162ms
+     × I-C7: Server removed; trailing slash and description changes on the remaining server are not changes 160ms
+     × I-C8: Security scheme removed (AsyncAPI 2.6); the server security requirement change is unclassified 163ms
+     × I-C9: Cosmetic-only changes: comments, key order, quoting, descriptions, summaries, examples, tags, info, x- extensions 162ms
+     × I-C10: Remote $ref in both revisions: unknown, the URL is never printed or fetched 162ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  13 failed | 2 passed (15)

@@ -1,0 +1,46 @@
+{
+  "case": "I-C8",
+  "description": "Security scheme removed (AsyncAPI 2.6); the server security requirement change is unclassified",
+  "findings": [
+    {
+      "rule_id": "contract-breaking-change",
+      "status": "verified_static_fact",
+      "severity": "medium",
+      "path": "asyncapi.yaml",
+      "evidence": [
+        {
+          "change": "security-scheme-removed",
+          "pointer": "/components/securitySchemes/certs",
+          "side": "base",
+          "base_line": 22,
+          "head_line": 18,
+          "detail_includes": "security scheme removed: certs"
+        }
+      ]
+    },
+    {
+      "rule_id": "contract-change-unclassified",
+      "status": "hypothesis",
+      "severity": "low",
+      "path": "asyncapi.yaml",
+      "evidence": [
+        {
+          "change": "changed",
+          "pointer": "/servers/production/security",
+          "side": "head",
+          "base_line": 9,
+          "head_line": 9,
+          "detail_includes": "changed: security"
+        }
+      ]
+    }
+  ],
+  "limitations": [],
+  "forbidden_rule_ids": [
+    "api-contract-changed"
+  ],
+  "forbidden_strings": [
+    "schemas.example.com",
+    "api.example.com"
+  ]
+}

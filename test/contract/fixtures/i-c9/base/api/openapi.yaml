@@ -1,0 +1,35 @@
+openapi: 3.0.3
+info:
+  title: Pets
+  version: 1.0.0
+tags:
+  - name: pets
+paths:
+  /pets:
+    get:
+      summary: List pets
+      tags: [pets]
+      parameters:
+        - name: limit
+          in: query
+          description: max items
+          schema:
+            type: integer
+            example: 10
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+components:
+  schemas:
+    Pet:
+      type: object
+      properties:
+        name:
+          type: string
+          description: the name

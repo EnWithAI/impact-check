@@ -1,0 +1,18 @@
+asyncapi: 2.6.0
+info:
+  title: Pet events
+  version: 1.0.0
+channels:
+  pet/created:
+    subscribe:
+      message:
+        oneOf:
+          - messageId: petCreated
+            payload:
+              type: object
+  pet/adopted:
+    publish:
+      message:
+        messageId: petAdopted
+        payload:
+          type: object
