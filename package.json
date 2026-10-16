@@ -1,6 +1,6 @@
 {
   "name": "@enwithai/impact-check",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Local-first, evidence-backed change-impact reports for JavaScript/TypeScript pull requests.",
   "license": "MIT",
   "author": "EnWithAI Technologies",

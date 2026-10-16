@@ -5,6 +5,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## 0.3.0 — 2026-10-16
+
+OpenAPI/AsyncAPI structural contract diff and `impact-check graph` (design notes §7.1). Report schema stays 2.0
+(additive, D-090).
+
 ### Added
 
 - **Structural contract diff** for OpenAPI 3.0/3.1 and AsyncAPI 2.6/3.0 (docs/CONTRACT_DIFF.md, design notes §7.1,
