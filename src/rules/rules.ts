@@ -10,6 +10,7 @@ import type { FileHunks } from "../git/repo.js";
 import type { ModuleGraph } from "../graph/graph.js";
 import { findSpecifierLine } from "../graph/lexical.js";
 import { extractExports, firstLineIn, importedNames, type ExportSet } from "../analyzers/exports.js";
+import { diffContract, looksLikeContract, type ContractItem } from "../analyzers/contract.js";
 import type { Limitations } from "../analysis/limitations.js";
 import { manifestEntries, parseJsonObject } from "../graph/workspaces.js";
 import type { Snapshot } from "../snapshot/snapshot.js";
@@ -37,6 +38,8 @@ export interface RuleContext {
   headSnapshot: Snapshot;
   /** Reads a file from the comparison's starting commit (base side). */
   readBase: (path: string) => Promise<string | null>;
+  /** Reads any file (not only snapshot files) from the head side: the head commit or the working tree. */
+  readHead: (path: string) => Promise<string | null>;
   dependentCounts: Map<string, number>;
   blastRadiusThreshold: number;
   maxDepth: number;
@@ -82,6 +85,10 @@ const ACTIONS: Record<string, string> = {
   "migration-changed":
     "Review migration ordering, reversibility and data impact, and plan the deployment sequence.",
   "api-contract-changed": "Check backward compatibility of the contract for all API consumers.",
+  "contract-breaking-change":
+    "Confirm the breaking change is intended, version or announce it, and check every consumer of the contract, including those outside this repository.",
+  "contract-change-unclassified":
+    "Check whether consumers rely on the changed behavior (defaults, constraints, media types, security requirements).",
   "config-changed":
     "Review the build, CI or runtime configuration change; confirm no credentials or permissions changed unintentionally.",
   "security-sensitive-change": "Request a focused security review of this change.",
@@ -558,6 +565,119 @@ async function manifestChanges(ctx: RuleContext): Promise<Draft[]> {
 }
 
 // ---------------------------------------------------------------------------------------------------------------
+// contract-breaking-change + contract-change-unclassified (OpenAPI/AsyncAPI structural diff)
+
+const CONTRACT_NAME = [
+  /(^|\/)[^/]*(openapi|swagger)[^/]*\.(ya?ml|json)$/i,
+  /(^|\/)asyncapi[^/]*\.(ya?ml|json)$/i,
+];
+
+/** Evidence for one classified contract difference. */
+function contractEvidence(item: ContractItem, file: ChangedFile): Evidence {
+  const line = item.side === "base" ? item.baseLine : item.headLine;
+  return {
+    ...ev(
+      "contract-element",
+      item.side === "base" ? (file.previous_path ?? file.path) : file.path,
+      item.side,
+      item.detail,
+      line
+    ),
+    contract: {
+      change: item.change,
+      pointer: item.pointer,
+      base_line: item.baseLine,
+      head_line: item.headLine,
+    },
+  };
+}
+
+/**
+ * Structural diff of changed OpenAPI 3.0/3.1 and AsyncAPI 2.6/3.0 files (docs/CONTRACT_DIFF.md). Returns the findings
+ * and the paths it handled, which the path-based `api-contract-changed` rule then skips.
+ */
+async function contractChanges(ctx: RuleContext): Promise<{ drafts: Draft[]; handled: Set<string> }> {
+  const drafts: Draft[] = [];
+  const handled = new Set<string>();
+  for (const file of ctx.files) {
+    if (file.binary || !/\.(ya?ml|json)$/i.test(file.path)) continue;
+    const basePath = file.previous_path ?? file.path;
+    const named = CONTRACT_NAME.some((re) => re.test(file.path) || re.test(basePath));
+    const headText = file.status === "deleted" ? undefined : await ctx.readHead(file.path);
+    const baseText = file.status === "added" ? undefined : await ctx.readBase(basePath);
+    if (
+      !named &&
+      !looksLikeContract(file.path, headText ?? null) &&
+      !looksLikeContract(basePath, baseText ?? null)
+    )
+      continue;
+    const result = diffContract(baseText, headText);
+    if (!result.contract) continue;
+    handled.add(file.path);
+    const groups: [ContractItem["kind"], ContractItem[]][] = (
+      ["break", "unknown", "unclassified"] as const
+    ).map((kind) => [kind, result.items.filter((i) => i.kind === kind)]);
+    for (const [kind, items] of groups) {
+      if (items.length === 0) continue;
+      const evidence = items.map((i) => contractEvidence(i, file));
+      const more = items.length > MAX_EVIDENCE ? ` The first ${MAX_EVIDENCE} are listed.` : "";
+      if (kind === "break") {
+        drafts.push(
+          draft(
+            "contract-breaking-change",
+            "api-contract",
+            "medium",
+            "high",
+            "verified_static_fact",
+            "graph",
+            `${plural(items.length, "breaking contract change")} in ${file.path}`,
+            `A structural comparison of the base and head contract finds ${plural(items.length, "change")} that can break existing consumers (removed operations, channels, messages, statuses, properties, servers or security schemes; new requirements; narrowed types or enums).${more} Whether any consumer uses the changed element is not visible to Impact Check.`,
+            evidence,
+            [file.path]
+          )
+        );
+      } else if (kind === "unknown") {
+        ctx.limitations.add(
+          "contract-diff-incomplete",
+          "Contract files whose compatibility could not be fully determined (unparseable, unsupported version, or external/unresolvable $ref). External references are never fetched.",
+          file.path
+        );
+        drafts.push(
+          draft(
+            "contract-breaking-change",
+            "api-contract",
+            "medium",
+            "low",
+            "unknown",
+            "graph",
+            `Contract compatibility could not be fully determined: ${file.path}`,
+            `The contract could not be compared completely (${[...new Set(items.map((i) => i.change))].join(", ")}). Changes behind these locations may or may not break consumers.${more}`,
+            evidence,
+            [file.path]
+          )
+        );
+      } else {
+        drafts.push(
+          draft(
+            "contract-change-unclassified",
+            "api-contract",
+            "low",
+            "medium",
+            "hypothesis",
+            "inferred",
+            `${plural(items.length, "contract change")} that may affect consumers in ${file.path}`,
+            `These semantic differences (constraints, defaults, media types, security requirements, widened response types, new enum values, …) are compatible or not depending on how consumers use the contract. Cosmetic changes are not reported.${more}`,
+            evidence,
+            [file.path]
+          )
+        );
+      }
+    }
+  }
+  return { drafts, handled };
+}
+
+// ---------------------------------------------------------------------------------------------------------------
 // Path-pattern rules
 
 const MIGRATION = [
@@ -592,9 +712,10 @@ function pathRule(
   category: FindingCategory,
   patterns: RegExp[],
   title: string,
-  explanation: string
+  explanation: string,
+  skip: Set<string> = new Set()
 ): Draft[] {
-  const matched = ctx.files.filter((f) => patterns.some((re) => re.test(f.path)));
+  const matched = ctx.files.filter((f) => !skip.has(f.path) && patterns.some((re) => re.test(f.path)));
   if (matched.length === 0) return [];
   return [
     draft(
@@ -776,7 +897,9 @@ function blastRadius(ctx: RuleContext): Draft[] {
 
 /** Run every rule and return findings sorted by severity, rule and id. */
 export async function runRules(ctx: RuleContext): Promise<Finding[]> {
+  const contracts = await contractChanges(ctx);
   const drafts: Draft[] = [
+    ...contracts.drafts,
     ...deletedModules(ctx),
     ...(await exportChanges(ctx)),
     ...(await manifestChanges(ctx)),
@@ -794,7 +917,8 @@ export async function runRules(ctx: RuleContext): Promise<Finding[]> {
       "api-contract",
       CONTRACT,
       "API contract files changed",
-      "OpenAPI/GraphQL/protobuf/schema files define contracts with external consumers. Detected by file name; compatibility was not evaluated."
+      "GraphQL/protobuf/schema files define contracts with external consumers. Detected by file name; compatibility was not evaluated.",
+      contracts.handled
     ),
     ...configChanges(ctx),
     ...securityChanges(ctx),

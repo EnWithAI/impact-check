@@ -66,7 +66,8 @@ export type EvidenceKind =
   | "export-declaration"
   | "path-pattern"
   | "manifest-field"
-  | "graph-count";
+  | "graph-count"
+  | "contract-element";
 
 /**
  * A source reference: path and line range on one side of the comparison, the commit it refers to
@@ -80,6 +81,16 @@ export interface Evidence {
   line_end: number | null;
   commit: string | null;
   detail: string;
+  /** Only on `contract-element` evidence (docs/CONTRACT_DIFF.md §6). */
+  contract?: ContractLocation;
+}
+
+/** Where a contract difference sits: change class, JSON pointer and the line on each side. */
+export interface ContractLocation {
+  change: string;
+  pointer: string;
+  base_line: number | null;
+  head_line: number | null;
 }
 
 /** A changed module (distance 0) or a module that depends on one (`affected_modules[]`). */
