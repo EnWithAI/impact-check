@@ -11,12 +11,13 @@ license.
 This repository does not include (vendor) third-party source code. Runtime dependencies are installed by your
 package manager from their own distributions, under their own licenses:
 
-| Package                                                              | Version | License    | Copyright notice                       |
-| -------------------------------------------------------------------- | ------- | ---------- | -------------------------------------- |
-| [dependency-cruiser](https://github.com/sverweij/dependency-cruiser) | 18.5.0  | MIT        | Copyright (c) 2016-2026 Sander Verweij |
-| [TypeScript](https://github.com/microsoft/TypeScript)                | 6.0.3   | Apache-2.0 | Copyright (c) Microsoft Corporation    |
+| Package                                                              | Version | License    | Copyright notice                        |
+| -------------------------------------------------------------------- | ------- | ---------- | --------------------------------------- |
+| [dependency-cruiser](https://github.com/sverweij/dependency-cruiser) | 18.5.0  | MIT        | Copyright (c) 2016-2026 Sander Verweij  |
+| [TypeScript](https://github.com/microsoft/TypeScript)                | 6.0.3   | Apache-2.0 | Copyright (c) Microsoft Corporation     |
+| [yaml](https://github.com/eemeli/yaml)                               | 2.9.1   | ISC        | Copyright Eemeli Aro <eemeli@gmail.com> |
 
-Their transitive dependencies (44 production packages: MIT 40, ISC 3, Apache-2.0 1) are listed by
+Their transitive dependencies (45 production packages: MIT 40, ISC 4, Apache-2.0 1) are listed by
 `node scripts/license-audit.mjs`.
 
 ## Trademarks

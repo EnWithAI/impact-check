@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { diffContract, looksLikeContract, type ContractItem } from "../../src/analyzers/contract.js";
-import { analyzeJson, Repo } from "../helpers.js";
+import { analyzeJson, cli, Repo } from "../helpers.js";
 
 const changes = (items: ContractItem[]): string[] => items.map((i) => `${i.kind}:${i.change}:${i.pointer}`);
 function diff(base: string | null | undefined, head: string | null | undefined): ContractItem[] {
@@ -75,6 +75,14 @@ describe("file-level outcomes", () => {
     expect(changes(diff(oas("paths: {}\n"), oas("paths: {}\npaths: {}\n")))).toEqual([
       "unknown:unparseable:",
     ]);
+  });
+
+  it("deep nesting is either compared or unparseable, never a crash", () => {
+    const nested = (n: number): string =>
+      oas(`paths: {}\nx-n: 1\nwebhooks: ${"{a: ".repeat(n)}1${"}".repeat(n)}\n`);
+    expect(changes(diff(oas("paths: {}\n"), nested(500)))).toEqual(["unclassified:added:/webhooks"]);
+    expect(changes(diff(nested(500), nested(500).replace("{a: 1}", "{a: 2}")))).toHaveLength(1);
+    expect(changes(diff(oas("paths: {}\n"), nested(5000)))).toEqual(["unknown:unparseable:"]);
   });
 
   it("a minor spec-version change is unclassified; a patch change is not reported", () => {
@@ -345,6 +353,50 @@ describe("AsyncAPI details", () => {
 });
 
 describe("integration", () => {
+  it("adversarial contract: secret-like enum values are redacted, Markdown-breaking names escaped, URLs never shown", async () => {
+    const token = `ghp_${"x".repeat(36)}`; // fake, generated at test time
+    const evil = "a`](https://evil.invalid) <b>@admin</b>";
+    const spec = (values: string[], withPath: boolean): string =>
+      oas(
+        [
+          "servers:",
+          "  - url: https://user:pass@api.example.invalid/v1",
+          "paths:",
+          ...(withPath ? [`  "/${evil}":`, "    get:", "      responses: {}"] : []),
+          "  /a:",
+          "    post:",
+          "      parameters:",
+          "        - name: mode",
+          "          in: query",
+          `          schema: { type: string, enum: [${values.map((v) => JSON.stringify(v)).join(", ")}] }`,
+          "      responses: {}",
+          "",
+        ].join("\n")
+      );
+    const repo = Repo.create({
+      "src/index.ts": "export {};\n",
+      "openapi.yaml": spec(["safe", token], true),
+    }).branch("f");
+    repo.write({
+      "openapi.yaml": spec(["safe"], false).replace(
+        "  - url: https://user:pass@api.example.invalid/v1\n",
+        ""
+      ),
+    });
+    repo.commit("change");
+    const json = await analyzeJson(repo.dir, ["--base", "main", "--head", "HEAD"]);
+    const text = JSON.stringify(json);
+    expect(text).not.toContain(token);
+    expect(text).not.toContain("user:pass");
+    expect(text).toContain("enum value removed: [REDACTED]");
+    const md = await cli(["analyze", "--quiet", "--base", "main", "--head", "HEAD"], repo.dir);
+    expect(md.stdout).not.toContain(token);
+    expect(md.stdout).not.toContain("<b>@admin</b>");
+    // Prose is escaped; the pointer is an inert code span.
+    expect(md.stdout).toContain("path removed: /a\\`\\](https://evil.invalid) \\<b\\>");
+    expect(md.stdout).toContain("``/paths/~1a`](https:~1~1evil.invalid) <b>@admin<~1b>``");
+  });
+
   it("sniffs unnamed contracts, keeps api-contract-changed for others, handles deleted and renamed files", async () => {
     const spec = oas("paths:\n  /a:\n    get:\n      responses: {}\n  /b:\n    get:\n      responses: {}\n");
     const repo = Repo.create({
