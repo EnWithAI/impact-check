@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2026 EnWithAI Technologies
+# Architecture Check on pull requests: compares architecture/workspace.dsl with the code, using this repository's own
+# module graph (impact-check graph). Report only. Pinned to the Architecture Check v0.1.0 release commit, so the
+# action installs its own runtime dependency as it does for any consumer. Read-only token; actions pinned by SHA.
+
+name: Architecture
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: architecture-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  architecture-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --ignore-scripts && npm run build
+      - run: node dist/cli/main.js graph --format json --output graph.json
+      - id: architecture-check
+        uses: EnWithAI/architecture-check@c6ab14da78eaf4415182505155b00f535ac75c9c # v0.1.0
+        with:
+          graph: graph.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: architecture-check-report
+          path: architecture-check-report/
+          retention-days: 7
