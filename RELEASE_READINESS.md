@@ -1,3 +1,11 @@
+# Release readiness — 0.3.261110 (version alignment)
+
+Date: 2026-11-10 · Branch `release/0.3.261110` · **Verdict: RELEASE APPROVED** by the user on 2026-11-10. Every
+Engineering Commons tool moves to `0.3.YYMMDD`; no functional change. `npm run check:all` exit 0 (142 passed | 1 skipped (143)); demo outputs
+regenerated with the new version.
+
+---
+
 # Release readiness — Impact Check 0.2.0-alpha.0
 
 Date: 2026-10-09 · Branch `alpha/impact-check-0.2-sdlc` (local only) · Code commit `5024167` · Report schema 2.0
