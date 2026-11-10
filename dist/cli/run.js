@@ -1,0 +1,287 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 EnWithAI Technologies
+/**
+ * Command-line interface: argument parsing (node:util parseArgs), commands (analyze, check, render,
+ * schema), configuration loading, output writing and the mapping of every error to a documented exit code.
+ */
+import { existsSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { dirname, isAbsolute, join, resolve } from "node:path";
+import { parseArgs } from "node:util";
+import { analyze } from "../analysis/analyze.js";
+import { exportGraph } from "../graph/export.js";
+import { DEFAULT_CONFIG, loadConfigFile } from "../config.js";
+import { ImpactCheckError, ExitCode, usageError } from "../errors.js";
+import { repoRoot } from "../git/repo.js";
+import { evaluatePolicy } from "../policy.js";
+import { renderJson } from "../report/json.js";
+import { renderMarkdown } from "../report/markdown.js";
+import { redactDeep } from "../report/redact.js";
+import { parseReport } from "../report/validate.js";
+import { TOOL_VERSION } from "../version.js";
+/** Text printed by `impact-check --help`. */
+export const HELP = `Impact Check ${TOOL_VERSION} — evidence-backed change-impact reports for JS/TS repositories.
+
+Usage:
+  impact-check analyze [options]   Analyze changes and print/write a report (exit 0 unless a fatal error occurs)
+  impact-check check   [options]   Analyze, then apply the policy from the config (exit 4 on policy failure)
+  impact-check graph   [options]   Print/write the module graph of one revision as JSON (--head or working tree)
+  impact-check schema [graph]      Print the JSON Schema of the report (or of the graph)
+  impact-check render --input <report.json> [--format markdown|json] [--output <file>]
+                                 Re-render a saved JSON report (validates it; escapes all content)
+  impact-check --help | --version
+
+Options:
+  --base <ref>             Base ref (default: main, then origin/main, master, origin/master)
+  --head <ref>             Analyze this commit. Without --head the working tree is analyzed
+                           (staged + unstaged + untracked files)
+  --worktree               Analyze the working tree explicitly (cannot be combined with --head)
+  --diff-mode <mode>       merge-base (default; GitHub PR semantics) or direct
+  --format <fmt>           markdown (default) or json
+  --output <file>          Write the report to a file instead of stdout
+  --config <file>          JSON config/policy (default: .impact-check.json at the repository root, if present)
+  --cwd <dir>              Repository directory (default: current directory)
+  --tsconfig <file>        tsconfig/jsconfig for path aliases (default: tsconfig.json, then jsconfig.json)
+  --max-depth <n>          Max reverse-dependency hops (default 10)
+  --max-affected <n>       Max affected modules listed (default 500)
+  --offline                Accepted for explicitness: Impact Check never uses the network
+  --on-error <fail|pass>   Tool/git errors: fail (default; fail-closed, exit 1/3) or pass (fail-open: warn, exit 0).
+                           Usage errors always exit 2; policy failures always exit 4
+  --no-branding            Omit the footer line in Markdown output
+  --quiet                  No progress messages on stderr
+  -h, --help               Show this help
+  -v, --version            Show the version
+
+Exit codes: 0 ok · 1 internal error · 2 usage/config error · 3 git/repository error · 4 policy failure (check)
+Privacy: no network access, no telemetry, no execution of repository code or package scripts.
+`;
+/** Parses a positive integer CLI flag value. */
+function positiveInt(value, flag) {
+    if (value === undefined)
+        return undefined;
+    if (!/^\d+$/.test(value) || Number(value) < 1 || Number(value) > 1_000_000) {
+        throw usageError(`${flag} must be a positive integer`);
+    }
+    return Number(value);
+}
+/** Writes a report file atomically (temp file + rename); the parent directory must exist. */
+function writeOutput(path, content) {
+    if (existsSync(path) && statSync(path).isDirectory())
+        throw usageError(`--output points to a directory: ${path}`);
+    if (!existsSync(dirname(path)))
+        throw usageError(`Output directory does not exist: ${dirname(path)}`);
+    const temp = join(dirname(path), `.impact-check-${process.pid}-${Date.now()}.tmp`);
+    writeFileSync(temp, content, { mode: 0o644 });
+    renameSync(temp, path);
+}
+/** Returns the bundled report JSON Schema (works from both src/ and dist/). */
+export function readSchema() {
+    return readFileSync(new URL("../../schema/impact-check-report.schema.json", import.meta.url), "utf8");
+}
+/** Returns the bundled graph JSON Schema (works from both src/ and dist/). */
+export function readGraphSchema() {
+    return readFileSync(new URL("../../schema/impact-check-graph.schema.json", import.meta.url), "utf8");
+}
+/** Set by --on-error pass: tool/git errors become warnings with exit 0 (fail-open). */
+let failOpen = false;
+/** Parses arguments and runs one command. Throws ImpactCheckError for expected failures. */
+async function main(argv, io) {
+    const { values, positionals } = (() => {
+        try {
+            return parseArgs({
+                args: argv,
+                allowPositionals: true,
+                strict: true,
+                options: {
+                    base: { type: "string" },
+                    input: { type: "string" },
+                    head: { type: "string" },
+                    worktree: { type: "boolean" },
+                    "diff-mode": { type: "string" },
+                    format: { type: "string" },
+                    output: { type: "string" },
+                    config: { type: "string" },
+                    cwd: { type: "string" },
+                    tsconfig: { type: "string" },
+                    "max-depth": { type: "string" },
+                    "max-affected": { type: "string" },
+                    offline: { type: "boolean" },
+                    "no-branding": { type: "boolean" },
+                    "on-error": { type: "string" },
+                    quiet: { type: "boolean" },
+                    help: { type: "boolean", short: "h" },
+                    version: { type: "boolean", short: "v" },
+                },
+            });
+        }
+        catch (error) {
+            throw usageError(error.message, "Run `impact-check --help` for usage.");
+        }
+    })();
+    if (values.help) {
+        io.stdout(HELP);
+        return ExitCode.Ok;
+    }
+    if (values.version) {
+        io.stdout(`${TOOL_VERSION}\n`);
+        return ExitCode.Ok;
+    }
+    const command = positionals[0];
+    if (command === undefined) {
+        io.stderr(HELP);
+        return ExitCode.Usage;
+    }
+    const maxPositionals = command === "schema" ? 2 : 1;
+    if (positionals.length > maxPositionals)
+        throw usageError(`Unexpected argument: ${positionals[maxPositionals]}`);
+    if (command === "schema") {
+        const which = positionals[1];
+        if (which !== undefined && which !== "graph")
+            throw usageError(`Unknown schema: ${which}`, "Use `impact-check schema` or `impact-check schema graph`.");
+        io.stdout(which === "graph" ? readGraphSchema() : readSchema());
+        return ExitCode.Ok;
+    }
+    if (command === "render") {
+        if (values.input === undefined)
+            throw usageError("render requires --input <report.json>");
+        const format = values.format ?? "markdown";
+        if (format !== "markdown" && format !== "json")
+            throw usageError(`--format must be "markdown" or "json"`);
+        const inputPath = isAbsolute(values.input) ? values.input : resolve(io.cwd, values.input);
+        let text;
+        try {
+            if (statSync(inputPath).size > 64 * 1024 * 1024)
+                throw usageError("--input is too large");
+            text = readFileSync(inputPath, "utf8");
+        }
+        catch (error) {
+            if (error instanceof ImpactCheckError)
+                throw error;
+            throw usageError(`Cannot read --input ${JSON.stringify(values.input)}`);
+        }
+        const report = redactDeep(parseReport(text));
+        const rendered = format === "json" ? renderJson(report) : renderMarkdown(report, { branding: !values["no-branding"] });
+        if (values.output !== undefined)
+            writeOutput(isAbsolute(values.output) ? values.output : resolve(io.cwd, values.output), rendered);
+        else
+            io.stdout(rendered);
+        return ExitCode.Ok;
+    }
+    if (command !== "analyze" && command !== "check" && command !== "graph") {
+        throw usageError(`Unknown command: ${command}`, "Commands: analyze, check, graph, render, schema.");
+    }
+    const onError = values["on-error"] ?? "fail";
+    if (onError !== "fail" && onError !== "pass")
+        throw usageError(`--on-error must be "fail" or "pass"`);
+    failOpen = onError === "pass";
+    if (values.head !== undefined && values.worktree)
+        throw usageError("--head and --worktree cannot be combined");
+    if (command === "graph") {
+        for (const flag of ["base", "diff-mode", "max-depth", "max-affected", "no-branding", "input"]) {
+            if (values[flag] !== undefined)
+                throw usageError(`--${flag} is not supported by graph`, "See docs/GRAPH.md.");
+        }
+        if ((values.format ?? "json") !== "json")
+            throw usageError(`graph supports only --format json`);
+    }
+    const format = values.format ?? "markdown";
+    if (format !== "markdown" && format !== "json")
+        throw usageError(`--format must be "markdown" or "json"`);
+    const diffMode = values["diff-mode"] ?? "merge-base";
+    if (diffMode !== "merge-base" && diffMode !== "direct")
+        throw usageError(`--diff-mode must be "merge-base" or "direct"`);
+    const maxDepth = positiveInt(values["max-depth"], "--max-depth");
+    const maxAffected = positiveInt(values["max-affected"], "--max-affected");
+    const cwd = values.cwd ? resolve(io.cwd, values.cwd) : io.cwd;
+    if (!existsSync(cwd) || !statSync(cwd).isDirectory())
+        throw usageError(`--cwd is not a directory: ${values.cwd ?? cwd}`);
+    let config = DEFAULT_CONFIG;
+    let configSource = "defaults";
+    if (values.config !== undefined) {
+        configSource = "--config";
+        config = loadConfigFile(isAbsolute(values.config) ? values.config : resolve(io.cwd, values.config));
+    }
+    else {
+        const root = await repoRoot(cwd);
+        const implicit = join(root, ".impact-check.json");
+        if (existsSync(implicit)) {
+            config = loadConfigFile(implicit);
+            configSource = ".impact-check.json";
+        }
+    }
+    const log = values.quiet ? undefined : (message) => io.stderr(`impact-check: ${message}\n`);
+    if (command === "graph") {
+        const graph = await exportGraph({
+            cwd,
+            head: values.head ?? null,
+            tsConfig: values.tsconfig ?? null,
+            config,
+            ...(io.now ? { now: io.now } : {}),
+            ...(log ? { log } : {}),
+        });
+        const rendered = `${JSON.stringify(graph, null, 2)}\n`;
+        if (values.output !== undefined) {
+            writeOutput(isAbsolute(values.output) ? values.output : resolve(io.cwd, values.output), rendered);
+            log?.(`Graph written to ${values.output}`);
+        }
+        else
+            io.stdout(rendered);
+        return ExitCode.Ok;
+    }
+    const options = {
+        cwd,
+        base: values.base ?? null,
+        head: values.head ?? null,
+        diffMode: diffMode,
+        config,
+        configSource,
+        tsConfig: values.tsconfig ?? null,
+        ...(maxDepth !== undefined ? { maxDepth } : {}),
+        ...(maxAffected !== undefined ? { maxAffected } : {}),
+        ...(io.now ? { now: io.now } : {}),
+        ...(log ? { log } : {}),
+    };
+    const report = await analyze(options);
+    const branding = config.branding && !values["no-branding"];
+    const rendered = format === "json" ? renderJson(report) : renderMarkdown(report, { branding });
+    if (values.output !== undefined) {
+        const target = isAbsolute(values.output) ? values.output : resolve(io.cwd, values.output);
+        writeOutput(target, rendered);
+        log?.(`Report written to ${values.output}`);
+    }
+    else {
+        io.stdout(rendered);
+    }
+    if (command === "check") {
+        const policy = evaluatePolicy(report, config.policy);
+        if (!policy.passed) {
+            for (const violation of policy.violations)
+                io.stderr(`impact-check: policy violation: ${violation}\n`);
+            return ExitCode.Policy;
+        }
+        log?.("Policy passed");
+    }
+    return ExitCode.Ok;
+}
+/** CLI entry point. Never throws; maps every error to a documented exit code. */
+export async function run(argv, io) {
+    failOpen = false;
+    try {
+        return await main(argv, io);
+    }
+    catch (error) {
+        const usage = error instanceof ImpactCheckError && error.exitCode === ExitCode.Usage;
+        if (failOpen && !usage) {
+            io.stderr(`impact-check: warning: analysis failed and was ignored (on-error=pass, fail-open): ${error.message}\n`);
+            return ExitCode.Ok;
+        }
+        if (error instanceof ImpactCheckError) {
+            io.stderr(`impact-check: error: ${error.message}\n`);
+            if (error.hint)
+                io.stderr(`impact-check: hint: ${error.hint}\n`);
+            return error.exitCode;
+        }
+        io.stderr(`impact-check: internal error: ${error?.stack ?? String(error)}\n`);
+        io.stderr("impact-check: this is a bug; please report it with the command you ran (no source code needed).\n");
+        return ExitCode.Internal;
+    }
+}
