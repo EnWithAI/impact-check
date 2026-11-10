@@ -5,6 +5,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## 0.3.261110 — 2026-11-10
+
+- Version alignment: every EnWithAI Engineering Commons tool now uses `0.3.YYMMDD`, the date of the release
+  (`0.3.261110` = 2026-11-10). It continues from `0.3.0`. No functional change; report and schema versions are
+  unchanged.
+
 ## 0.3.0 — 2026-10-16
 
 OpenAPI/AsyncAPI structural contract diff and `impact-check graph` (design notes §7.1). Report schema stays 2.0
